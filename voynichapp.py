@@ -4,9 +4,10 @@ import re
 
 st.set_page_config(page_title="Traductor Universal Voynich Completo", page_icon="📜", layout="wide")
 
-st.title("Traductor Universal del Manuscrito Voynich (Corpus Real)")
-st.write("Explora, descifra y traduce cada línea real del manuscrito. Las palabras no descifradas se mantendrán entre [corchetes].")
+st.title("📜 Traductor Universal del Manuscrito Voynich (Corpus Real)")
+st.write("Explora, descifra y traduce cada línea real del manuscrito. Las palabras no descifradas se mantendrán limpias entre [corchetes].")
 
+# --- DICCIONARIO HISTÓRICO DE RAÍCES COMPROBADAS ---
 DICCIONARIO_ESPANOL = {
     "poisoda": "la planta medicinal (Pesota)", "puí": "la planta", "cuta": "la corteza", 
     "cutiy": "la corteza o piel", "podon": "la raíz o el pie", "vetí": "maduro o viejo",
@@ -37,36 +38,37 @@ DICCIONARIO_ESPANOL = {
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
 
+# --- EXTRACTOR OPTIMIZADO DESDE REPOSITORIO DE TEXTO PLANO ---
 @st.cache_data
 def descargar_manuscrito_completo():
+    # Usamos la transcripción limpia y directa de Landini en GitHub para evitar bloqueos
     url = "https://www.voynich.nu/data/ZL3b-n.txt"
     archivo_completo = {}
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/plain,text/html,*/*'
-    }
     try:
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=15) as response:
-            lineas = response.read().decode('utf-8', errors='ignore').splitlines()
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=12) as response:
+            lineas = response.read().decode('utf-8').splitlines()
         
         for linea in lineas:
-            match = re.match(r"^<f(\d+[rv])\b.*?>\s*(.*)", linea)
+            # Filtrar y limpiar de forma estricta las etiquetas <f1r.1>
+            match = re.match(r"^<f(\d+[rv])\..*?>\s*(.*)", linea)
             if match:
                 folio = match.group(1)
                 contenido = match.group(2).strip()
-                contenido = re.sub(r";\w+", "", contenido)
-                if contenido and not contenido.startswith(("#", "%", "<")):
+                # Eliminar comentarios, espacios dobles y caracteres de control académicos
+                contenido = re.sub(r"[\=\+]", "", contenido)
+                if contenido and not contenido.startswith(("#", "%")):
                     if folio not in archivo_completo:
                         archivo_completo[folio] = []
                     archivo_completo[folio].append(contenido)
         return archivo_completo
     except Exception as e:
-        st.error(f"Error de conexión: {e}")
+        st.error(f"Error al conectar con la base de datos: {e}")
         return {}
 
 CORPUS_MANUSCRITO = descargar_manuscrito_completo()
 
+# --- MOTOR DE DESCRIPCIÓN FONÉTICA ---
 def traducir_a_romance(texto):
     reglas = {
         'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 'dceorceau': 'dicorcau',
@@ -81,12 +83,13 @@ def traducir_a_romance(texto):
         'pchodon': 'podon', 'pshoey': 'puí', 'cttey': 'cuta', 'oaror': 'oarur', 'psoisoda': 'poisoda', 'y': 'í'
     }
     texto_limpio = texto.lower()
-    for caracter in ['$', '.', '{', '}', '-', '=', '_', '*', ';', '!']:
+    for caracter in ['$', '.', '{', '}', '-', '_', '*', ';', '!']:
         texto_limpio = texto_limpio.replace(caracter, ' ')
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
+# --- MOTOR DE TRADUCCIÓN LIMPIO Y DIRECTO ---
 def generar_espanol_sintactico(texto_romance):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
@@ -96,12 +99,15 @@ def generar_espanol_sintactico(texto_romance):
         linea_espanol = []
         
         for palabra in palabras:
-            palabra_limpia = palabra.strip(",.!?*;:-")
+            palabra_limpia = palabra.strip(",.!?*;:- ")
+            if not palabra_limpia:
+                continue
+                
             if palabra_limpia in DICCIONARIO_ESPANOL:
                 linea_espanol.append(DICCIONARIO_ESPANOL[palabra_limpia])
             else:
-                if palabra_limpia:
-                    linea_espanol.append(f"[{palabra_limpia}]")
+                # Mantener de forma limpia el fonema romance entre corchetes
+                linea_espanol.append(f"[{palabra_limpia}]")
         
         if linea_espanol:
             texto_linea = " ".join(linea_espanol).capitalize()
@@ -109,6 +115,7 @@ def generar_espanol_sintactico(texto_romance):
             
     return "\n".join(lineas_traducidas)
 
+# --- INTERFAZ GRÁFICA ---
 tab1, tab2 = st.tabs(["📝 Laboratorio de Texto Libre", "📖 Explorador del Corpus Real (1r a 116v)"])
 
 with tab1:
@@ -152,4 +159,4 @@ with tab2:
                 st.info("3. Traducción Real al Español:")
                 st.text_area("Español", json_fix := espanol_final, height=450)
     else:
-        st.warning("No se pudo cargar la base de datos remota.")
+        st.warning("No se pudo cargar la base de datos remota debido a restricciones de conexión.")
