@@ -128,7 +128,7 @@ def generar_espanol_sintactico(texto_romance):
 def ordenar_folios_natural(lista):
     def clave(x):
         numeros = re.findall(r'\d+', str(x))
-        return (int(numeros) if numeros else 999, 0 if "r" in str(x) else 1)
+        return (int(numeros[0]) if numeros else 999, 0 if "r" in str(x) else 1)
     return sorted(lista, key=clave)
 
 tab1, tab2 = st.tabs(["📝 Laboratorio Libre", "📖 Explorador del Corpus"])
