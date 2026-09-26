@@ -42,7 +42,7 @@ DICCIONARIO_ESPANOL = {
 # --- EXTRACTOR OPTIMIZADO DESDE REPOSITORIO DE TEXTO PLANO ---
 @st.cache_data
 def descargar_manuscrito_completo():
-    url = "https://www.voynich.nu/data/ZL3b-n.txt"
+    url = "https://voynich.nu"
     archivo_completo = {}
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
@@ -83,10 +83,18 @@ def traducir_a_romance(texto):
         'pchodon': 'podon', 'pshoey': 'puí', 'cttey': 'cuta', 'oaror': 'oarur', 'psoisoda': 'poisoda', 'y': 'í'
     }
     texto_limpio = texto.lower()
-    for caracter in ['$', '.', '{', '}', '-', '_', '*', ';', '!']:
-        texto_limpio = texto_limpio.replace(caracter, ' ')
+    
+    # 1. Aplicar reglas fonéticas antes de quitar separadores de palabras
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
+        
+    # 2. Reemplazar caracteres académicos y separadores por espacios limpios
+    for caracter in ['$', '.', '{', '}', '-', '_', '*', ';', '!']:
+        texto_limpio = texto_limpio.replace(caracter, ' ')
+        
+    # 3. Colapsar espacios duplicados para que split() no procese vacíos
+    texto_limpio = re.sub(r'\s+', ' ', texto_limpio)
+    
     return texto_limpio
 
 # --- MOTOR DE TRADUCCIÓN LIMPIO Y DIRECTO ---
@@ -110,7 +118,7 @@ def generar_espanol_sintactico(texto_romance):
         
         if linea_espanol:
             texto_linea = " ".join(linea_espanol).capitalize()
-            lineas_traducidas.append(f"Línea {idx+1}: {texto_linea}.")
+            lineas_traducidas.append(f"Línea {idx+1}: {texto_linea}")
             
     return "\n".join(lineas_traducidas)
 
@@ -119,7 +127,7 @@ tab1, tab2 = st.tabs(["📝 Laboratorio de Texto Libre", "📖 Explorador del Co
 
 with tab1:
     st.subheader("Laboratorio de Entrada Libre")
-    entrada = st.text_area("Pega caracteres EVA aquí:", "teeodau cseey cpair osaiin")
+    entrada = st.text_area("Pega caracteres EVA aquí:", "psoisoda.pshoey.cttey")
     if st.button("Analizar Fragmento"):
         romance = traducir_a_romance(entrada)
         espanol = generar_espanol_sintactico(romance)
