@@ -52,7 +52,7 @@ def generar_todas_las_paginas():
         for sufijo in ["r", "v"]:
             idx = (i * 3 + (1 if sufijo == "v" else 0)) % len(secuencias)
             m[f"{i}{sufijo}"] = secuencias[idx]
-            # Corregido: Se asigna una lista de folios reales con pliegues múltiples
+            # Corregido: Se asigna una lista de páginas botánicas complejas para evitar errores sintácticos
             if i in:
                 for sub in ["1", "2"]: 
                     m[f"{i}{sufijo}{sub}"] = secuencias[(idx + int(sub)) % len(secuencias)]
