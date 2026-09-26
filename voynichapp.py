@@ -1,6 +1,7 @@
 import streamlit as st
 import urllib.request
 import re
+import json
 
 st.set_page_config(page_title="Traductor Universal Voynich Completo", page_icon="📜", layout="wide")
 
@@ -41,29 +42,28 @@ DICCIONARIO_ESPANOL = {
 # --- EXTRACTOR OPTIMIZADO DESDE REPOSITORIO DE TEXTO PLANO ---
 @st.cache_data
 def descargar_manuscrito_completo():
-    # Usamos la transcripción limpia y directa de Landini en GitHub para evitar bloqueos
     url = "https://www.voynich.nu/data/ZL3b-n.txt"
     archivo_completo = {}
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
         with urllib.request.urlopen(req, timeout=12) as response:
-            lineas = response.read().decode('utf-8').splitlines()
+            lineas = response.read().decode('utf-8', errors='ignore').splitlines()
         
         for linea in lineas:
-            # Filtrar y limpiar de forma estricta las etiquetas <f1r.1>
-            match = re.match(r"^<f(\d+[rv])\..*?>\s*(.*)", linea)
+            match = re.match(r"^<f(\d+[rv]\d*)[\.A-Za-z0-9_]*?>\s*(.*)", linea)
             if match:
                 folio = match.group(1)
                 contenido = match.group(2).strip()
-                # Eliminar comentarios, espacios dobles y caracteres de control académicos
-                contenido = re.sub(r"[\=\+]", "", contenido)
-                if contenido and not contenido.startswith(("#", "%")):
+                
+                if contenido and not contenido.startswith(("%", "#")):
+                    contenido = re.sub(r"[\=\+\*\?\-\{\}]", "", contenido)
+                    
                     if folio not in archivo_completo:
                         archivo_completo[folio] = []
                     archivo_completo[folio].append(contenido)
         return archivo_completo
     except Exception as e:
-        st.error(f"Error al conectar con la base de datos: {e}")
+        st.error(f"Error al conectar con la base de datos de Voynich.nu: {e}")
         return {}
 
 CORPUS_MANUSCRITO = descargar_manuscrito_completo()
@@ -106,7 +106,6 @@ def generar_espanol_sintactico(texto_romance):
             if palabra_limpia in DICCIONARIO_ESPANOL:
                 linea_espanol.append(DICCIONARIO_ESPANOL[palabra_limpia])
             else:
-                # Mantener de forma limpia el fonema romance entre corchetes
                 linea_espanol.append(f"[{palabra_limpia}]")
         
         if linea_espanol:
@@ -157,6 +156,6 @@ with tab2:
                 st.text_area("Romance", romance_final, height=450)
             with col_esp:
                 st.info("3. Traducción Real al Español:")
-                st.text_area("Español", json_fix := espanol_final, height=450)
+                st.text_area("Español", espanol_final, height=450)
     else:
         st.warning("No se pudo cargar la base de datos remota debido a restricciones de conexión.")
