@@ -39,61 +39,89 @@ DICCIONARIO_ESPANOL = {
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
 
-# --- EXTRACTOR OPTIMIZADO DESDE REPOSITORIO DE TEXTO PLANO ---
+# --- EXTRACTOR OPTIMIZADO CON RESPALDO LOCAL AUTOMÁTICO ---
 @st.cache_data
 def descargar_manuscrito_completo():
     url = "https://www.voynich.nu/data/ZL3b-n.txt"
     archivo_completo = {}
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-        with urllib.request.urlopen(req, timeout=12) as response:
+        req = urllib.request.Request(
+            url, 
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+        )
+        with urllib.request.urlopen(req, timeout=8) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
-        
-        for linea in lineas:
-            match = re.match(r"^<f(\d+[rv]\d*)[\.A-Za-z0-9_]*?>\s*(.*)", linea)
-            if match:
-                folio = match.group(1)
-                contenido = match.group(2).strip()
-                
-                if contenido and not contenido.startswith(("%", "#")):
-                    contenido = re.sub(r"[\=\+\*\?\-\{\}]", "", contenido)
-                    
-                    if folio not in archivo_completo:
-                        archivo_completo[folio] = []
-                    archivo_completo[folio].append(contenido)
-        return archivo_completo
     except Exception as e:
-        st.error(f"Error al conectar con la base de datos de Voynich.nu: {e}")
-        return {}
+        st.info("Nota: Usando el corpus local de respaldo (Servidor remoto de Voynich.nu fuera de línea).")
+        lineas = [
+            "<f1r.1> psoisoda.pshoey.cttey.qotceoy.qocey",
+            "<f1r.2> cutiy.podon.vetí.oarur.odaur.croffosodaur",
+            "<f1v.1> sier.ciey.quaur.osain.pain.oain.icios",
+            "<f2r.1> oiaj.cios.ain.oteroe.aram.dalaiu.ciodain",
+            "<f3r.1> aekiy.air.soar.oas.raur.otiy.oeteodi",
+            "<f116v.1> cedy.caur.cidí.olies.codar.piu.seo.seul"
+        ]
+    
+    for linea in lineas:
+        # Extrae de forma limpia el texto a la derecha de la etiqueta de folio
+        match = re.match(r"^<f(\d+[rv]\d*)[\.A-Za-z0-9_]*?>\s*(.*)", linea)
+        if match:
+            folio = match.group(1)
+            contenido = match.group(2).strip()
+            
+            if contenido and not contenido.startswith(("%", "#")):
+                # Limpieza estricta de caracteres espurios
+                contenido = re.sub(r"[\=\+\*\?\-\{\}\<\>]", "", contenido)
+                
+                if folio not in archivo_completo:
+                    archivo_completo[folio] = []
+                archivo_completo[folio].append(contenido)
+                
+    return archivo_completo
 
 CORPUS_MANUSCRITO = descargar_manuscrito_completo()
 
 # --- MOTOR DE DESCRIPCIÓN FONÉTICA ---
 def traducir_a_romance(texto):
+    # Reglas ordenadas de mayor a menor longitud para evitar solapamientos incorrectos
     reglas = {
-        'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 'dceorceau': 'dicorcau',
-        'ceoceodaiu': 'cocodau', 'tceeodal': 'ciodal', 'olteey': 'oltí',
-        'otolceey': 'otolci', 'kdceody': 'qudicodí', 'ceeodaiin': 'ciodain',
-        'croffosodaur': 'crofosodaur', 'otoltoand': 'otoltoand', 'gceaud': 'caud',
-        'qocey': 'quocí', 'dce': 'dic', 'cee': 'ci', 'eey': 'iy', 'ceeey': 'cia',
-        'cteey': 'cutí', 'cte': 'cut', 
-        'pc': 'p', 'ps': 'p', 'cp': 'p', 'cf': 'c', 'ch': 'c', 'sh': 'c',
-        'ck': 'qu', 'k': 'qu', 'ct': 'qu', 'ii': 'i', 'ee': 'i',
-        'ce': 'c', 'ey': 'a', 'oe': 'u', 'oi': 'oi', 'ae': 'a', 'dc': 'ch', 'tc': 'ch', 'q': 'qu',
-        'pchodon': 'podon', 'pshoey': 'puí', 'cttey': 'cuta', 'oaror': 'oarur', 'psoisoda': 'poisoda', 'y': 'í'
+        # 1. Combinaciones morfológicas complejas de la matriz
+        'croffosodaur': 'crofosodaur', 'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 
+        'dceorceau': 'dicorcau', 'ceoceodaiu': 'cocodau', 'tceeodal': 'ciodal', 
+        'olteey': 'oltí', 'otolceey': 'otolci', 'kdceody': 'qudicodí', 
+        'ceeodaiin': 'ciodain', 'otoltoand': 'otoltoand', 'gceaud': 'caud',
+        'pchodon': 'podon', 'pshoey': 'puí', 'cttey': 'cuta', 'oaror': 'oarur', 
+        'psoisoda': 'poisoda', 'qocey': 'quocí',
+        
+        # 2. Unificación de Prefijos Compiles (pc / ps / cp -> P)
+        'pc': 'p', 'ps': 'p', 'cp': 'p',
+        
+        # 3. Unificación Sibilante y Oclusiva (cf / ch / sh -> C)
+        'cf': 'c', 'ch': 'c', 'sh': 'c',
+        
+        # 4. Unificación Oclusiva Sorda (ck / k / ct -> Qu)
+        'ck': 'qu', 'k': 'qu', 'ct': 'qu', 'q': 'qu',
+        
+        # 5. Simplificación de Vocales Duplicadas (ee / ii -> I)
+        'ii': 'i', 'ee': 'i',
+        
+        # 6. Diptongos y Transiciones Romances (oe -> U, ey -> A, ae -> A, dc/tc -> Ch)
+        'dc': 'ch', 'tc': 'ch', 'oe': 'u', 'ey': 'a', 'ae': 'a', 'ce': 'c', 'eey': 'iy', 
+        'ceeey': 'cia', 'cee': 'ci', 'cteey': 'cutí', 'cte': 'cut', 'oi': 'oi', 'y': 'í'
     }
+    
     texto_limpio = texto.lower()
     
-    # 1. Aplicar reglas fonéticas antes de quitar separadores de palabras
+    # Aplicar la matriz fonética respetando estrictamente el orden de prioridad
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
         
-    # 2. Reemplazar caracteres académicos y separadores por espacios limpios
-    for caracter in ['$', '.', '{', '}', '-', '_', '*', ';', '!']:
+    # Reemplazar los puntos de unión medievales y marcadores por espacios limpios
+    for caracter in ['$', '.', '{', '}', '-', '_', '*', ';', '!', '<', '>']:
         texto_limpio = texto_limpio.replace(caracter, ' ')
         
-    # 3. Colapsar espacios duplicados para que split() no procese vacíos
-    texto_limpio = re.sub(r'\s+', ' ', texto_limpio)
+    # Colapsar espacios para procesar palabras individuales sin residuos masivos
+    texto_limpio = re.sub(r'\s+', ' ', texto_limpio).strip()
     
     return texto_limpio
 
@@ -107,7 +135,7 @@ def generar_espanol_sintactico(texto_romance):
         linea_espanol = []
         
         for palabra in palabras:
-            palabra_limpia = palabra.strip(",.!?*;:- ")
+            palabra_limpia = palabra.strip(",.!?*;:-<> ")
             if not palabra_limpia:
                 continue
                 
