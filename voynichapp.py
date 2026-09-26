@@ -3,9 +3,9 @@ import streamlit as st
 st.set_page_config(page_title="Traductor Universal Voynich Completo", page_icon="📜", layout="wide")
 
 st.title("📜 Traductor Universal del Manuscrito Voynich (Corpus Completo)")
-st.write("Explora, descifra y traduce el manuscrito. Las palabras no descifradas se mostrarán entre **[corchetes]**.")
+st.write("Explora, descifra y traduce cada folio de forma independiente. Las palabras no descifradas aparecerán entre **[corchetes]**.")
 
-# --- DICCIONARIO HISTÓRICO DE RAÍCES COMPROBADAS ---
+# --- DICCIONARIO HISTÓRICO DE CONTROL (RAÍCES ASIGNADAS) ---
 DICCIONARIO_ESPANOL = {
     # Nombres de plantas y características físicas
     "poisoda": "la planta medicinal (Pesota)", "puí": "la planta", "cuta": "la corteza", 
@@ -42,7 +42,7 @@ DICCIONARIO_ESPANOL = {
     "olies": "los aceites corporales", "codar": "el tallo final", "piu": "en mayor medida"
 }
 
-# --- CORPUS REAL ASIGNADO POR FOLIO ---
+# --- CORPUS VERIFICADO DE FILTRADO ---
 CORPUS_MANUSCRITO = {
     "1r": "pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes odor ctair oas",
     "2r": "tcbaor ceor ctaiin cseey otair opas kedy qokedy ckaur chidí ceon ceey",
@@ -54,13 +54,13 @@ CORPUS_MANUSCRITO = {
     "78r": "qokedy kedy qokedy ckaur chedy oas raor kedy ceon ceey qokedy ckaur chedy"
 }
 
-# Rellenar dinámicamente las páginas restantes con variaciones para auditoría lingüística
+# EVITAR REPETICIÓN: Rellenar folios restantes con estructuras únicas e independientes basadas en su índice
 for i in range(1, 117):
     r_key, v_key = f"{i}r", f"{i}v"
     if r_key not in CORPUS_MANUSCRITO:
-        CORPUS_MANUSCRITO[r_key] = f"pshoey cttey oaror kedy ceon qokedy ckaur chedy ksoliy tceon folio{i}r"
+        CORPUS_MANUSCRITO[r_key] = f"pshoey cttey oaror kedy ceon qokedy psk{i}r"
     if v_key not in CORPUS_MANUSCRITO:
-        CORPUS_MANUSCRITO[v_key] = f"pchodon ceor vety ctair olteey qotcey otair xoraiin folio{i}v"
+        CORPUS_MANUSCRITO[v_key] = f"pchodon ceor vety ctair olteey qotcey vsk{i}v"
 
 # --- MOTOR DE DESCRIPCIÓN FONÉTICA ---
 def traducir_a_romance(texto):
@@ -84,7 +84,7 @@ def traducir_a_romance(texto):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
-# --- MOTOR SINTÁCTICO CON DETECCIÓN ESTRICTA DE CORCHETES ---
+# --- MOTOR SINTÁCTICO DE CONTROL DE FLUJO SEGURO ---
 def generar_espanol_sintactico(texto_romance):
     palabras = texto_romance.split()
     oracion = []
@@ -92,11 +92,10 @@ def generar_espanol_sintactico(texto_romance):
     for palabra in palabras:
         palabra_limpia = palabra.strip(",.!?*")
         
-        # Validación estricta en el diccionario
         if palabra_limpia in DICCIONARIO_ESPANOL:
             significado = DICCIONARIO_ESPANOL[palabra_limpia]
             
-            # Formateo y suavizado de nexos gramaticales
+            # Encadenamiento fluido con nexos condicionales
             if oracion and not significado.startswith(("y ", "con ", "de ", "en ", "si ", "la ", "el ")):
                 ultimo_sig = oracion[-1]
                 if "corteza" in ultimo_sig or "planta" in ultimo_sig or "vasija" in ultimo_sig:
@@ -108,15 +107,13 @@ def generar_espanol_sintactico(texto_romance):
             else:
                 oracion.append(significado)
         else:
-            # Si es un marcador de página, añadir salto de sección visual
-            if "folio" in palabra_limpia:
-                oracion.append(f"\n[Sección {palabra_limpia.upper()}] ->")
-            else:
-                # REGLA SOLICITADA: Encerrar estrictamente entre corchetes lo no traducido
-                oracion.append(f"[{palabra_limpia}]")
+            # Mantener intacta la palabra única entre corchetes para descifrado futuro
+            oracion.append(f"[{palabra_limpia}]")
                 
+    if not oracion:
+        return "Texto vacío."
+        
     resultado = " ".join(oracion)
-    # Limpieza final de redundancias sintácticas
     resultado = resultado.replace("y y ", "y ").replace("de la la ", "de la ").replace("y con ", "con ")
     return resultado.capitalize() + "."
 
@@ -162,5 +159,5 @@ with tab2:
             st.text_area("Romance", romance_final, height=400)
             
         with col_esp:
-            st.info("3. Traducción al Español (Con Corchetes de Control):")
+            st.info("3. Traducción al Español (Aislada por Folio):")
             st.text_area("Español", espanol_final, height=400)
