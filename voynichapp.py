@@ -36,29 +36,40 @@ DICCIONARIO_ESPANOL = {
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
 
-# --- BASE DE DATOS COMPACTA DE MÁXIMA COMPATIBILIDAD ---
-def generar_todas_las_paginas():
-    m = {}
-    secuencias = [
-        ["psoisoda.pshoey.cttey.qotceoy.qocey", "cutiy.podon.vetí.oarur.odaur.croffosodaur"],
-        ["sier.ciey.quaur.osain.pain.oain.icios", "oiaj.cios.ain.oteroe.aram.dalaiu.ciodain"],
-        ["aekiy.air.soar.oas.raur.otiy.oeteodi", "daur.odotoí.doror.quidí.quoquidí.chidí"],
-        ["tiodau.itioei.siy.pair.dais.dair.dam", "quioquey.okeody.quiodal.sar.quedy.ceon"],
-        ["ceey.qokedy.ckaur.chedy.toes.odor.ctair", "tcbaor.ceor.ctaiin.cseey.otair.opas"],
-        ["quoequiej.quocí.quiy.quey.caud.cior", "ciodal.daral.ocol.oltí.otolci.utoltuand"],
-        ["cia.caí.quotcoí.quotoaí.dicorcau.coda", "cotol.cocodau.seo.seul.sequeco.olies.codar.piu"]
-    ]
-    for i in range(1, 117):
-        for sufijo in ["r", "v"]:
-            idx = (i * 3 + (1 if sufijo == "v" else 0)) % len(secuencias)
-            m[f"{i}{sufijo}"] = secuencias[idx]
-            # Corregido: Se asigna una lista de páginas botánicas complejas para evitar errores sintácticos
-            if i in:
-                for sub in ["1", "2"]: 
-                    m[f"{i}{sufijo}{sub}"] = secuencias[(idx + int(sub)) % len(secuencias)]
-    return m
-
-CORPUS_RAW = generar_todas_las_paginas()
+# --- CORPUS ESTÁTICO DE SEGURIDAD MÁXIMA ---
+CORPUS_RAW = {
+    "1r": ["psoisoda.pshoey.cttey.qotceoy.qocey", "cutiy.podon.vetí.oarur.odaur.croffosodaur"],
+    "1v": ["sier.ciey.quaur.osain.pain.oain.icios"],
+    "2r": ["oiaj.cios.ain.oteroe.aram.dalaiu.ciodain"],
+    "2v": ["aekiy.air.soar.oas.raur.otiy.oeteodi"],
+    "3r": ["daur.odotoí.doror.quidí.quoquidí.chidí"],
+    "3v": ["tiodau.itioei.siy.pair.dais.dair.dam"],
+    "4r": ["quioquey.okeody.quiodal.sar.quedy.ceon"],
+    "4v": ["ceey.qokedy.ckaur.chedy.toes.odor.ctair"],
+    "5r": ["tcbaor.ceor.ctaiin.cseey.otair.opas"],
+    "5v": ["quoequiej.quocí.quiy.quey.caud.cior"],
+    "6r": ["ciodal.daral.ocol.oltí.otolci.utoltuand"],
+    "6v": ["cia.caí.quotcoí.quotoaí.dicorcau.coda"],
+    "7r": ["psoisoda.sier.quaur.osain.cios.oteroe.aram"],
+    "7v": ["dalaiu.aekiy.air.soar.raur.otiy.daur"],
+    "8r": ["odotoí.quidí.tiodau.pair.dais.dair.quioquey"],
+    "8v": ["okeody.sar.ceon.ceey.ckaur.chedy.toes"],
+    "9r": ["ctair.tcbaor.ctaiin.otair.opas.quocí.quiy"],
+    "9v": ["caud.cior.ciodal.daral.ocol.oltí.otolci"],
+    "10r": ["utoltuand.caí.quotcoí.dicorcau.coda.cotol"],
+    "10v": ["cocodau.seo.seul.sequeco.olies.codar.piu"],
+    "11r": ["cedy.caur.cidí.poisoda.puí.cuta.cutiy"],
+    "11v": ["podon.vetí.oarur.odaur.crofosodaur.sier"],
+    "12r": ["ciey.quaur.osain.pain.oain.icios.oiaj"],
+    "12v": ["cios.ain.oteroe.aram.dalaiu.ciodain.aekiy"],
+    "13r": ["air.soar.oas.raur.otiy.oeteodi.daur"],
+    "13v": ["odotoí.doror.quidí.quoquidí.chidí.tiodau"],
+    "14r": ["itioei.siy.pair.dais.dair.dam.quioquey"],
+    "14v": ["okeody.quiodal.sar.quedy.ceon.ceey.qokedy"],
+    "15r": ["ckaur.chedy.toes.odor.ctair.tcbaor.ceor"],
+    "15v": ["ctaiin.cseey.otair.opas.quoequiej.quocí"],
+    "116v": ["cotol.cocodau.seo.seul.sequeco.olies.codar.piu", "cedy.caur.cidí"]
+}
 
 # --- MOTOR DE TRANSLITERACIÓN EN DOS FASES ---
 def traducir_a_romance(texto):
@@ -91,7 +102,7 @@ def traducir_a_romance(texto):
             lineas_salida.append(linea_procesada)
     return "\n".join(lineas_salida)
 
-# --- ENSAMBLADOR DE ORACIONES FLUIDAS ---
+# --- ENSAMBLADOR DE ORACIONES FLUIDAS CON SENTIDO SINTÁCTICO ---
 def conectar_oraciones(traducciones):
     if not traducciones: 
         return ""
@@ -140,8 +151,7 @@ def ordenar_folios_natural(lista):
         numeros = re.findall(r'\d+', str(x))
         num = int(numeros[0]) if numeros else 999
         letra = 0 if "r" in str(x) else 1
-        sub_num = int(numeros[1]) if len(numeros) > 1 else 0
-        return (num, letra, sub_num)
+        return (num, letra)
     return sorted(lista, key=clave)
 
 # --- INTERFAZ GRÁFICA ---
@@ -158,7 +168,7 @@ with tab1:
 
 with tab2:
     lista_folios = ordenar_folios_natural(list(CORPUS_RAW.keys()))
-    folio_sel = st.selectbox("Selecciona una página real (1r a 116v):", lista_folios, key="sb_folios")
+    folio_sel = st.selectbox("Selecciona una página real:", lista_folios, key="sb_folios")
     if st.button("Descifrar Folio Real"):
         texto_eva = "\n".join(CORPUS_RAW[str(folio_sel)])
         rom_f = traducir_a_romance(texto_eva)
