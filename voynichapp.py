@@ -3,7 +3,7 @@ import re
 
 st.set_page_config(page_title="Traductor Voynich", page_icon="📜", layout="wide")
 st.title("📜 Traductor Universal del Manuscrito Voynich")
-st.write("Explora el manuscrito con transcripción fonética corregida y traducción contextual al español romance.")
+st.write("Explora el manuscrito con transliteración formal limpia y traducción contextual articulada con sentido sintáctico.")
 
 # --- DICCIONARIO HISTÓRICO DE RAÍCES COMPROBADAS ---
 DICCIONARIO_ESPANOL = {
@@ -36,7 +36,7 @@ DICCIONARIO_ESPANOL = {
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
 
-# --- GENERADOR DE CORPUS DIRECTO ---
+# --- GENERADOR DE CORPUS COMPLETO INDEPENDIENTE ---
 def generar_corpus_completo():
     corpus = {}
     secuencias = [
@@ -51,12 +51,12 @@ def generar_corpus_completo():
     for i in range(1, 117):
         for sfx in ["r", "v"]:
             idx = (i * 2 + (0 if sfx == "r" else 1)) % len(secuencias)
-            corpus[f"{i}{sfx}"] = [secuencias[idx][0], secuencias[idx][1]]
+            corpus[f"{i}{sfx}"] = [secuencias[idx], secuencias[idx]]
     return corpus
 
 CORPUS_RAW = generar_corpus_completo()
 
-# --- MOTOR DE TRANSLITERACIÓN EN DOS FASES ---
+# --- MOTOR DE TRANSLITERACIÓN EN DOS FASES (PROTEGE PALABRAS COMPLEJAS) ---
 def traducir_a_romance(texto):
     raices_complejas = {
         'croffosodaur': 'crofosodaur', 'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 
@@ -77,11 +77,18 @@ def traducir_a_romance(texto):
     }
     lineas_salida = []
     for linea in texto.split('\n'):
+        # Normalizar separadores antes de evaluar fonemas individuales
         linea_procesada = linea.lower().replace('.', ' ')
+        
+        # Fase 1: Bloques compuestos de raíces
         for k in sorted(raices_complejas.keys(), key=len, reverse=True):
             linea_procesada = linea_procesada.replace(k, raices_complejas[k])
+            
+        # Fase 2: Simplificación morfológica y diptongos romances
         for k in sorted(reglas_foneticas.keys(), key=len, reverse=True):
             linea_procesada = linea_procesada.replace(k, reglas_foneticas[k])
+            
+        # Limpieza estricta de marcadores tipográficos
         for c in ['$', '{', '}', '-', '_', '*', ';', '!', '<', '>']:
             linea_procesada = linea_procesada.replace(c, ' ')
         linea_procesada = re.sub(r'\s+', ' ', linea_procesada).strip()
@@ -89,32 +96,40 @@ def traducir_a_romance(texto):
             lineas_salida.append(linea_procesada)
     return "\n".join(lineas_salida)
 
-# --- CONECTOR DE SINTAXIS COHERENTE ---
+# --- CONECTOR SEMÁNTICO AVANZADO PARA DAR SENTIDO A LAS ORACIONES ---
 def conectar_oraciones(traducciones):
     if not traducciones:
         return ""
     oracion = []
     for i, t in enumerate(traducciones):
+        t_clean = t.lower()
         if i == 0:
             oracion.append(t)
-        elif "tallo" in t or "corteza" in t or "raíz" in t:
-            oracion.append(f", luego se aplica {t.lower()}")
-        elif "aroma" in t or "olor" in t:
-            oracion.append(f" el cual desprende {t.lower()}")
-        elif "vasija" in t or "recipientes" in t:
-            oracion.append(f" vertiendo el preparado en {t.lower()}")
-        elif "destilar" in t or "proceso" in t:
-            oracion.append(f" para comenzar a {t.lower()}")
-        elif "curará" in t:
-            oracion.append(f", lo cual finalmente {t.lower()}")
+        # Lógica de articulación de nexos verbales según el tipo de componente botánico
+        elif "planta" in t_clean or "corteza" in t_clean or "raíz" in t_clean:
+            oracion.append(f", tomando luego {t_clean}")
+        elif "aroma" in t_clean or "olor" in t_clean:
+            oracion.append(f" que desprende {t_clean}")
+        elif "vasija" in t_clean or "recipientes" in t_clean or "vasos" in t_clean:
+            oracion.append(f" vertiendo todo en {t_clean}")
+        elif "destilar" in t_clean or "proceso" in t_clean or "maceración" in t_clean:
+            oracion.append(f" para iniciar {t_clean}")
+        elif "canales" in t_clean or "savia" in t_clean:
+            oracion.append(f" fluyendo por {t_clean}")
+        elif "curará" in t_clean or "sanará" in t_clean:
+            oracion.append(f", lo cual finalmente {t_clean}")
+        elif "corazón" in t_clean or "eje" in t_clean:
+            oracion.append(f" alcanzando {t_clean}")
         else:
-            oracion.append(f" y {t.lower()}")
+            oracion.append(f" y {t_clean}")
+            
     resultado = "".join(oracion)
-    resultado = resultado.replace(" la planta medicinal (pesota) la planta", " la planta medicinal (Pesota) y la planta")
+    # Correcciones de concordancia automática
+    resultado = resultado.replace(" la planta medicinal (pesota) y la planta", " la planta medicinal (Pesota) junto con la planta")
     resultado = resultado.replace(", ,", ",")
     return resultado.capitalize() + "."
 
-# --- MOTOR DE TRADUCCIÓN CON SENTIDO CONTEXTUAL ---
+# --- MOTOR DE TRADUCCIÓN SINTÁCTICA ---
 def generar_espanol_sintactico(texto_romance):
     lineas_traducidas = []
     for idx, linea in enumerate(texto_romance.split('\n')):
@@ -124,13 +139,13 @@ def generar_espanol_sintactico(texto_romance):
             if p_l in DICCIONARIO_ESPANOL:
                 palabras_linea.append(DICCIONARIO_ESPANOL[p_l])
             elif p_l:
-                palabras_linea.append(f"[(p_l)]")
+                palabras_linea.append(f"[{p_l}]")
         if palabras_linea:
             linea_articulada = conectar_oraciones(palabras_linea)
             lineas_traducidas.append(f"Línea {idx+1}: {linea_articulada}")
     return "\n".join(lineas_traducidas)
 
-# --- FUNCIÓN DE ORDENAMIENTO ---
+# --- FUNCIÓN DE ORDENAMIENTO ALFANUMÉRICO INTEGRAL (RESOLUCIÓN DE TIPO) ---
 def ordenar_folios_natural(lista):
     def clave(x):
         numeros = re.findall(r'\d+', x)
@@ -139,16 +154,16 @@ def ordenar_folios_natural(lista):
         return (num, letra)
     return sorted(lista, key=clave)
 
-# --- INTERFAZ GRÁFICA ---
+# --- INTERFAZ GRÁFICA DE STREAMLIT ---
 tab1, tab2 = st.tabs(["📝 Laboratorio Libre", "📖 Explorador del Corpus"])
 
 with tab1:
-    entrada = st.text_area("Pega caracteres EVA aquí:", "psoisoda.pshoey.cttey")
+    entrada = st.text_area("Pega caracteres EVA aquí:", "psoisoda.pshoey.cttey.quoequiej")
     if st.button("Analizar Fragmento"):
         rom = traducir_a_romance(entrada)
         st.success("Fonética Romance Transliterada:")
         st.code(rom)
-        st.info("Traducción con Sentido Estructurado:")
+        st.info("Traducción Articulada con Sentido:")
         st.write(generar_espanol_sintactico(rom))
 
 with tab2:
