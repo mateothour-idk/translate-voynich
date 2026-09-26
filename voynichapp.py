@@ -42,7 +42,7 @@ DICCIONARIO_ESPANOL = {
 # --- EXTRACTOR OPTIMIZADO DESDE REPOSITORIO DE TEXTO PLANO ---
 @st.cache_data
 def descargar_manuscrito_completo():
-    url = "https://voynich.nu"
+    url = "https://www.voynich.nu/data/ZL3b-n.txt"
     archivo_completo = {}
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
