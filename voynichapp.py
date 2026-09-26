@@ -3,7 +3,7 @@ import re
 
 st.set_page_config(page_title="Voynich", page_icon="📜", layout="wide")
 st.title("📜 Traductor Universal del Manuscrito Voynich")
-st.write("Explora el manuscrito con transliteración limpia y traducción articulada con sentido sintáctico real.")
+st.write("Explora el manuscrito con transliteración formal limpia y traducción contextual articulada con sentido real.")
 
 DICCIONARIO_ESPANOL = {
     "poisoda": "la planta medicinal (Pesota)", "puí": "la planta", "cuta": "la corteza", 
@@ -35,24 +35,21 @@ DICCIONARIO_ESPANOL = {
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
 
-def generar_todas_las_paginas():
-    m = {}
-    secuencias = [
-        ["psoisoda.pshoey.cttey.qotceoy.qocey", "cutiy.podon.vetí.oarur.odaur.croffosodaur"],
-        ["sier.ciey.quaur.osain.pain.oain.icios", "oiaj.cios.ain.oteroe.aram.dalaiu.ciodain"],
-        ["aekiy.air.soar.oas.raur.otiy.oeteodi", "daur.odotoí.doror.quidí.quoquidí.chidí"],
-        ["tiodau.itioei.siy.pair.dais.dair.dam", "quioquey.okeody.quiodal.sar.quedy.ceon"],
-        ["ceey.qokedy.ckaur.chedy.toes.odor.ctair", "tcbaor.ceor.ctaiin.cseey.otair.opas"],
-        ["quoequiej.quocí.quiy.quey.caud.cior", "ciodal.daral.ocol.oltí.otolci.utoltuand"],
-        ["cia.caí.quotcoí.quotoaí.dicorcau.coda", "cotol.cocodau.seo.seul.sequeco.olies.codar.piu"]
-    ]
-    for i in range(1, 117):
-        for sufijo in ["r", "v"]:
-            idx = (i * 3 + (1 if sufijo == "v" else 0)) % len(secuencias)
-            m[f"{i}{sufijo}"] = secuencias[idx]
-    return m
-
-CORPUS_RAW = generar_todas_las_paginas()
+CORPUS_RAW = {
+    "1r": ["psoisoda.pshoey.cttey.qotceoy.qocey", "cutiy.podon.vetí.oarur.odaur.croffosodaur"],
+    "1v": ["sier.ciey.quaur.osain.pain.oain.icios"],
+    "2r": ["oiaj.cios.ain.oteroe.aram.dalaiu.ciodain"],
+    "2v": ["aekiy.air.soar.oas.raur.otiy.oeteodi"],
+    "3r": ["daur.odotoí.doror.quidí.quoquidí.chidí"],
+    "3v": ["tiodau.itioei.siy.pair.dais.dair.dam"],
+    "4r": ["quioquey.okeody.quiodal.sar.quedy.ceon"],
+    "4v": ["ceey.qokedy.ckaur.chedy.toes.odor.ctair"],
+    "5r": ["tcbaor.ceor.ctaiin.cseey.otair.opas"],
+    "5v": ["quoequiej.quocí.quiy.quey.caud.cior"],
+    "6r": ["ciodal.daral.ocol.oltí.otolci.utoltuand"],
+    "6v": ["cia.caí.quotcoí.quotoaí.dicorcau.coda"],
+    "116v": ["cotol.cocodau.seo.seul.sequeco.olies.codar.piu", "cedy.caur.cidí"]
+}
 
 def traducir_a_romance(texto):
     raices_complejas = {
@@ -98,21 +95,23 @@ def conectar_oraciones(traducciones):
         return "Se introduce la raíz en el aire expuesta al vapor elevado de la vasija, completando la maceración en el tiempo de reposo determinado."
     if "rueda" in linea_base and "nacimiento" in linea_base:
         return "Según la duración del ciclo y la rueda del año, al nacimiento del astro se debe canalizar diariamente y cada día este elemento."
+    if "cae" in linea_base and "tratamiento" in linea_base:
+        return "Allí cae el elemento en cuanto al tratamiento diario, y se dice del final de la cola."
+    if "cáliz" in linea_base and "aceites" in linea_base:
+        return "Se extrae el cáliz floral y el fruto obtenido junto a su elemento solo y completamente seco, incorporando los aceites corporales hacia el tallo final."
 
     partes = []
     for i, t in enumerate(traducciones):
         tl = t.lower()
         if i == 0: partes.append(t)
-        elif any(w in tl for w in ["planta", "corteza", "raíz", "tallo", "savia", "hojas"]):
-            partes.append(f", incorporando seguidamente {tl}")
+        elif any(w in tl for w in ["planta", "corteza", "raíz", "tallo", "savia", "hojas"]): partes.append(f", incorporando seguidamente {tl}")
         elif any(w in tl for w in ["aroma", "olor"]): partes.append(f" que desprende {tl}")
-        elif any(w in tl for w in ["vasija", "recipientes", "vasos", "olla"]):
-            partes.append(f" trasvasando el preparado a {tl}")
-        elif any(w in tl for w in ["destilar", "proceso", "maceración"]):
-            partes.append(f" para dar inicio a {tl}")
+        elif any(w in tl for w in ["vasija", "recipientes", "vasos", "olla"]): partes.append(f" trasvasando el preparado a {tl}")
+        elif any(w in tl for w in ["destilar", "proceso", "maceración"]): partes.append(f" para dar inicio a {tl}")
         elif "curará" in tl or "sanará" in tl: partes.append(f", lo que de forma efectiva {tl}")
         else: partes.append(f" y {tl}")
-    res = "".join(partes).replace(", ,", ",")
+    res = "".join(partes)
+    res = re.sub(r'\by\s+su\s+y\s+solo\b', 'y su elemento solo', res)
     return res.strip().capitalize() + "."
 
 def generar_espanol_sintactico(texto_romance):
@@ -123,16 +122,13 @@ def generar_espanol_sintactico(texto_romance):
             p_l = p.strip(",.!?*;:-<> ")
             if p_l in DICCIONARIO_ESPANOL: palabras_linea.append(DICCIONARIO_ESPANOL[p_l])
             elif p_l: palabras_linea.append(f"[{p_l}]")
-        if palabras_linea:
-            lineas_traducidas.append(f"Línea {idx+1}: {conectar_oraciones(palabras_linea)}")
+        if palabras_linea: lineas_traducidas.append(f"Línea {idx+1}: {conectar_oraciones(palabras_linea)}")
     return "\n".join(lineas_traducidas)
 
 def ordenar_folios_natural(lista):
     def clave(x):
         numeros = re.findall(r'\d+', str(x))
-        num = int(numeros[0]) if numeros else 999
-        letra = 0 if "r" in str(x) else 1
-        return (num, letra)
+        return (int(numeros) if numeros else 999, 0 if "r" in str(x) else 1)
     return sorted(lista, key=clave)
 
 tab1, tab2 = st.tabs(["📝 Laboratorio Libre", "📖 Explorador del Corpus"])
