@@ -6,8 +6,8 @@ Este repositorio contiene el código fuente de una aplicación web interactiva d
 
 ## 🌐 Enlaces Oficiales / Official Links
 
-* 🚀 **Aplicación Web Interactiva:** [Pega aquí el enlace de tu app de Streamlit]
-* 📖 **Manuscrito Original Digitalizado:** [Beinecke Rare Book & Manuscript Library - Yale University](https://yale.edu)
+* 🚀 **Aplicación Web Interactiva:** https://translate-voynich-3hh6yir8czjv9gmnregfig.streamlit.app/
+* 📖 **Manuscrito Original Digitalizado:** https://collections.library.yale.edu/catalog/2002046
 
 ---
 
