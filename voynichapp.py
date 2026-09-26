@@ -44,8 +44,8 @@ def descargar_manuscrito_completo():
     url = "https://voynich.nu"
     archivo_completo = {}
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=8) as response:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+        with urllib.request.urlopen(req, timeout=12) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
     except Exception:
         st.info("Nota: Servidor remoto inaccesible. Usando el corpus local optimizado.")
@@ -59,7 +59,6 @@ def descargar_manuscrito_completo():
         ]
     
     for linea in lineas:
-        # Expresión regular ajustada para capturar cualquier variación alfanumérica de los folios
         match = re.match(r"^<f([0-9]+[rv][0-9]*|Xv|Xr)[\.A-Za-z0-9_,\+@]*?>\s*(.*)", linea)
         if match:
             folio, contenido = match.group(1), match.group(2).strip()
@@ -92,7 +91,7 @@ def traducir_a_romance(texto):
     }
     texto_limpio = texto.lower()
     for k in sorted(reglas.keys(), key=len, reverse=True):
-        texto_limpio = texto_limpio.replace(k, rules := reglas[k])
+        texto_limpio = texto_limpio.replace(k, reglas[k])
     for caracter in ['$', '.', '{', '}', '-', '_', '*', ';', '!', '<', '>']:
         texto_limpio = texto_limpio.replace(caracter, ' ')
     return re.sub(r'\s+', ' ', texto_limpio).strip()
@@ -116,10 +115,9 @@ def generar_espanol_sintactico(texto_romance):
             lineas_traducidas.append(f"Línea {idx+1}: {texto_linea}")
     return "\n".join(lineas_traducidas)
 
-# --- FUNCIÓN DE ORDENAMIENTO ALFANUMÉRICO NATURAL ---
+# --- FUNCIÓN DE ORDENAMIENTO ALFANUMÉRICO NATURAL CORREGIDA ---
 def ordenar_folios_natural(lista_folios):
     def extraer_clave(texto_folio):
-        # Aísla los números para un orden numérico puro y los sufijos r/v independientes
         numeros = re.findall(r'\d+', texto_folio)
         num = int(numeros[0]) if numeros else 999
         sufijo = ''.join(re.findall(r'[a-zA-Z]+', texto_folio))
@@ -147,7 +145,6 @@ with tab1:
 with tab2:
     st.subheader("Navegador de Transcripciones Académicas")
     if CORPUS_MANUSCRITO:
-        # Se aplica la función de ordenación natural para asegurar el indexado de todo el manuscrito
         lista_folios = ordenar_folios_natural(list(CORPUS_MANUSCRITO.keys()))
         folio_sel = st.selectbox("Selecciona un folio real:", lista_folios)
         
