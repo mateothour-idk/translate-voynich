@@ -72,6 +72,9 @@ def traducir_a_romance(texto):
     for caracter in ['$', '.', '{', '}', '-', '=', '_', '*', ';', '!']:
         texto_limpio = texto_limpio.replace(caracter, ' ')
     for k in sorted(reglas.keys(), key=len, reverse=True):
+        texto_limpio = texto_limpio.replace(k, rules_sorted := reglas[k])
+    # Corrección manual de iteración limpia
+    for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
@@ -113,7 +116,7 @@ with tab1:
         with c1:
             st.success("Fonética Romance con Nuevas Reglas:")
             st.code(romance)
-        with col2 := c2:
+        with c2:
             st.info("Traducción Automática:")
             st.write(espanol)
 
