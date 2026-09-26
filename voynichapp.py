@@ -3,7 +3,7 @@ import re
 
 st.set_page_config(page_title="Traductor Voynich", page_icon="📜", layout="wide")
 st.title("📜 Traductor Universal del Manuscrito Voynich")
-st.write("Explora el manuscrito con transliteración formal limpia y traducción articulada con sentido sintáctico real.")
+st.write("Explora el manuscrito con transliteración formal limpia y traducción contextual articulada con sentido sintáctico real.")
 
 # --- DICCIONARIO HISTÓRICO DE RAÍCES COMPROBADAS ---
 DICCIONARIO_ESPANOL = {
@@ -56,7 +56,7 @@ def generar_todas_las_paginas():
 
 CORPUS_RAW = generar_todas_las_paginas()
 
-# --- MOTOR DE TRANSLITERACIÓN EN DOS FASES ---
+# --- MOTOR DE TRANSLITERACIÓN COHERENTE CON LÍMITES DE PALABRA ---
 def traducir_a_romance(texto):
     raices_complejas = {
         'croffosodaur': 'crofosodaur', 'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 
@@ -67,24 +67,37 @@ def traducir_a_romance(texto):
         'psoisoda': 'poisoda', 'qocey': 'quocí'
     }
     reglas_foneticas = {
-        'pc': 'p', 'ps': 'p', 'cp': 'p', 'cf': 'c', 'ch': 'c', 'sh': 'c',
-        'ck': 'qu', 'k': 'qu', 'ct': 'qu', 'q': 'qu', 'ii': 'i', 'ee': 'i',
+        'cf': 'c', 'ch': 'c', 'sh': 'c',
+        'ck': 'qu', 'k': 'qu', 'q': 'qu', 'ii': 'i', 'ee': 'i',
         'dc': 'ch', 'tc': 'ch', 'oe': 'u', 'ey': 'a', 'ae': 'a', 'ce': 'c', 
         'eey': 'iy', 'ceeey': 'cia', 'cee': 'ci', 'cteey': 'cutí', 'cte': 'cut', 
         'oi': 'oi', 'y': 'í'
     }
     lineas_salida = []
     for linea in texto.split('\n'):
-        linea_procesada = linea.lower().replace('.', ' ')
+        t_l = linea.lower().replace('.', ' ')
+        
+        # 1. Proteger raíces completas de la matriz antes de simplificar
         for k in sorted(raices_complejas.keys(), key=len, reverse=True):
-            linea_procesada = linea_procesada.replace(k, raices_complejas[k])
+            t_l = t_l.replace(k, raices_complejas[k])
+            
+        # 2. Unificación de prefijos complejos SOLO al inicio de la palabra (\b)
+        t_l = re.sub(r'\b(pc|ps|cp)', 'p', t_l)
+        
+        # 3. Unificación oclusiva 'ct' -> 'qu' SOLO si no forma parte de verbos clave
+        t_l = re.sub(r'ct(?!air|aiin)', 'qu', t_l)
+        
+        # 4. Resto de reglas fonéticas ordenadas jerárquicamente
         for k in sorted(reglas_foneticas.keys(), key=len, reverse=True):
-            linea_procesada = linea_procesada.replace(k, reglas_foneticas[k])
+            t_l = t_l.replace(k, reglas_foneticas[k])
+            
+        # Limpieza final de caracteres de control
         for c in ['$', '{', '}', '-', '_', '*', ';', '!', '<', '>']:
-            linea_procesada = linea_procesada.replace(c, ' ')
-        linea_procesada = re.sub(r'\s+', ' ', linea_procesada).strip()
-        if linea_procesada: 
-            lineas_salida.append(linea_procesada)
+            t_l = t_l.replace(c, ' ')
+        t_l = re.sub(r'\s+', ' ', t_l).strip()
+        if t_l: 
+            lineas_salida.append(t_l)
+            
     return "\n".join(lineas_salida)
 
 # --- ENSAMBLADOR SEMÁNTICO MEDIEVAL CON SENTIDO GRAMATICAL ---
@@ -108,11 +121,14 @@ def conectar_oraciones(traducciones):
     partes = []
     if acciones:
         partes.append(f"Primero se procede a {', '.join(acciones).lower()}")
-        if ingredientes: partes.append(f" de {', '.join(ingredientes).lower()}")
+        if ingredientes: 
+            partes.append(f" de {', '.join(ingredientes).lower()}")
     elif ingredientes:
         partes.append(f"Se toma {', '.join(ingredientes).lower()}")
+        
     if propiedades:
         partes.append(f", asegurando que esté {', '.join(propiedades).lower()}")
+        
     if recipientes:
         partes.append(f" dentro de {', '.join(recipientes).lower()}")
         
@@ -127,8 +143,10 @@ def generar_espanol_sintactico(texto_romance):
         palabras_linea = []
         for p in linea.split():
             p_l = p.strip(",.!?*;:-<> ")
-            if p_l in DICCIONARIO_ESPANOL: palabras_linea.append(DICCIONARIO_ESPANOL[p_l])
-            elif p_l: palabras_linea.append(f"[{p_l}]")
+            if p_l in DICCIONARIO_ESPANOL: 
+                palabras_linea.append(DICCIONARIO_ESPANOL[p_l])
+            elif p_l: 
+                palabras_linea.append(f"[{p_l}]")
         if palabras_linea:
             lineas_traducidas.append(f"Línea {idx+1}: {conectar_oraciones(palabras_linea)}")
     return "\n".join(lineas_traducidas)
