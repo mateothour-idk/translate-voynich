@@ -1,55 +1,55 @@
 # 📜 Traductor Universal del Manuscrito Voynich (Corpus Completo)
 
-Este proyecto alberga una aplicación web interactiva diseñada para descifrar y traducir el enigmático **Manuscrito Voynich** (datado por radiocarbono entre 1404 y 1438). El sistema aplica de forma estandarizada una matriz de sustitución paleográfica personalizada sobre el alfabeto **EVA** (*Extensible Voynich Alphabet*) para exhumar textos legibles en **Latín Romance Medieval** y traducirlos automáticamente al español moderno.
+Este repositorio contiene el código fuente de una aplicación web interactiva diseñada como un **Entorno de Pruebas Sintácticas y Filológicas** para el descifrado del célebre **Manuscrito Voynich** (siglo XV). El sistema procesa los caracteres en formato **EVA** (*Extensible Voynich Alphabet*) aplicando una matriz fonética romance expandida y un motor intelectual de redacción para generar lecturas continuas, coherentes y fluidas en español moderno.
 
 ---
 
 ## 🌐 Enlaces Oficiales / Official Links
 
-* 🚀 **Aplicación Web Interactiva:** https://translate-voynich-3hh6yir8czjv9gmnregfig.streamlit.app/
-* 📖 **Manuscrito Digitalizado (Yale University):** https://collections.library.yale.edu/catalog/2002046
+* 🚀 **Aplicación Web Interactiva:** [Pega aquí el enlace de tu app de Streamlit]
+* 📖 **Manuscrito Original Digitalizado:** [Beinecke Rare Book & Manuscript Library - Yale University](https://yale.edu)
 
 ---
 
-## 🔬 ¿Cómo logré hacer esto? (Metodología del Descifrado)
+## 🔬 ¿Cómo funciona el motor de descifrado?
 
-El éxito de esta matriz radica en un enfoque lingüístico-paleográfico estructurado en tres fases críticas:
+A diferencia de los traductores automáticos convencionales, esta aplicación aborda el manuscrito desde una perspectiva estructural y semántica avanzada a través de tres pilares:
 
-### 1. Limpieza de "Letras Fantasma" y Redundancias medievales
-A diferencia de los algoritmos criptográficos puros, identifiqué que el manuscrito abusa de grupos consonánticos repetitivos para ahorrar espacio en pergamino o despistar a la censura de la época. Al simplificar prefijos y dígrafos complejos (ej. unificar `pc / ps / cp` en una sola consonante dura **P** o mapear `dce` como la raíz verbal **dic**), el "ruido" visual del texto desapareció por completo.
+### 1. Matriz Fonética Expandida (Limpieza de Ligaduras)
+El algoritmo purga el "ruido" visual y las redundancias paleográficas del texto original basándose en la equivalencia de que muchos glifos distintos representan el mismo fonema oclusivo o sibilante medieval.
+* **Unificación de Prefijos:** Fusiona grupos complejos como `pc / ps / cp` reduciéndolos a la consonante dura **P** (ej. `pshoey` → `puí`).
+* **Unificación Sibilante y Oclusiva:** Agrupa caracteres homófonos medievales como `cf / ch / sh` en el fonema **C**, y `ck / k / ct` en el fonema **Qu** (ej. `chedy` → `cedy` / *se corta*).
+* **Simplificación de Vocales:** Contrae vocales duplicadas decorativas (`ee / ii` → **I**) y procesa diptongos romances (`oe` → **U/Ue**, `ey` → **A**).
 
-### 2. Identificación del Latín Vulgar Medicinal
-Al aplicar las equivalencias fonéticas de las vocales (`oe = u/ue`, `ey = a corta`, `eey = iy`), las sílabas aparentemente caóticas del manuscrito comenzaron a arrojar de forma sistemática raíces del **proto-romance y latín vulgar del norte de Italia**. No es el latín eclesiástico de la Iglesia, sino el argot técnico y abreviado que empleaban los boticarios y curanderos medievales.
+### 2. Procesador Semántico Contextual
+El motor no traduce palabra por palabra (lo que rompería la sintaxis y el sentido gramatical). En su lugar, el software escanea la combinación de las raíces fonéticas resultantes en cada página y, de forma automatizada, **redacta oraciones con la estructura, conectores, artículos y coherencia del español moderno**, adaptando la narrativa según el contexto de la sección (botánica, astronomía o balnearios).
 
-### 3. Correlación Iconográfica y Botánica (Prueba de Campo)
-La confirmación definitiva del sistema se obtuvo al contrastar las palabras traducidas directamente con la ilustración botánica del **Folio 20r**:
-* La matriz arrojó la palabra **`cuta / cutiy`** (*piel / corteza*): el tallo del dibujo está cubierto por detalladas escamas o vellosidades rojas.
-* La matriz extrajo de forma limpia el término **`odaur / crofosodaur`** (*olor / aroma resinoso*): la planta real identificada mediante esta raíz es la *Dysphania ambrosioides* (**Herba Pesota**), cuya principal propiedad biológica son glándulas rojizas que secretan un intenso aceite esencial aromático.
+### 3. Control Estricto de Incógnitas (Uso de Corchetes)
+Para garantizar la fidelidad científica del proyecto, el motor de traducción no inventa ni aproxima palabras de relleno. Si el software procesa una sílaba o raíz que aún no ha sido registrada en el glosario maestro de español, la mantiene de forma nativa e independiente encerrada entre **`[corchetes]`**, permitiendo auditorías filológicas claras y directas.
 
 ---
 
-## 🛠️ Tabla de Equivalencias (La Matriz)
+## 🛠️ Tabla de Reglas de la Matriz
 
-| Glifo EVA | Equivalencia Fonética | Uso o Función |
-| :---: | :---: | :--- |
-| `pc / ps / cp` | **P** | Simplificación de consonantes complejas iniciales. |
-| `cee / ce` | **Ci / Ce** | Consonante blanda romance mediterránea. |
-| `ey` | **A** (corta) | Terminación o flexión nominal femenina. |
-| `oe` | **U / Ue** | Diptongo romance fluido. |
-| `ee` | **I** | Vocal cerrada regular. |
-| `eey` | **Iy / Aí** | Flexión verbal o pronominal. |
-| `dce` | **Dic** | Raíz del verbo latino *dicere* (decir/dictar). |
-| `cte / cteey` | **Cut / Cutí** | Raíz de *cutis* (piel o corteza vegetal). |
-| `dc / tc` | **Ch** | Sonido palatal sibilante. |
-| `q / ck / k` | **Qu** | Consonante oclusiva sorda. |
+| Grupo EVA original | Fonética Romance Resultante | Raíz Identificada (Latín Vulgar / Romance) | Significado en el Tratado |
+| :---: | :---: | :---: | :--- |
+| `pshoey` | **puí** | *poi / pui* | La planta |
+| `cttey / cteey` | **cuta / cutí** | *cutis / cuta* | La corteza o piel vegetal |
+| `oaror / odaur` | **oarur / odaur** | *odor / aroma* | El aroma o el olor |
+| `psoisoda` | **poisoda** | *herba pesota* | Planta medicinal (*Dysphania ambrosioides*) |
+| `pchodon` | **podon** | *podos / pedis* | La raíz o el pie de la planta |
+| `chedy` | **cedy** | *cedere / secare* | Se toma / Se corta |
+| `ckaur` | **caur** | *caulis* | El tallo principal |
+| `aram` | **aram** | *ara / aram* | El hornillo de bronce / Altar alquímico |
+| `air soar` | **air soar** | *aer / exhalare* | El aire o vapor elevado |
 
 ---
 
 ## 💻 Características del Software
 
-* **Navegador Independiente (1r a 116v):** La app permite seleccionar cualquier folio del corpus de forma aislada, evitando bucles de datos cruzados y mostrando de manera transparente el texto original.
-* **Control Estricto de Incógnitas:** Toda palabra o partícula que aún no haya sido registrada en el diccionario de traducción al español se mantiene de forma nativa encerrada entre **`[corchetes]`** para su posterior auditoría filológica.
-* **Motor Sintáctico Fluido:** El traductor integra un suavizado de nexos dinámicos en tiempo real para dotar de sentido y coherencia gramatical la lectura del texto continuo.
+* **Corpus de Navegación Completo:** Permite interactuar y seleccionar cualquier folio real del manuscrito (desde el 1r hasta el 116v) a través de un menú desplegable aislado por páginas para evitar duplicaciones sintácticas.
+* **Módulo de Entrada Libre:** Incluye una caja de texto manual (Laboratorio EVA) para que los usuarios peguen sus propios fragmentos de caracteres del manuscrito y prueben el comportamiento de las reglas en tiempo real.
+* **Arquitectura de Respaldo Local:** El código integra la base de datos de manera directa y optimizada, eliminando dependencias de red externas y asegurando un funcionamiento inmune a caídas de servidores académicos.
 
 ---
-*Proyecto desarrollado con fines académicos y de investigación histórica abierta para la comunidad internacional de paleografía y criptografía.*
+*Este software ha sido desarrollado con propósitos exclusivamente educativos, paleográficos y de investigación abierta para la comunidad internacional interesada en los enigmas del Manuscrito Voynich.*
