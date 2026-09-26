@@ -1,5 +1,7 @@
+# app.py
 import streamlit as st
 import re
+from voynich_data import obtener_corpus_completo
 
 st.set_page_config(page_title="Traductor Universal Voynich Completo", page_icon="📜", layout="wide")
 
@@ -22,7 +24,7 @@ DICCIONARIO_ESPANOL = {
     "tiodau": "en el tiempo determinado", "itioei": "la estación", "siy": "si se presenta", "pair": "por medio de", 
     "dais": "se debe aplicar", "dair": "dar", "dam": "entregar", "quioquey": "y el corazón",
     "okeody": "lo que dicta el tratado", "quiodal": "lo cual", "sar": "curará o sanará",
-    "quedy": "el elemento que es", "ceon": "con", "ceey": "su respectivo",
+    "quedy": "el element o que es", "ceon": "con", "ceey": "su respectivo",
     "qokedy": "por lo cual", "ckaur": "el tallo principal", "chedy": "se toma",
     "toes": "estos elementos", "odor": "oloroso", "ctair": "cortar", "tcbaor": "extraer",
     "ceor": "hacia", "ctaiin": "el cáliz", "cseey": "si se observa", "otair": "extraer",
@@ -36,47 +38,6 @@ DICCIONARIO_ESPANOL = {
     "olies": "los aceites corporales", "codar": "el tallo final", "piu": "en mayor medida",
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
-
-# --- CORPUS COMPLETO INTEGRADO (TODAS LAS PÁGINAS ACADÉMICAS REALES) ---
-@st.cache_data
-def obtener_corpus_completo():
-    return {
-        "1r": ["psoisoda.pshoey.cttey.qotceoy.qocey", "cutiy.podon.vetí.oarur.odaur.croffosodaur"],
-        "1v": ["sier.ciey.quaur.osain.pain.oain.icios"],
-        "2r": ["oiaj.cios.ain.oteroe.aram.dalaiu.ciodain"],
-        "2v": ["aekiy.air.soar.oas.raur.otiy.oeteodi"],
-        "3r": ["daur.odotoí.doror.quidí.quoquidí.chidí"],
-        "3v": ["tiodau.itioei.siy.pair.dais.dair.dam"],
-        "4r": ["quioquey.okeody.quiodal.sar.quedy.ceon"],
-        "4v": ["ceey.qokedy.ckaur.chedy.toes.odor.ctair"],
-        "5r": ["tcbaor.ceor.ctaiin.cseey.otair.opas"],
-        "5v": ["quoequiej.quocí.quiy.quey.caud.cior"],
-        "6r": ["ciodal.daral.ocol.oltí.otolci.utoltuand"],
-        "6v": ["cia.caí.quotcoí.quotoaí.dicorcau.coda"],
-        "7r": ["psoisoda.sier.quaur.osain.cios.oteroe.aram"],
-        "7v": ["dalaiu.aekiy.air.soar.raur.otiy.daur"],
-        "8r": ["odotoí.quidí.tiodau.pair.dais.dair.quioquey"],
-        "8v": ["okeody.sar.ceon.ceey.ckaur.chedy.toes"],
-        "9r": ["ctair.tcbaor.ctaiin.otair.opas.quocí.quiy"],
-        "9v": ["caud.cior.ciodal.daral.ocol.oltí.otolci"],
-        "10r": ["utoltuand.caí.quotcoí.dicorcau.coda.cotol"],
-        "10v": ["cocodau.seo.seul.sequeco.olies.codar.piu"],
-        "11r": ["cedy.caur.cidí.poisoda.puí.cuta.cutiy"],
-        "11v": ["podon.vetí.oarur.odaur.crofosodaur.sier"],
-        "12r": ["ciey.quaur.osain.pain.oain.icios.oiaj"],
-        "12v": ["cios.ain.oteroe.aram.dalaiu.ciodain.aekiy"],
-        "13r": ["air.soar.oas.raur.otiy.oeteodi.daur"],
-        "13v": ["odotoí.doror.quidí.quoquidí.chidí.tiodau"],
-        "14r": ["itioei.siy.pair.dais.dair.dam.quioquey"],
-        "14v": ["okeody.quiodal.sar.quedy.ceon.ceey.qokedy"],
-        "15r": ["ckaur.chedy.toes.odor.ctair.tcbaor.ceor"],
-        "15v": ["ctaiin.cseey.otair.opas.quoequiej.quocí"],
-        "16r": ["quiy.quey.caud.cior.ciodal.daral.ocol"],
-        "16v": ["oltí.otolci.utoltuand.cia.caí.quotcoí"],
-        "17r": ["quotoaí.dicorcau.coda.cotol.cocodau.seo"],
-        "17v": ["seul.sequeco.olies.codar.piu.cedy.caur"],
-        "116v": ["seul.sequeco.olies.codar.piu.cedy.caur.cidí"]
-    }
 
 CORPUS_MANUSCRITO = obtener_corpus_completo()
 
@@ -102,7 +63,7 @@ def traducir_a_romance(texto):
         texto_limpio = texto_limpio.replace(caracter, ' ')
     return re.sub(r'\s+', ' ', texto_limpio).strip()
 
-# --- MOTOR DE TRADUCCIÓN LIMPIO Y DIRECTO ---
+# --- MOTOR DE TRADUCCIÓN ---
 def generar_espanol_sintactico(texto_romance):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
@@ -121,7 +82,7 @@ def generar_espanol_sintactico(texto_romance):
             lineas_traducidas.append(f"Línea {idx+1}: {texto_linea}")
     return "\n".join(lineas_traducidas)
 
-# --- FUNCIÓN DE ORDENAMIENTO ALFANUMÉRICO NATURAL CORREGIDA ---
+# --- FUNCIÓN DE ORDENAMIENTO ---
 def ordenar_folios_natural(lista_folios):
     def extraer_clave(texto_folio):
         numeros = re.findall(r'\d+', texto_folio)
@@ -132,7 +93,7 @@ def ordenar_folios_natural(lista_folios):
     return sorted(lista_folios, key=extraer_clave)
 
 # --- INTERFAZ GRÁFICA ---
-tab1, tab2 = st.tabs(["📝 Laboratorio de Texto Libre", "📖 Explorador del Corpus Real (1r a 116v)"])
+tab1, tab2 = st.tabs(["📝 Laboratorio de Texto Libre", "📖 Explorador del Corpus Real"])
 
 with tab1:
     st.subheader("Laboratorio de Entrada Libre")
@@ -171,5 +132,3 @@ with tab2:
             with col_esp:
                 st.info("3. Traducción Real al Español:")
                 st.text_area("Español", espanol_final, height=450)
-    else:
-        st.warning("No se pudo iniciar la base de datos interna.")
