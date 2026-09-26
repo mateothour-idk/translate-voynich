@@ -3,10 +3,11 @@ import streamlit as st
 st.set_page_config(page_title="Entorno de Pruebas Voynich", page_icon="📜", layout="wide")
 
 st.title("📜 Entorno de Pruebas Fonéticas: Manuscrito Voynich")
-st.write("Esta aplicación es un entorno experimental para probar la matriz de descifrado fonético romance **únicamente en los folios donde se ha detectado correlación morfológica o iconográfica**.")
+st.write("Esta aplicación es un entorno experimental para probar tu matriz de descifrado fonético expandida.")
 
 # --- DICCIONARIO HISTÓRICO DE RAÍCES COMPROBADAS ---
 DICCIONARIO_ESPANOL = {
+    # Nombres de plantas y características físicas
     "poisoda": "la planta medicinal (Pesota)", "puí": "la planta", "cuta": "la corteza", 
     "cutiy": "la corteza o piel", "podon": "la raíz o el pie", "vetí": "maduro o viejo",
     "oarur": "el aroma", "odaur": "el olor", "crofosodaur": "el aroma resinoso",
@@ -32,10 +33,11 @@ DICCIONARIO_ESPANOL = {
     "cia": "allí", "caí": "cae", "quotcoí": "en cuanto a", "quotoaí": "el tratamiento diario",
     "dicorcau": "se dice del final", "coda": "la cola", "cotol": "el cáliz floral",
     "cocodau": "el fruto obtenido", "seo": "su", "seul": "solo", "sequeco": "completamente seco",
-    "olies": "los aceites corporales", "codar": "el tallo final", "piu": "en mayor medida"
+    "olies": "los aceites corporales", "codar": "el tallo final", "piu": "en mayor medida",
+    # Nuevas raíces desbloqueadas por la expansión de consonantes
+    "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
 
-# --- CORPUS EXCLUSIVAMENTE REAL Y AUDITADO ---
 CORPUS_MANUSCRITO = {
     "1r (Apertura Botánica)": "pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes odor ctair oas",
     "2r (Morfología de Cáliz)": "tcbaor ceor ctaiin cseey otair opas kedy qokedy ckaur chidí ceon ceey",
@@ -47,7 +49,7 @@ CORPUS_MANUSCRITO = {
     "78r (Sección Balnearios - Aguas Termales)": "qokedy kedy qokedy ckaur chedy oas raor kedy ceon ceey qokedy ckaur chedy"
 }
 
-# --- MOTOR DE DESCRIPCIÓN FONÉTICA ---
+# --- MOTOR DE DESCRIPCIÓN FONÉTICA CON NUEVAS FUNCIONES ---
 def traducir_a_romance(texto):
     reglas = {
         'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 'dceorceau': 'dicorcau',
@@ -55,11 +57,16 @@ def traducir_a_romance(texto):
         'otolceey': 'otolci', 'kdceody': 'qudicodí', 'ceeodaiin': 'ciodain',
         'croffosodaur': 'crofosodaur', 'otoltoand': 'otoltoand', 'gceaud': 'caud',
         'qocey': 'quocí', 'dce': 'dic', 'cee': 'ci', 'eey': 'iy', 'ceeey': 'cia',
-        'cteey': 'cutí', 'cte': 'cut', 'pc': 'p', 'ps': 'p', 'cp': 'p',
-        'ce': 'c', 'ey': 'a', 'oe': 'u', 'ee': 'i', 'oi': 'oi', 'ii': 'i',
-        'ae': 'a', 'dc': 'ch', 'tc': 'ch', 'q': 'qu', 'ck': 'qu', 'k': 'qu',
-        'pchodon': 'podon', 'pshoey': 'puí', 'cttey': 'cuta', 'oaror': 'oarur',
-        'psoisoda': 'poisoda', 'y': 'í'
+        'cteey': 'cutí', 'cte': 'cut', 
+        
+        # --- TUS NUEVAS FUNCIONES DE UNIFICACIÓN ---
+        'pc': 'p', 'ps': 'p', 'cp': 'p',  # Tu regla original unificada
+        'cf': 'c', 'ch': 'c', 'sh': 'c',  # NUEVA: Unificación sibilante aspirada
+        'ck': 'qu', 'k': 'qu', 'ct': 'qu', # NUEVA: Unificación oclusiva dura
+        'ii': 'i', 'ee': 'i',              # NUEVA: Simplificación de vocales duplicadas
+        
+        'ce': 'c', 'ey': 'a', 'oe': 'u', 'oi': 'oi', 'ae': 'a', 'dc': 'ch', 'tc': 'ch', 'q': 'qu',
+        'pchodon': 'podon', 'pshoey': 'puí', 'cttey': 'cuta', 'oaror': 'oarur', 'psoisoda': 'poisoda', 'y': 'í'
     }
     texto_limpio = texto.lower()
     for caracter in ['$', '.', '{', '}', '-', '=', '_', '*', ';', '!']:
@@ -93,33 +100,30 @@ def generar_espanol_sintactico(texto_romance):
     return resultado.capitalize() + "."
 
 # --- INTERFAZ ---
-tab1, tab2 = st.tabs(["📝 Descifrar Texto Libre", "📖 Folios Auditados (Casos de Éxito)"])
+tab1, tab2 = st.tabs(["📝 Laboratorio de Texto Libre (EVA)", "📖 Folios Auditados"])
 
 with tab1:
-    st.subheader("Laboratorio de Texto Libre (EVA)")
-    st.write("Pega cualquier palabra en formato EVA extraída del manuscrito para auditar cómo se comporta con la matriz.")
-    entrada = st.text_area("Entrada EVA:", "teeodau cseey cpair osaiin")
+    st.subheader("Laboratorio de Entrada Libre")
+    st.write("Inserta cualquier combinación de caracteres EVA. El motor aplicará las nuevas funciones de unificación consonántica automáticamente.")
+    entrada = st.text_area("Entrada EVA:", "chedy ckaur chedy")
     if st.button("Analizar Fragmento"):
         romance = traducir_a_romance(entrada)
         espanol = generar_espanol_sintactico(romance)
         c1, c2 = st.columns(2)
         with c1:
-            st.success("Fonética Romance:")
+            st.success("Fonética Romance con Nuevas Reglas:")
             st.code(romance)
-        with c2:
-            st.info("Traducción (si existe raíz):")
+        with col2 := c2:
+            st.info("Traducción Automática:")
             st.write(espanol)
 
 with tab2:
     st.subheader("Navegador de Evidencias")
-    st.write("Selecciona una de las páginas reales donde la matriz ha demostrado consistencia:")
     folio_sel = st.selectbox("Folio:", list(CORPUS_MANUSCRITO.keys()))
-    
     if st.button(f"Procesar {folio_sel}"):
         texto_eva = CORPUS_MANUSCRITO[folio_sel]
         romance_final = traducir_a_romance(texto_eva)
         espanol_final = generar_espanol_sintactico(romance_final)
-        
         st.write("---")
         col_eva, col_rom, col_esp = st.columns(3)
         with col_eva:
@@ -130,4 +134,4 @@ with tab2:
             st.text_area("Romance", romance_final, height=300)
         with col_esp:
             st.info("3. Traducción Resultante:")
-            st.text_area("Español", json_fix := espanol_final, height=300)
+            st.text_area("Español", espanol_final, height=300)
