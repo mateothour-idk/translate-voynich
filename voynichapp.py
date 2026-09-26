@@ -36,8 +36,7 @@ DICCIONARIO_ESPANOL = {
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
 
-# --- GENERADOR DE CORPUS COMPLETO (1r - 116v) ---
-@st.cache_data
+# --- GENERADOR DE CORPUS DIRECTO ---
 def generar_corpus_completo():
     corpus = {}
     secuencias = [
@@ -52,12 +51,12 @@ def generar_corpus_completo():
     for i in range(1, 117):
         for sfx in ["r", "v"]:
             idx = (i * 2 + (0 if sfx == "r" else 1)) % len(secuencias)
-            corpus[f"{i}{sfx}"] = [secuencias[idx], secuencias[idx]]
+            corpus[f"{i}{sfx}"] = [secuencias[idx][0], secuencias[idx][1]]
     return corpus
 
 CORPUS_RAW = generar_corpus_completo()
 
-# --- MOTOR DE TRANSLITERACIÓN EN DOS FASES (EVITA SOBRE-REEMPLAZOS) ---
+# --- MOTOR DE TRANSLITERACIÓN EN DOS FASES ---
 def traducir_a_romance(texto):
     raices_complejas = {
         'croffosodaur': 'crofosodaur', 'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 
@@ -90,7 +89,7 @@ def traducir_a_romance(texto):
             lineas_salida.append(linea_procesada)
     return "\n".join(lineas_salida)
 
-# --- CONECTOR DE SINTAXIS COHERENTE (CONECTORES TEXTUALES NATURALES) ---
+# --- CONECTOR DE SINTAXIS COHERENTE ---
 def conectar_oraciones(traducciones):
     if not traducciones:
         return ""
@@ -125,13 +124,13 @@ def generar_espanol_sintactico(texto_romance):
             if p_l in DICCIONARIO_ESPANOL:
                 palabras_linea.append(DICCIONARIO_ESPANOL[p_l])
             elif p_l:
-                palabras_linea.append(f"[{p_l}]")
+                palabras_linea.append(f"[(p_l)]")
         if palabras_linea:
             linea_articulada = conectar_oraciones(palabras_linea)
             lineas_traducidas.append(f"Línea {idx+1}: {linea_articulada}")
     return "\n".join(lineas_traducidas)
 
-# --- FUNCIÓN DE ORDENAMIENTO ALFANUMÉRICO CORREGIDA ---
+# --- FUNCIÓN DE ORDENAMIENTO ---
 def ordenar_folios_natural(lista):
     def clave(x):
         numeros = re.findall(r'\d+', x)
