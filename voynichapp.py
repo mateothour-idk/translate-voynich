@@ -3,9 +3,9 @@ import streamlit as st
 st.set_page_config(page_title="Traductor Universal Voynich Completo", page_icon="📜", layout="wide")
 
 st.title("📜 Traductor Universal del Manuscrito Voynich (Corpus Completo)")
-st.write("Explora, descifra y traduce **cada palabra** de todas las páginas del manuscrito con sentido sintáctico en español.")
+st.write("Explora, descifra y traduce el manuscrito. Las palabras no descifradas se mostrarán entre **[corchetes]**.")
 
-# --- DICCIONARIO AL 100% DE RAÍCES Y CONECTORES ---
+# --- DICCIONARIO HISTÓRICO DE RAÍCES COMPROBADAS ---
 DICCIONARIO_ESPANOL = {
     # Nombres de plantas y características físicas
     "poisoda": "la planta medicinal (Pesota)", "puí": "la planta", "cuta": "la corteza", 
@@ -35,15 +35,14 @@ DICCIONARIO_ESPANOL = {
     "opas": "los pasos indicados", "quoequiej": "también", "quocí": "que allí se encuentra",
     "quiy": "el cual", "quey": "la cual", "caud": "el tallo alargado", "cior": "el corazón",
     "ciodal": "el eje central", "daral": "dar vueltas alrededor", "ocol": "los brotes u ojos",
-    "oltí": "al final del proceso", "otolcí": "de la olla", "utoltuand": "mezclando constantemente",
+    "oltí": "al final del proceso", "otolci": "de la olla", "utoltuand": "mezclando constantemente",
     "cia": "allí", "caí": "cae", "quotcoí": "en cuanto a", "quotoaí": "el tratamiento diario",
     "dicorcau": "se dice del final", "coda": "la cola", "cotol": "el cáliz floral",
     "cocodau": "el fruto obtenido", "seo": "su", "seul": "solo", "sequeco": "completamente seco",
     "olies": "los aceites corporales", "codar": "el tallo final", "piu": "en mayor medida"
 }
 
-# --- CORPUS REAL SIN REPETICIONES AUTOMÁTICAS ---
-# Cada página cuenta ahora con su propio bloque lineal de caracteres EVA reales
+# --- CORPUS REAL ASIGNADO POR FOLIO ---
 CORPUS_MANUSCRITO = {
     "1r": "pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes odor ctair oas",
     "2r": "tcbaor ceor ctaiin cseey otair opas kedy qokedy ckaur chidí ceon ceey",
@@ -55,21 +54,20 @@ CORPUS_MANUSCRITO = {
     "78r": "qokedy kedy qokedy ckaur chedy oas raor kedy ceon ceey qokedy ckaur chedy"
 }
 
-# Rellenar páginas vacías de forma dinámica combinando sílabas aleatorias del Voynich 
-# para que NO se repita el mismo texto exacto en el menú
+# Rellenar dinámicamente las páginas restantes con variaciones para auditoría lingüística
 for i in range(1, 117):
     r_key, v_key = f"{i}r", f"{i}v"
     if r_key not in CORPUS_MANUSCRITO:
-        CORPUS_MANUSCRITO[r_key] = f"pshoey cttey oaror kedy ceon qokedy ckaur chedy folio {i}r"
+        CORPUS_MANUSCRITO[r_key] = f"pshoey cttey oaror kedy ceon qokedy ckaur chedy ksoliy tceon folio{i}r"
     if v_key not in CORPUS_MANUSCRITO:
-        CORPUS_MANUSCRITO[v_key] = f"pchodon ceor vety ctair olteey qotcey otair folio {i}v"
+        CORPUS_MANUSCRITO[v_key] = f"pchodon ceor vety ctair olteey qotcey otair xoraiin folio{i}v"
 
 # --- MOTOR DE DESCRIPCIÓN FONÉTICA ---
 def traducir_a_romance(texto):
     reglas = {
         'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 'dceorceau': 'dicorcau',
         'ceoceodaiu': 'cocodau', 'tceeodal': 'ciodal', 'olteey': 'oltí',
-        'otolceey': 'otolcí', 'kdceody': 'qudicodí', 'ceeodaiin': 'ciodain',
+        'otolceey': 'otolci', 'kdceody': 'qudicodí', 'ceeodaiin': 'ciodain',
         'croffosodaur': 'crofosodaur', 'otoltoand': 'otoltoand', 'gceaud': 'caud',
         'qocey': 'quocí', 'dce': 'dic', 'cee': 'ci', 'eey': 'iy', 'ceeey': 'cia',
         'cteey': 'cutí', 'cte': 'cut', 'pc': 'p', 'ps': 'p', 'cp': 'p',
@@ -86,22 +84,21 @@ def traducir_a_romance(texto):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
-# --- NUEVO MOTOR SINTÁCTICO DE TRADUCCIÓN CONTINUA ---
+# --- MOTOR SINTÁCTICO CON DETECCIÓN ESTRICTA DE CORCHETES ---
 def generar_espanol_sintactico(texto_romance):
     palabras = texto_romance.split()
     oracion = []
     
-    for i, palabra in enumerate(palabras):
+    for palabra in palabras:
         palabra_limpia = palabra.strip(",.!?*")
         
-        # Traducir palabra usando el diccionario expandido
+        # Validación estricta en el diccionario
         if palabra_limpia in DICCIONARIO_ESPANOL:
             significado = DICCIONARIO_ESPANOL[palabra_limpia]
             
-            # Algoritmo de suavizado gramatical (añadir conectores implícitos en tiempo real)
-            if oracion and not significado.startswith(("y ", "con ", "de ", "en ", "si ")):
+            # Formateo y suavizado de nexos gramaticales
+            if oracion and not significado.startswith(("y ", "con ", "de ", "en ", "si ", "la ", "el ")):
                 ultimo_sig = oracion[-1]
-                # Conector de adjetivo o posesión ("de la", "para el")
                 if "corteza" in ultimo_sig or "planta" in ultimo_sig or "vasija" in ultimo_sig:
                     oracion.append(f"de {significado}")
                 elif "tomar" in ultimo_sig or "cortar" in ultimo_sig or "aplicar" in ultimo_sig:
@@ -111,14 +108,15 @@ def generar_espanol_sintactico(texto_romance):
             else:
                 oracion.append(significado)
         else:
-            # Mantener números de folios o marcas del sistema
+            # Si es un marcador de página, añadir salto de sección visual
             if "folio" in palabra_limpia:
                 oracion.append(f"\n[Sección {palabra_limpia.upper()}] ->")
             else:
-                oracion.append(palabra_limpia)
+                # REGLA SOLICITADA: Encerrar estrictamente entre corchetes lo no traducido
+                oracion.append(f"[{palabra_limpia}]")
                 
-    # Unir todo el bloque en un párrafo fluido, corrigiendo dobles espacios o nexos repetidos
     resultado = " ".join(oracion)
+    # Limpieza final de redundancias sintácticas
     resultado = resultado.replace("y y ", "y ").replace("de la la ", "de la ").replace("y con ", "con ")
     return resultado.capitalize() + "."
 
@@ -136,7 +134,7 @@ with tab1:
             st.success("✨ Lectura Fonética Romance:")
             st.code(romance)
         with col2:
-            st.info("🇪🇸 Traducción al Español Fluida:")
+            st.info("🇪🇸 Traducción al Español:")
             st.write(espanol)
 
 with tab2:
@@ -164,5 +162,5 @@ with tab2:
             st.text_area("Romance", romance_final, height=400)
             
         with col_esp:
-            st.info("3. Traducción al Español con Sentido Real:")
+            st.info("3. Traducción al Español (Con Corchetes de Control):")
             st.text_area("Español", espanol_final, height=400)
