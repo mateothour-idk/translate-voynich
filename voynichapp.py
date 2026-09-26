@@ -1,10 +1,24 @@
 import streamlit as st
-import urllib.request
 
 st.set_page_config(page_title="Traductor Completo del Manuscrito Voynich", page_icon="📜", layout="wide")
 
 st.title("📜 Traductor Universal del Manuscrito Voynich")
-st.write("Esta herramienta aplica tu matriz de descifrado fonético romance a **cualquiera de las páginas** del manuscrito.")
+st.write("Esta herramienta aplica tu matriz de descifrado fonético romance y latín medieval sobre las páginas del manuscrito.")
+
+# Base de datos local integrada con tus folios clave para evitar errores de conexión
+BASE_DATOS_VOYNICH = {
+    "20r": (
+        "kdceody ceopy ceeey qotceoy qotoeey dceorceau ceodey cteey ceotol odaur\n"
+        "qotcey cteody ceodcey qoteey ceoceodaiu cseo qocey ceey tceeodal daral\n"
+        "oceol olteey otolceey\n"
+        "teeodau cseey cpair osaiin yteeoey cseey cpaiin oaiin daiis okeody\n"
+        "qoeqeeej sar oeteody oteey keey key keeodal yceeos oiaj ceeos aiin\n"
+        "oteroe aram cseeer dalaiu dam ceeodaiin aekeey sar air soar ceeey dair cteey"
+    ),
+    "21v": "pchodon ceor vety dceor ceodey ctair olteey qotcey otair",
+    "67r": "daor odotoey doror daor ceody qotcey oaror",
+    "78r": "qokedy kedy qokedy ckaur chedy oas raor kedy ceon ceey"
+}
 
 # Matriz de traducción unificada y optimizada
 def traducir_texto(texto):
@@ -18,17 +32,14 @@ def traducir_texto(texto):
         'ce': 'c', 'ey': 'a', 'oe': 'u', 'ee': 'i', 'oi': 'oi', 'ii': 'i',
         'ae': 'a', 'dc': 'ch', 'tc': 'ch', 'q': 'qu', 'ck': 'qu', 'k': 'qu'
     }
-    # Convertir a minúsculas y limpiar caracteres extraños de transcripción
     texto_limpio = texto.lower()
     for caracter in ['$', '.', '{', '}', '-', '=', '_']:
         texto_limpio = texto_limpio.replace(caracter, ' ')
         
-    # Aplicar reemplazos por longitud decreciente para evitar colisiones
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
-# Crear pestañas para facilitar la experiencia del usuario
 tab1, tab2 = st.tabs(["📝 Traducir Texto Libre", "📖 Seleccionar Folio Completo"])
 
 with tab1:
@@ -39,42 +50,15 @@ with tab1:
         st.write(traducir_texto(entrada))
 
 with tab2:
-    st.subheader("Descifrador Automático por Folio")
-    st.write("El sistema se conectará a los servidores académicos para extraer el texto EVA original de la página elegida.")
+    st.subheader("Descifrador Automático por Folio (Modo Local Seguro)")
+    st.write("Selecciona uno de los folios clave cargados directamente en el sistema.")
     
-    # Generar lista de folios típicos (1r a 116v)
-    folios_disponibles = [f"{i}r" for i in range(1, 117)] + [f"{i}v" for i in range(1, 117)]
-    folios_disponibles.sort(key=lambda x: (int(''.join(filter(str.isdigit, x))), x[-1]))
+    folio_seleccionado = st.selectbox("Elige el Folio que deseas leer:", list(BASE_DATOS_VOYNICH.keys()))
     
-    folio_seleccionado = st.selectbox("Elige el Folio que deseas leer:", folios_disponibles)
-    
-    if st.button(f"Descargar y Descifrar Folio {folio_seleccionado}"):
-        try:
-            # Enlace al repositorio público con la transcripción completa del Voynich
-            url_archivo = "https://githubusercontent.com"
-            
-            with urllib.request.urlopen(url_archivo) as response:
-                lineas = response.read().decode('utf-8').splitlines()
-            
-            texto_folio = []
-            for linea in lineas:
-                # Filtrar las líneas que pertenecen exclusivamente al folio elegido
-                if linea.startswith(f"<{folio_seleccionado}."):
-                    # Extraer solo el contenido de texto EVA quitando la etiqueta del folio
-                    partes = linea.split(">")
-                    if len(partes) > 1:
-                        texto_folio.append(partes[1].strip())
-            
-            if texto_folio:
-                texto_completo_eva = "\n".join(texto_folio)
-                st.info(f"📄 Texto original en formato EVA detectado ({len(texto_folio)} líneas). Procesando descifrado...")
-                
-                resultado_final = traducir_texto(texto_completo_eva)
-                
-                st.success(f"✨ Transliteración fonética romance completa del Folio {folio_seleccionado}:")
-                st.text_area("Resultado:", resultado_final, height=400)
-            else:
-                st.warning(f"No se encontraron líneas transcritas para el Folio {folio_seleccionado} en este archivo.")
-                
-        except Exception as e:
-            st.error(f"Error al conectar con la base de datos de transcripción: {e}")
+    if st.button(f"Descifrar Folio {folio_seleccionado}"):
+        texto_completo_eva = BASE_DATOS_VOYNICH[folio_seleccionado]
+        resultado_final = traducir_texto(texto_completo_eva)
+        
+        st.info(f"📄 Procesando el texto original EVA del Folio {folio_seleccionado}...")
+        st.success(f"✨ Transliteración fonética romance completa:")
+        st.text_area("Resultado:", resultado_final, height=250)
