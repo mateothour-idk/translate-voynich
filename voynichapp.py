@@ -38,23 +38,31 @@ DICCIONARIO_ESPANOL = {
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
 
-# --- EXTRACTOR ADAPTADO PARA EL FORMATO DE VOYNYCH.NU ---
+# --- EXTRACTOR CON AGENT HACKING PARA EVITAR ERROR 406 ---
 @st.cache_data
 def descargar_manuscrito_completo():
     url = "https://www.voynich.nu/data/ZL3b-n.txt"
     archivo_completo = {}
+    
+    # Simular cabeceras reales completas de un navegador web moderno
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/plain,text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3'
+    }
+    
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=12) as response:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=15) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
         
         for linea in lineas:
-            # Capturar folios en el formato clásico de transcripción interlineal (ej: <f1r.1> o similares)
+            # Capturar los folios del formato estándar interlineal de Zandbergen
             match = re.match(r"^<f(\d+[rv])\b.*?>\s*(.*)", linea)
             if match:
                 folio = match.group(1)
                 contenido = match.group(2).strip()
-                # Eliminar marcas de alineación o comentarios interlineales del archivo
+                # Limpiar marcas internas de la transcripción académica
                 contenido = re.sub(r";\w+", "", contenido)
                 if contenido and not contenido.startswith(("#", "%", "<")):
                     if folio not in archivo_completo:
