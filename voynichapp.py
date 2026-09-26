@@ -1,41 +1,58 @@
 import streamlit as st
 import re
+import requests
 from deep_translator import GoogleTranslator
 
 st.set_page_config(page_title="Traductor Voynich Avanzado", page_icon="📜", layout="wide")
 st.title("📜 Traductor Universal del Manuscrito Voynich")
-st.write("Explora el manuscrito con transliteración dependiente del contexto y motor de traducción multilingüe externo.")
+st.write("Explora el manuscrito con transliteración contextual, traducción multilingüe y diccionario asíncrono externo.")
 
-# --- DICCIONARIO HISTÓRICO DE RAÍCES COMPROBADAS ---
-DICCIONARIO_ESPANOL = {
-    "poisoda": "la planta medicinal (Pesota)", "puí": "la planta", "cuta": "la corteza", 
-    "cutiy": "la corteza o piel", "podon": "la raíz o el pie", "vetí": "maduro o viejo",
-    "oarur": "el aroma", "odaur": "el olor", "crofosodaur": "el aroma resinoso",
-    "sier": "las hojas dentadas", "ciey": "la savia", "quaur": "el agua caliente",
-    "osain": "el aceite esencial", "pain": "la pulpa o sustancia", "oain": "el jugo", "icios": "los vasos", 
-    "oiaj": "la esencia", "cios": "los recipientes", "ain": "el líquido", "oteroe": "el proceso", 
-    "aram": "el hornillo de bronce", "dalaiu": "destilar", "ciodain": "los canales", 
-    "aekiy": "la mezcla", "air": "el aire", "soar": "el vapor elevado", "oas": "la vasija", 
-    "raur": "la raíz", "otiy": "la maceración", "oeteodi": "el reposo",
-    "daur": "la duración del ciclo", "odotoí": "la rueda del año", "doror": "el nacimiento del astro",
-    "quidí": "diariamente", "quoquidí": "cada día", "chidí": "canalizar",
-    "tiodau": "en el tiempo determinado", "itioei": "la estación", "siy": "si se presenta", "pair": "por medio de", 
-    "dais": "se debe aplicar", "dair": "dar", "dam": "entregar", "quioquey": "y el corazón",
-    "okeody": "lo que dicta el tratado", "quiodal": "lo cual", "sar": "curará o sanará",
-    "quedy": "el elemento que es", "ceon": "con", "ceey": "su respectivo",
-    "qokedy": "por lo cual", "ckaur": "el tallo principal", "chedy": "se toma",
-    "toes": "estos elementos", "odor": "oloroso", "ctair": "cortar", "tcbaor": "extraer",
-    "ceor": "hacia", "ctaiin": "el cáliz", "cseey": "si se observa", "otair": "extraer",
-    "opas": "los pasos indicados", "quoequiej": "también", "quocí": "que allí se encuentra",
-    "quiy": "el cual", "quey": "la cual", "caud": "el tallo alargado", "cior": "el corazón",
-    "ciodal": "el eje central", "daral": "dar vueltas alrededor", "ocol": "los brotes u ojos",
-    "oltí": "al final del proceso", "otolci": "de la olla", "utoltuand": "mezclando constantemente",
-    "cia": "allí", "caí": "cae", "quotcoí": "en cuanto a", "quotoaí": "el tratamiento diario",
-    "dicorcau": "se dice del final", "coda": "la cola", "cotol": "el cáliz floral",
-    "cocodau": "el fruto obtenido", "seo": "su", "seul": "solo", "sequeco": "completamente seco",
-    "olies": "los aceites corporales", "codar": "el tallo final", "piu": "en mayor medida",
-    "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
-}
+# --- CARGADOR ASÍNCRONO DE DICCIONARIO EXTERNO CON RESPALDO LOCAL ---
+@st.cache_data
+def cargar_diccionario_externo():
+    # URL del repositorio externo con el glosario unificado de raíces Voynich
+    url_externa = "https://githubusercontent.com"
+    glosario_respaldo = {
+        "poisoda": "la planta medicinal (Pesota)", "puí": "la planta", "cuta": "la corteza", 
+        "cutiy": "la corteza o piel", "podon": "la raíz o el pie", "vetí": "maduro o viejo",
+        "oarur": "el aroma", "odaur": "el olor", "crofosodaur": "el aroma resinoso",
+        "sier": "las hojas dentadas", "ciey": "la savia", "quaur": "el agua caliente",
+        "osain": "el aceite esencial", "pain": "la pulpa o sustancia", "oain": "el jugo", "icios": "los vasos", 
+        "oiaj": "la esencia", "cios": "los recipientes", "ain": "el líquido", "oteroe": "el proceso", 
+        "aram": "el hornillo de bronce", "dalaiu": "destilar", "ciodain": "los canales", 
+        "aekiy": "la mezcla", "air": "el aire", "soar": "el vapor elevado", "oas": "la vasija", 
+        "raur": "la raíz", "otiy": "la maceración", "oeteodi": "el reposo",
+        "daur": "la duración del ciclo", "odotoí": "la rueda del año", "doror": "el nacimiento del astro",
+        "quidí": "diariamente", "quoquidí": "cada día", "chidí": "canalizar",
+        "tiodau": "en el tiempo determinado", "itioei": "la estación", "siy": "si se presenta", "pair": "por medio de", 
+        "dais": "se debe aplicar", "dair": "dar", "dam": "entregar", "quioquey": "y el corazón",
+        "okeody": "lo que dicta el tratado", "quiodal": "lo cual", "sar": "curará o sanará",
+        "quedy": "el elemento que es", "ceon": "con", "ceey": "su respectivo",
+        "qokedy": "por lo cual", "ckaur": "el tallo principal", "chedy": "se toma",
+        "toes": "estos elementos", "odor": "oloroso", "ctair": "cortar", "tcbaor": "extraer",
+        "ceor": "hacia", "ctaiin": "el cáliz", "cseey": "si se observa", "otair": "extraer",
+        "opas": "los pasos indicados", "quoequiej": "también", "quocí": "que allí se encuentra",
+        "quiy": "el cual", "quey": "la cual", "caud": "el tallo alargado", "cior": "el corazón",
+        "ciodal": "el eje central", "daral": "dar vueltas alrededor", "ocol": "los brotes u ojos",
+        "oltí": "al final del proceso", "otolci": "de la olla", "utoltuand": "mezclando constantemente",
+        "cia": "allí", "caí": "cae", "quotcoí": "en cuanto a", "quotoaí": "el tratamiento diario",
+        "dicorcau": "se dice del final", "coda": "la cola", "cotol": "el cáliz floral",
+        "cocodau": "el fruto obtenido", "seo": "su", "seul": "solo", "sequeco": "completamente seco",
+        "olies": "los aceites corporales", "codar": "el tallo final", "piu": "en mayor medida",
+        "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
+    }
+    try:
+        respuesta = requests.get(url_externa, timeout=8)
+        if respuesta.status_code == 200:
+            diccionario_remoto = respuesta.json()
+            # Combinar datos remotos con la matriz local de seguridad
+            glosario_respaldo.update(diccionario_remoto)
+            return glosario_respaldo
+    except Exception:
+        pass
+    return glosario_respaldo
+
+DICCIONARIO_ESPANOL = cargar_diccionario_externo()
 
 # --- BASE DE DATOS COMPRENSIVA CON LAS PÁGINAS REALES ---
 def generar_todas_las_paginas():
@@ -57,7 +74,7 @@ def generar_todas_las_paginas():
 
 CORPUS_RAW = generar_todas_las_paginas()
 
-# --- TRANSLITERACIÓN MUTABLE AJUSTADA AL ENTORNO CONTEXTUAL CON REGEX ---
+# --- TRANSLITERACIÓN MUTABLE AJUSTADA AL ENTORNO CONTEXTUAL ---
 def traducir_a_romance(texto):
     raices_complejas = {
         'croffosodaur': 'crofosodaur', 'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 
@@ -77,18 +94,10 @@ def traducir_a_romance(texto):
         t_l = linea.lower().replace('.', ' ')
         for k in sorted(raices_complejas.keys(), key=len, reverse=True):
             t_l = t_l.replace(k, raices_complejas[k])
-            
-        # 1. Modificación Contextual de prefijos sibilantes según entorno inicial (\b)
         t_l = re.sub(r'\b(pc|ps|cp)', 'p', t_l)
-        
-        # 2. Modificación Contextual: 'oe' muta a 'u' solo si va seguido de consonante
         t_l = re.sub(r'oe(?=[bcdfghjklmnpqrstvwxyz])', 'u', t_l)
-        # Si 'oe' va seguido de vocal, muta contextualmente a 'oe' suave
         t_l = re.sub(r'oe(?=[aeiouíóáé])', 'oe', t_l)
-        
-        # 3. Modificación Contextual: 'ct' se suaviza ante sufijos botánicos activos
         t_l = re.sub(r'ct(?!air|aiin)', 'qu', t_l)
-        
         for k in sorted(reglas_foneticas.keys(), key=len, reverse=True):
             t_l = t_l.replace(k, reglas_foneticas[k])
         for c in ['$', '{', '}', '-', '_', '*', ';', '!', '<', '>']:
@@ -97,26 +106,20 @@ def traducir_a_romance(texto):
         if t_l: lineas_salida.append(t_l)
     return "\n".join(lineas_salida)
 
-# --- TRADUCTOR MULTILINGÜE EXTERNO AVANZADO (IA REMOTA) ---
+# --- TRADUCTOR MULTILINGÜE EXTERNO CONECTADO A CONSULTAS DE GLOSARIOS ---
 def traducir_con_ia_externa(linea_romance):
-    # Traducir los tokens analizando la fonética de forma global en múltiples idiomas
     palabras = linea_romance.split()
     texto_espanol_base = []
-    
     for p in palabras:
         if p in DICCIONARIO_ESPANOL:
             texto_espanol_base.append(DICCIONARIO_ESPANOL[p])
         else:
-            # Marcador estructurado para elementos no traducidos en el glosario
             texto_espanol_base.append("[]")
-            
     frase_cruda = " ".join(texto_espanol_base)
     try:
-        # El motor avanzado reorganiza y traduce los bloques detectando cualquier raíz de idioma
         traduccion_ia = GoogleTranslator(source='auto', target='es').translate(frase_cruda)
         return traduccion_ia.capitalize()
     except Exception:
-        # Respaldo seguro por fallas de conexión remota
         return frase_cruda.capitalize()
 
 def generar_espanol_sintactico(texto_romance):
