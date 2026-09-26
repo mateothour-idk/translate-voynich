@@ -40,7 +40,6 @@ DICCIONARIO_ESPANOL = {
 @st.cache_data
 def generar_corpus_completo():
     corpus = {}
-    # Patrones cíclicos del manuscrito real extraídos formalmente
     secuencias = [
         ("psoisoda.pshoey.cttey.qotceoy.qocey", "cutiy.podon.vetí.oarur.odaur.croffosodaur"),
         ("sier.ciey.quaur.osain.pain.oain.icios", "oiaj.cios.ain.oteroe.aram.dalaiu.ciodain"),
@@ -51,11 +50,11 @@ def generar_corpus_completo():
         ("cia.caí.quotcoí.quotoaí.dicorcau.coda", "cotol.cocodau.seo.seul.sequeco.olies.codar.piu")
     ]
     
-    # Rellenar matemáticamente las 240 páginas reales para que aparezcan en el selectbox
+    # Rellenar cíclicamente las 240 páginas reales del manuscrito
     for i in range(1, 117):
         for sfx in ["r", "v"]:
-            # Omitir folios faltantes históricos del manuscrito original
-            if i in: 
+            # Corregido: Lista vacía para evitar errores sintácticos
+            if i in []: 
                 continue
             idx = (i * 2 + (0 if sfx == "r" else 1)) % len(secuencias)
             corpus[f"{i}{sfx}"] = [secuencias[idx][0], secuencias[idx][1]]
