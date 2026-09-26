@@ -3,7 +3,7 @@ import re
 
 st.set_page_config(page_title="Traductor Voynich", page_icon="📜", layout="wide")
 st.title("📜 Traductor Universal del Manuscrito Voynich")
-st.write("Explora el manuscrito con transcripción fonética y traducción contextual al español romance.")
+st.write("Explora el manuscrito con transcripción fonética corregida y traducción contextual al español romance.")
 
 # --- DICCIONARIO HISTÓRICO DE RAÍCES COMPROBADAS ---
 DICCIONARIO_ESPANOL = {
@@ -52,36 +52,51 @@ def generar_corpus_completo():
     for i in range(1, 117):
         for sfx in ["r", "v"]:
             idx = (i * 2 + (0 if sfx == "r" else 1)) % len(secuencias)
-            corpus[f"{i}{sfx}"] = [secuencias[idx][0], secuencias[idx][1]]
+            corpus[f"{i}{sfx}"] = [secuencias[idx], secuencias[idx]]
     return corpus
 
 CORPUS_RAW = generar_corpus_completo()
 
-# --- MOTOR DE TRANSLITERACIÓN FONÉTIQUICA AVANZADA (EVA -> ROMANCE) ---
+# --- MOTOR DE TRANSLITERACIÓN EN DOS FASES (EVITA SOBRE-REEMPLAZOS) ---
 def traducir_a_romance(texto):
-    reglas = {
+    # Fase 1: Bloques léxicos de tu matriz histórica (Se protegen primero)
+    raices_complejas = {
         'croffosodaur': 'crofosodaur', 'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 
         'dceorceau': 'dicorcau', 'ceoceodaiu': 'cocodau', 'tceeodal': 'ciodal', 
         'olteey': 'oltí', 'otolceey': 'otolci', 'kdceody': 'qudicodí', 
         'ceeodaiin': 'ciodain', 'otoltoand': 'otoltoand', 'gceaud': 'caud',
         'pchodon': 'podon', 'pshoey': 'puí', 'cttey': 'cuta', 'oaror': 'oarur', 
-        'psoisoda': 'poisoda', 'qocey': 'quocí',
-        'pc': 'p', 'ps': 'p', 'cp': 'p', 'cf': 'c', 'ch': 'c', 'sh': 'c',
-        'ck': 'qu', 'k': 'qu', 'ct': 'qu', 'q': 'qu', 'ii': 'i', 'ee': 'i',
+        'psoisoda': 'poisoda', 'qocey': 'quocí'
+    }
+    
+    # Fase 2: Unificaciones sibilantes, prefijos y simplificación de vocales duplicadas
+    reglas_foneticas = {
+        'pc': 'p', 'ps': 'p', 'cp': 'p', 
+        'cf': 'c', 'ch': 'c', 'sh': 'c',
+        'ck': 'qu', 'k': 'qu', 'ct': 'qu', 'q': 'qu', 
+        'ii': 'i', 'ee': 'i',
         'dc': 'ch', 'tc': 'ch', 'oe': 'u', 'ey': 'a', 'ae': 'a', 'ce': 'c', 
         'eey': 'iy', 'ceeey': 'cia', 'cee': 'ci', 'cteey': 'cutí', 'cte': 'cut', 
         'oi': 'oi', 'y': 'í'
     }
+    
     lineas_salida = []
     for linea in texto.split('\n'):
-        # Reemplazar puntos medievales por espacios para separar tokens antes de transformar
         linea_procesada = linea.lower().replace('.', ' ')
-        for k in sorted(reglas.keys(), key=len, reverse=True):
-            linea_procesada = linea_procesada.replace(k, reglas[k])
-        # Limpieza final de caracteres extraños y normalización de espacios
+        
+        # 1. Aplicar raíces complejas completas
+        for k in sorted(raices_complejas.keys(), key=len, reverse=True):
+            linea_procesada = linea_procesada.replace(k, raices_complejas[k])
+            
+        # 2. Aplicar reglas de reducción fonética individual
+        for k in sorted(reglas_foneticas.keys(), key=len, reverse=True):
+            linea_procesada = linea_procesada.replace(k, reglas_foneticas[k])
+            
+        # Limpieza de caracteres espurios medievales y académicos
         for c in ['$', '{', '}', '-', '_', '*', ';', '!', '<', '>']:
             linea_procesada = linea_procesada.replace(c, ' ')
         linea_procesada = re.sub(r'\s+', ' ', linea_procesada).strip()
+        
         if linea_procesada:
             lineas_salida.append(linea_procesada)
     return "\n".join(lineas_salida)
@@ -90,7 +105,6 @@ def traducir_a_romance(texto):
 def conectar_oraciones(traducciones):
     if not traducciones:
         return ""
-    # Si la traducción contiene elementos botánicos procedimentales, insertamos nexos sintácticos
     oracion = []
     for i, t in enumerate(traducciones):
         if i == 0:
@@ -109,7 +123,6 @@ def conectar_oraciones(traducciones):
             oracion.append(f" y {t.lower()}")
     
     resultado = "".join(oracion)
-    # Limpieza de conectores duplicados rústicos
     resultado = resultado.replace(" la planta medicinal (pesota) la planta", " la planta medicinal (Pesota) y la planta")
     resultado = resultado.replace(", ,", ",")
     return resultado.capitalize() + "."
@@ -133,7 +146,7 @@ def generar_espanol_sintactico(texto_romance):
 
 def ordenar_folios_natural(lista):
     def clave(x):
-        num = int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x) else 999
+        num = int(re.findall(r'\d+', x)) if re.findall(r'\d+', x) else 999
         letra = 0 if "r" in x else 1
         return (num, letra)
     return sorted(lista, key=clave)
