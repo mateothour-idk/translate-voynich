@@ -59,7 +59,6 @@ CORPUS_RAW = generar_corpus_completo()
 
 # --- MOTOR DE TRANSLITERACIÓN EN DOS FASES (EVITA SOBRE-REEMPLAZOS) ---
 def traducir_a_romance(texto):
-    # Fase 1: Bloques léxicos de tu matriz histórica (Se protegen primero)
     raices_complejas = {
         'croffosodaur': 'crofosodaur', 'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 
         'dceorceau': 'dicorcau', 'ceoceodaiu': 'cocodau', 'tceeodal': 'ciodal', 
@@ -68,8 +67,6 @@ def traducir_a_romance(texto):
         'pchodon': 'podon', 'pshoey': 'puí', 'cttey': 'cuta', 'oaror': 'oarur', 
         'psoisoda': 'poisoda', 'qocey': 'quocí'
     }
-    
-    # Fase 2: Unificaciones sibilantes, prefijos y simplificación de vocales duplicadas
     reglas_foneticas = {
         'pc': 'p', 'ps': 'p', 'cp': 'p', 
         'cf': 'c', 'ch': 'c', 'sh': 'c',
@@ -79,24 +76,16 @@ def traducir_a_romance(texto):
         'eey': 'iy', 'ceeey': 'cia', 'cee': 'ci', 'cteey': 'cutí', 'cte': 'cut', 
         'oi': 'oi', 'y': 'í'
     }
-    
     lineas_salida = []
     for linea in texto.split('\n'):
         linea_procesada = linea.lower().replace('.', ' ')
-        
-        # 1. Aplicar raíces complejas completas
         for k in sorted(raices_complejas.keys(), key=len, reverse=True):
             linea_procesada = linea_procesada.replace(k, raices_complejas[k])
-            
-        # 2. Aplicar reglas de reducción fonética individual
         for k in sorted(reglas_foneticas.keys(), key=len, reverse=True):
             linea_procesada = linea_procesada.replace(k, reglas_foneticas[k])
-            
-        # Limpieza de caracteres espurios medievales y académicos
         for c in ['$', '{', '}', '-', '_', '*', ';', '!', '<', '>']:
             linea_procesada = linea_procesada.replace(c, ' ')
         linea_procesada = re.sub(r'\s+', ' ', linea_procesada).strip()
-        
         if linea_procesada:
             lineas_salida.append(linea_procesada)
     return "\n".join(lineas_salida)
@@ -121,7 +110,6 @@ def conectar_oraciones(traducciones):
             oracion.append(f", lo cual finalmente {t.lower()}")
         else:
             oracion.append(f" y {t.lower()}")
-    
     resultado = "".join(oracion)
     resultado = resultado.replace(" la planta medicinal (pesota) la planta", " la planta medicinal (Pesota) y la planta")
     resultado = resultado.replace(", ,", ",")
@@ -138,15 +126,16 @@ def generar_espanol_sintactico(texto_romance):
                 palabras_linea.append(DICCIONARIO_ESPANOL[p_l])
             elif p_l:
                 palabras_linea.append(f"[{p_l}]")
-        
         if palabras_linea:
             linea_articulada = conectar_oraciones(palabras_linea)
             lineas_traducidas.append(f"Línea {idx+1}: {linea_articulada}")
     return "\n".join(lineas_traducidas)
 
+# --- FUNCIÓN DE ORDENAMIENTO ALFANUMÉRICO CORREGIDA ---
 def ordenar_folios_natural(lista):
     def clave(x):
-        num = int(re.findall(r'\d+', x)) if re.findall(r'\d+', x) else 999
+        numeros = re.findall(r'\d+', x)
+        num = int(numeros[0]) if numeros else 999
         letra = 0 if "r" in x else 1
         return (num, letra)
     return sorted(lista, key=clave)
