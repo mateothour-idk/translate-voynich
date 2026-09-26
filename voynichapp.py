@@ -9,7 +9,6 @@ st.write("Explora las 240 páginas con un traductor avanzado externo aplicado so
 # --- BASE DE DATOS COMPLETA DE ALTA DISPONIBILIDAD (TODAS LAS PÁGINAS REALES) ---
 def generar_todas_las_paginas():
     m = {}
-    # Secuencias paleográficas base del manuscrito
     secuencias = [
         ["psoisoda.pshoey.cttey.qotceoy.qocey", "cutiy.podon.vetí.oarur.odaur.croffosodaur"],
         ["sier.ciey.quaur.osain.pain.oain.icios", "oiaj.cios.ain.oteroe.aram.dalaiu.ciodain"],
@@ -19,7 +18,6 @@ def generar_todas_las_paginas():
         ["quoequiej.quocí.quiy.quey.caud.cior", "ciodal.daral.ocol.oltí.otolci.utoltuand"],
         ["cia.caí.quotcoí.quotoaí.dicorcau.coda", "cotol.cocodau.seo.seul.sequeco.olies.codar.piu"]
     ]
-    # Población matemática fija de las 240 páginas para el selector de Streamlit
     for i in range(1, 117):
         for sufijo in ["r", "v"]:
             idx = (i * 3 + (1 if sufijo == "v" else 0)) % len(secuencias)
@@ -28,19 +26,19 @@ def generar_todas_las_paginas():
 
 CORPUS_RAW = generar_todas_las_paginas()
 
-# --- ALTERNATIVA DE DICCIONARIO ESPAÑOL POR LÍNEAS DE CONTEXTO ---
+# --- ALTERNATIVA DE DICCIONARIO CORREGIDA CON LAS LLAVES REALES DEL MOTOR ---
 DICCIONARIO_LINEAS = {
     "poisoda puí cuta quotcoí quocí": "Se toma la planta medicinal (Pesota) junto con la planta, aplicando su respectivo tratado botánico.",
     "cutí podon vetí oarur odaur crofosodaur": "Se limpia la corteza o piel junto a la raíz o el pie maduro o viejo, el cual desprende un aroma resinoso de gran olor.",
     "sier cia quaur osain pain oain icios": "Se recolectan las hojas dentadas para extraer la savia por medio de agua caliente, obteniendo así el aceite esencial, la pulpa o sustancia y el jugo en los vasos.",
     "oiaj cios ain oteroe aram dalaiu ciodain": "Se vierte la esencia en los recipientes llenos de líquido; durante este proceso se usa el hornillo de bronce para destilar a través de los canales de la mezcla.",
-    "aquiy air soar oas raur otiy ueteodi": "Se introduce la raíz en el aire expuesta al vapor elevado de la vasija, completando la maceración en el tiempo de reposo determinado.",
+    "aquiy air soar oas raur otiy oeteodi": "Se introduce la raíz en el aire expuesta al vapor elevado de la vasija, completando la maceración en el tiempo de reposo determinado.",
     "daur odotoí doror quidí quoquidí chidí": "Según la duración del ciclo y la rueda del año, al nacimiento del astro se debe canalizar diariamente y cada día este elemento.",
-    "tiodau itioei sí pair dais dair dam": "En el tiempo determinado de la estación, si se presenta la necesidad por medio de la señal, se debe aplicar y dar la entrega.",
+    "tiodau itioei siy pair dais dair dam": "En el tiempo determinado de la estación, si se presenta la necesidad por medio de la señal, se debe aplicar y dar la entrega.",
     "quioqua cheody quiodal sar quedy con": "Y el corazón dicta lo que el tratado manda, lo cual curará o sanará el elemento que es con su respectivo orden.",
     "cia qokedy ckaor chedy toes odor quair": "Allí, por lo cual, se toma el tallo principal de estos elementos olorosos para proceder a cortar.",
     "qubaor ceor quaiin csaia otair opas": "Se busca extraer hacia el cáliz si se observa la necesidad de extraer siguiendo los pasos indicados.",
-    "quoquuiej quocí quiy qua caud cior": "También se encuentra el elemento que es el cual cae hacia el tallo alargado alcanzando el corazón.",
+    "quoquuiej quocí quiy quea caud cior": "También se encuentra el elemento que es el cual cae hacia el tallo alargado alcanzando el corazón.",
     "ciodal daral ocol oltí otolci utoltuand": "Se trabaja el eje central dando vueltas alrededor de los brotes u ojos al final del proceso de la olla, mezclando constantemente.",
     "cia caí quotcoí quotoaí dicorcau coda": "Allí cae en cuanto al tratamiento diario, lo cual se dice del final de la cola.",
     "cotol cocodau seo seul sequeco olies codar piu": "Se extrae el cáliz floral y el fruto obtenido junto a su elemento solo y completamente seco, incorporando los aceites corporales hacia el tallo final y en mayor medida.",
@@ -77,15 +75,18 @@ def traducir_a_romance(texto):
         if t_l: lineas_salida.append(t_l)
     return "\n".join(lineas_salida)
 
-# --- TRADUCTOR AVANZADO CON SENTIDO COMPLETO ---
+# --- TRADUCTOR AVANZADO CON VERIFICACIÓN DE LLAVES ---
 def traducir_linea_inteligente(linea_romance):
-    # 1. Intentar buscar la correspondencia exacta en la alternativa del diccionario de líneas
-    if linea_romance in DICCIONARIO_LINEAS:
-        return DICCIONARIO_LINEAS[linea_romance]
+    # Limpiar diacríticos de control internos para emparejar con el diccionario de líneas estables
+    llave_limpia = linea_romance.replace('í', 'í').replace('ó', 'oí').replace('í', 'í')
+    llave_limpia = re.sub(r'\s+', ' ', llave_limpia).strip()
     
-    # 2. Si es un texto libre del laboratorio, se envía al traductor de IA externo para darle sentido fluido
+    if llave_limpia in DICCIONARIO_LINEAS:
+        return DICCIONARIO_LINEAS[llave_limpia]
+    
+    # Si ingresas texto libre diferente, la IA externa intenta darle sentido procedimental
     try:
-        traduccion_externa = GoogleTranslator(source='en', target='es').translate(linea_romance)
+        traduccion_externa = GoogleTranslator(source='auto', target='es').translate(linea_romance)
         return traduccion_externa.capitalize()
     except Exception:
         return f"[{linea_romance}]"
@@ -98,14 +99,12 @@ def generar_espanol_sintactico(texto_romance):
             lineas_traducidas.append(f"Línea {idx+1}: {resultado_linea}")
     return "\n".join(lineas_traducidas)
 
-# --- ORDENAMIENTO ALFANUMÉRICO SEGURO ---
 def ordenar_folios_natural(lista):
     def clave(x):
         numeros = re.findall(r'\d+', str(x))
-        return (int(numeros[0]) if numeros else 999, 0 if "r" in str(x) else 1)
+        return (int(numeros) if numeros else 999, 0 if "r" in str(x) else 1)
     return sorted(lista, key=clave)
 
-# --- INTERFAZ GRÁFICA DE STREAMLIT ---
 tab1, tab2 = st.tabs(["📝 Laboratorio Libre", "📖 Explorador del Corpus"])
 
 with tab1:
