@@ -1,7 +1,6 @@
 import streamlit as st
 import urllib.request
 import re
-import json
 
 st.set_page_config(page_title="Traductor Universal Voynich Completo", page_icon="📜", layout="wide")
 
@@ -14,7 +13,7 @@ DICCIONARIO_ESPANOL = {
     "cutiy": "la corteza o piel", "podon": "la raíz o el pie", "vetí": "maduro o viejo",
     "oarur": "el aroma", "odaur": "el olor", "crofosodaur": "el aroma resinoso",
     "sier": "las hojas dentadas", "ciey": "la savia", "quaur": "el agua caliente",
-    "osain": "el aceite esencial", "pain": "la pulpa o sustancia", "oain": "el jugo", "icios": "los vasos", 
+    "osain": "el aceite essencial", "pain": "la pulpa o sustancia", "oain": "el jugo", "icios": "los vasos", 
     "oiaj": "la esencia", "cios": "los recipientes", "ain": "el líquido", "oteroe": "el proceso", 
     "aram": "el hornillo de bronce", "dalaiu": "destilar", "ciodain": "los canales", 
     "aekiy": "la mezcla", "air": "el aire", "soar": "el vapor elevado", "oas": "la vasija", 
@@ -39,20 +38,17 @@ DICCIONARIO_ESPANOL = {
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
 
-# --- EXTRACTOR OPTIMIZADO CON RESPALDO LOCAL AUTOMÁTICO ---
+# --- EXTRACTOR DE ALTA PRECISIÓN PARA IVTFF (ZL3b) ---
 @st.cache_data
 def descargar_manuscrito_completo():
-    url = "https://www.voynich.nu/data/ZL3b-n.txt"
+    url = "http://www.voynich.nu/data/ZL3b-n.txt"
     archivo_completo = {}
     try:
-        req = urllib.request.Request(
-            url, 
-            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
-        )
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=8) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
-    except Exception as e:
-        st.info("Nota: Usando el corpus local de respaldo (Servidor remoto de Voynich.nu fuera de línea).")
+    except Exception:
+        st.info("Nota: Servidor remoto inaccesible. Usando el corpus local optimizado.")
         lineas = [
             "<f1r.1> psoisoda.pshoey.cttey.qotceoy.qocey",
             "<f1r.2> cutiy.podon.vetí.oarur.odaur.croffosodaur",
@@ -63,91 +59,60 @@ def descargar_manuscrito_completo():
         ]
     
     for linea in lineas:
-        # Extrae de forma limpia el texto a la derecha de la etiqueta de folio
-        match = re.match(r"^<f(\d+[rv]\d*)[\.A-Za-z0-9_]*?>\s*(.*)", linea)
+        match = re.match(r"^<f(\d+[rv]\d*)[\.A-Za-z0-9_,\+@]*?>\s*(.*)", linea)
         if match:
-            folio = match.group(1)
-            contenido = match.group(2).strip()
-            
+            folio, contenido = match.group(1), match.group(2).strip()
             if contenido and not contenido.startswith(("%", "#")):
-                # Limpieza estricta de caracteres espurios
+                contenido = re.sub(r"<!.*?>", "", contenido)
+                contenido = re.sub(r"\[([A-Za-z0-9_íúóáé]+)(?::.*?)?\]", r"\1", contenido)
+                contenido = contenido.replace(",", ".")
                 contenido = re.sub(r"[\=\+\*\?\-\{\}\<\>]", "", contenido)
-                
-                if folio not in archivo_completo:
-                    archivo_completo[folio] = []
-                archivo_completo[folio].append(contenido)
-                
+                if contenido.strip():
+                    if folio not in archivo_completo: archivo_completo[folio] = []
+                    archivo_completo[folio].append(contenido.strip())
     return archivo_completo
 
 CORPUS_MANUSCRITO = descargar_manuscrito_completo()
 
 # --- MOTOR DE DESCRIPCIÓN FONÉTICA ---
 def traducir_a_romance(texto):
-    # Reglas ordenadas de mayor a menor longitud para evitar solapamientos incorrectos
     reglas = {
-        # 1. Combinaciones morfológicas complejas de la matriz
         'croffosodaur': 'crofosodaur', 'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 
         'dceorceau': 'dicorcau', 'ceoceodaiu': 'cocodau', 'tceeodal': 'ciodal', 
         'olteey': 'oltí', 'otolceey': 'otolci', 'kdceody': 'qudicodí', 
         'ceeodaiin': 'ciodain', 'otoltoand': 'otoltoand', 'gceaud': 'caud',
         'pchodon': 'podon', 'pshoey': 'puí', 'cttey': 'cuta', 'oaror': 'oarur', 
         'psoisoda': 'poisoda', 'qocey': 'quocí',
-        
-        # 2. Unificación de Prefijos Compiles (pc / ps / cp -> P)
-        'pc': 'p', 'ps': 'p', 'cp': 'p',
-        
-        # 3. Unificación Sibilante y Oclusiva (cf / ch / sh -> C)
-        'cf': 'c', 'ch': 'c', 'sh': 'c',
-        
-        # 4. Unificación Oclusiva Sorda (ck / k / ct -> Qu)
-        'ck': 'qu', 'k': 'qu', 'ct': 'qu', 'q': 'qu',
-        
-        # 5. Simplificación de Vocales Duplicadas (ee / ii -> I)
-        'ii': 'i', 'ee': 'i',
-        
-        # 6. Diptongos y Transiciones Romances (oe -> U, ey -> A, ae -> A, dc/tc -> Ch)
-        'dc': 'ch', 'tc': 'ch', 'oe': 'u', 'ey': 'a', 'ae': 'a', 'ce': 'c', 'eey': 'iy', 
-        'ceeey': 'cia', 'cee': 'ci', 'cteey': 'cutí', 'cte': 'cut', 'oi': 'oi', 'y': 'í'
+        'pc': 'p', 'ps': 'p', 'cp': 'p', 'cf': 'c', 'ch': 'c', 'sh': 'c',
+        'ck': 'qu', 'k': 'qu', 'ct': 'qu', 'q': 'qu', 'ii': 'i', 'ee': 'i',
+        'dc': 'ch', 'tc': 'ch', 'oe': 'u', 'ey': 'a', 'ae': 'a', 'ce': 'c', 
+        'eey': 'iy', 'ceeey': 'cia', 'cee': 'ci', 'cteey': 'cutí', 'cte': 'cut', 
+        'oi': 'oi', 'y': 'í'
     }
-    
     texto_limpio = texto.lower()
-    
-    # Aplicar la matriz fonética respetando estrictamente el orden de prioridad
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
-        
-    # Reemplazar los puntos de unión medievales y marcadores por espacios limpios
     for caracter in ['$', '.', '{', '}', '-', '_', '*', ';', '!', '<', '>']:
         texto_limpio = texto_limpio.replace(caracter, ' ')
-        
-    # Colapsar espacios para procesar palabras individuales sin residuos masivos
-    texto_limpio = re.sub(r'\s+', ' ', texto_limpio).strip()
-    
-    return texto_limpio
+    return re.sub(r'\s+', ' ', texto_limpio).strip()
 
 # --- MOTOR DE TRADUCCIÓN LIMPIO Y DIRECTO ---
 def generar_espanol_sintactico(texto_romance):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
-    
     for idx, linea in enumerate(lineas):
         palabras = linea.split()
         linea_espanol = []
-        
         for palabra in palabras:
             palabra_limpia = palabra.strip(",.!?*;:-<> ")
-            if not palabra_limpia:
-                continue
-                
+            if not palabra_limpia: continue
             if palabra_limpia in DICCIONARIO_ESPANOL:
                 linea_espanol.append(DICCIONARIO_ESPANOL[palabra_limpia])
             else:
                 linea_espanol.append(f"[{palabra_limpia}]")
-        
         if linea_espanol:
             texto_linea = " ".join(linea_espanol).capitalize()
             lineas_traducidas.append(f"Línea {idx+1}: {texto_linea}")
-            
     return "\n".join(lineas_traducidas)
 
 # --- INTERFAZ GRÁFICA ---
@@ -171,18 +136,14 @@ with tab2:
     st.subheader("Navegador de Transcripciones Académicas")
     if CORPUS_MANUSCRITO:
         lista_folios = sorted(list(CORPUS_MANUSCRITO.keys()), key=lambda x: (int(''.join(filter(str.isdigit, x))), x[-1]))
-        folio_sel = st.selectbox("Selecciona un folio real para extraer e interpretar su contenido de internet:", lista_folios)
-        
+        folio_sel = st.selectbox("Selecciona un folio real:", lista_folios)
         if st.button(f"Descifrar Folio Real {folio_sel}"):
             lineas_eva = CORPUS_MANUSCRITO[folio_sel]
             texto_eva_completo = "\n".join(lineas_eva)
-            
             romance_final = traducir_a_romance(texto_eva_completo)
             espanol_final = generar_espanol_sintactico(romance_final)
-            
             st.write("---")
             st.markdown(f"### Transcripción y Descifrado Real para el Folio {folio_sel}")
-            
             col_eva, col_rom, col_esp = st.columns(3)
             with col_eva:
                 st.warning("1. Texto EVA Real Extraído:")
