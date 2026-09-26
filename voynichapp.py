@@ -3,7 +3,7 @@ import re
 
 st.set_page_config(page_title="Traductor Voynich", page_icon="📜", layout="wide")
 st.title("📜 Traductor Universal del Manuscrito Voynich")
-st.write("Explora el manuscrito con transliteración limpia y traducción articulada con sentido sintáctico.")
+st.write("Explora el manuscrito con transliteración formal limpia y traducción contextual articulada con sentido sintáctico.")
 
 # --- DICCIONARIO HISTÓRICO DE RAÍCES COMPROBADAS ---
 DICCIONARIO_ESPANOL = {
@@ -176,6 +176,12 @@ with tab2:
         st.write("---")
         st.markdown(f"### Transcripción y Descifrado Estructurado para el Folio {folio_sel}")
         c1, c2, c3 = st.columns(3)
-        c1.text_area("1. Texto EVA Real Extraído", texto_eva, height=400, disabled=True)
-        c2.text_area("2. Fonética Romance Transliterada", rom_f, height=400)
-        c3.text_area("3. Traducción Articulada al Español", esp_f, height=400)
+        with c1:
+            st.warning("1. Texto EVA Real Extraído")
+            st.text_area("EVA", texto_eva, height=400, disabled=True)
+        with c2:
+            st.success("2. Fonética Romance Transliterada")
+            st.text_area("Romance", rom_f, height=400)
+        with c3:
+            st.info("3. Traducción Articulada al Español")
+            st.text_area("Español", esp_f, height=400)
