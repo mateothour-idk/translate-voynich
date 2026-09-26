@@ -24,28 +24,28 @@ glosario_inicial = [
     ("oarur", "el aroma"), ("odaur", "el olor"), ("crofosodaur", "el aroma resinoso"),
     ("sier", "las hojas dentadas"), ("ciey", "la savia"), ("quaur", "el agua caliente"),
     ("osain", "el aceite esencial"), ("pain", "la pulpa o sustancia"), ("oain", "el jugo"), ("icios", "los vasos"), 
-    "oiaj", "la esencia"), ("cios", "los recipientes"), ("ain", "el líquido"), ("oteroe", "el proceso"), 
+    ("oiaj", "la esencia"), ("cios", "los recipientes"), ("ain", "el líquido"), ("oteroe", "el proceso"), 
     ("aram", "el hornillo de bronce"), ("dalaiu", "destilar"), ("ciodain", "los canales"), 
     ("aekiy", "la mezcla"), ("air", "el aire"), ("soar", "el vapor elevado"), ("oas", "la vasija"), 
     ("raur", "la raíz"), ("otiy", "la maceración"), ("oeteodi", "el reposo"),
     ("daur", "la duración del ciclo"), ("odotoí", "la rueda del año"), ("doror", "el nacimiento del astro"),
     ("quidí", "diariamente"), ("quoquidí", "cada día"), ("chidí", "canalizar"),
-    "tiodau", "en el tiempo determinado"), ("itioei", "la estación"), ("siy", "si se presenta"), ("pair", "por medio de"), 
+    ("tiodau", "en el tiempo determinado"), ("itioei", "la estación"), ("siy", "si se presenta"), ("pair", "por medio de"), 
     ("dais", "se debe aplicar"), ("dair", "dar"), ("dam", "entregar"), ("quioquey", "y el corazón"),
-    "okeody", "lo que dicta el tratado"), ("quiodal", "lo cual"), ("sar", "curará o sanará"),
+    ("okeody", "lo que dicta el tratado"), ("quiodal", "lo cual"), ("sar", "curará o sanará"),
     "quedy", "el elemento que es"), ("ceon", "con"), ("ceey", "su respectivo"),
-    "qokedy", "por lo cual"), ("ckaur", "el tallo principal"), ("chedy", "se toma"),
+    ("qokedy", "por lo cual"), ("ckaur", "el tallo principal"), ("chedy", "se toma"),
     "toes", "estos elementos"), ("odor", "oloroso"), ("ctair", "cortar"), ("tcbaor", "extraer"),
     "ceor", "hacia"), ("ctaiin", "el cáliz"), ("cseey", "si se observa"), ("otair", "extraer"),
     "opas", "los pasos indicados"), ("quoequiej", "también"), ("quocí", "que allí se encuentra"),
-    "quiy", "el cual"), ("quey", "la cual"), ("caud", "el tallo alargado"), ("cior", "el corazón"),
+    ("quiy", "el cual"), ("quey", "la cual"), ("caud", "el tallo alargado"), ("cior", "el corazón"),
     "ciodal", "el eje central"), ("daral", "dar vueltas alrededor"), ("ocol", "los brotes u ojos"),
     "oltí", "al final del proceso"), ("otolci", "de la olla"), ("utoltuand", "mezclando constantemente"),
     "cia", "allí"), ("caí", "cae"), ("quotcoí", "en cuanto a"), ("quotoaí", "el tratamiento diario"),
     "dicorcau", "se dice del final"), ("coda", "la cola"), ("cotol", "el cáliz floral"),
     "cocodau", "el fruto obtenido"), ("seo", "su"), ("seul", "solo"), ("sequeco", "completamente seco"),
-    "olies", "los aceites corporales"), ("codar", "el tallo final"), ("piu", "en mayor medida"),
-    "cedy", "se corta"), ("caur", "el tallo duro"), ("cidí", "ceder/verter")
+    ("olies", "los aceites corporales"), ("codar", "el tallo final"), ("piu", "en mayor medida"),
+    ("cedy", "se corta"), ("caur", "el tallo duro"), ("cidí", "ceder/verter")
 ]
 
 cursor.executemany("INSERT OR IGNORE INTO diccionario VALUES (?, ?)", glosario_inicial)
@@ -136,7 +136,7 @@ def generar_espanol_sintactico(texto_romance):
             cursor.execute("SELECT valor FROM diccionario WHERE clave = ? OR clave = ?", (p_norm, p_l))
             row = cursor.fetchone()
             if row:
-                palabras_linea.append(row)
+                palabras_linea.append(row[0])
             elif p_l:
                 palabras_linea.append(f"[{p_l}]")
                 
@@ -148,7 +148,7 @@ def generar_espanol_sintactico(texto_romance):
 def ordenar_folios_natural(lista):
     def clave(x):
         numeros = re.findall(r'\d+', str(x))
-        num = int(numeros) if numeros else 999
+        num = int(numeros[0]) if numeros else 999
         letra = 0 if "r" in str(x) else 1
         return (num, letra)
     return sorted(lista, key=clave)
