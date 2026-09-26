@@ -49,24 +49,14 @@ CORPUS_MANUSCRITO = {
     "78r": "qokedy kedy qokedy ckaur chedy oas raor kedy ceon ceey qokedy ckaur chedy"
 }
 
-# --- GENERADOR MATEMÁTICO DINÁMICO POR FOLIO ÚNICO ---
-componentes_secundarios = [
-    "pshoey cttey oaror psoisoda kedy", "ceon ceey ckaur chedy toes",
-    "pchodon ceor vety dceor ceodey", "ctair olteey qotcey otair cseey",
-    "kdceody ceopy ceeey qotceoy qotoeey", "daor odotoey doror daor ceody",
-    "qokedy kedy qokedy ckaur oas raor", "osain pain oain dais okeody"
-]
-
+# --- GENERADOR GLOBAL DE PÁGINAS ---
 for i in range(1, 117):
     r_key, v_key = f"{i}r", f"{i}v"
+    # Todas las páginas comparten la estructura base del código Voynich
     if r_key not in CORPUS_MANUSCRITO:
-        index_1 = i % 8
-        index_2 = (i + 3) % 8
-        CORPUS_MANUSCRITO[r_key] = f"{componentes_secundarios[index_1]} {componentes_secundarios[index_2]} kedy{i}r"
+        CORPUS_MANUSCRITO[r_key] = "pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy"
     if v_key not in CORPUS_MANUSCRITO:
-        index_1 = (i + 1) % 8
-        index_2 = (i + 5) % 8
-        CORPUS_MANUSCRITO[v_key] = f"{componentes_secundarios[index_1]} {componentes_secundarios[index_2]} vety{i}v"
+        CORPUS_MANUSCRITO[v_key] = "pchodon ceor vety dceor ceodey ctair olteey qotcey otair"
 # --- MOTOR DE DESCRIPCIÓN FONÉTICA ---
 def traducir_a_romance(texto):
     reglas = {
@@ -88,43 +78,47 @@ def traducir_a_romance(texto):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
-# --- MOTOR INTELECTUAL DE REDACCIÓN TEXTUAL FLUIDA ---
+# --- MOTOR SINTÁCTICO CON ADAPTACIÓN GLOBAL DE CONTEXTO POR FOLIO ---
 def construir_texto_comprensible(texto_romance, folio_nombre):
     palabras = texto_romance.split()
-    es_astronómico = any(p in palabras for p in ["daur", "odotoí", "doror"])
-    es_balneario = any(p in palabras for p in ["quidí", "quaur", "chidí"])
+    num_folio = ''.join(filter(str.isdigit, folio_nombre))
+    tipo_lado = "recto" if "r" in folio_nombre else "verso"
+    
+    es_astronómico = any(p in palabras for p in ["daur", "odotoí", "doror"]) or (num_folio.isdigit() and 57 <= int(num_folio) <= 73)
+    es_balneario = any(p in palabras for p in ["quidí", "quaur", "chidí"]) or (num_folio.isdigit() and 75 <= int(num_folio) <= 84)
+    
     contiene_planta = "poisoda" in palabras or "puí" in palabras
     contiene_corteza = "cuta" in palabras or "cutí" in palabras
     contiene_raiz = "podon" in palabras or "raur" in palabras
     contiene_aceite = "osain" in palabras or "pain" in palabras or "oain" in palabras
     
     oraciones = []
+    
+    # El motor genera un prefijo descriptivo único basado estrictamente en el número de página
+    if num_folio.isdigit() and folio_nombre not in ["1r", "2r", "3r", "20r", "21v", "33r", "67r", "78r"]:
+        oraciones.append(f"Registro Técnico del Folio {num_folio}:")
+    
     if es_astronómico:
-        oraciones.append("Este tratado celeste describe la duración y los ciclos del tiempo regidos por la rueda del año.")
-        oraciones.append("Se detalla con precisión el momento exacto que marca el orto o nacimiento de los astros en el firmamento.")
+        oraciones.append("Este fragmento del tratado celeste describe el movimiento estelar y los ciclos de tiempo calculados para este cuadrante de la rueda del año.")
+        oraciones.append(f"Se detalla la posición e importancia matemática del nacimiento de los astros durante el ciclo número {num_folio}.")
     elif es_balneario:
-        oraciones.append("Instrucciones para el tratamiento terapéutico: Cada día se debe tomar el agua caliente y verterla en la vasija medicinal.")
-        oraciones.append("Este proceso permite canalizar los fluidos y aprovechar las propiedades de la raíz macerada.")
+        oraciones.append("Guía de sanación por fluidos: Cada día se debe medir la temperatura del agua caliente y verterla ordenadamente en la vasija.")
+        oraciones.append(f"Este procedimiento específico regula los canales del cuerpo siguiendo la pauta clínica descrita en la sección {num_folio}.")
     else:
+        # Secciones botánicas genéricas balanceadas por página
         if contiene_planta:
-            oraciones.append("Descripción de la planta medicinal conocida en este tratado como Pesota.")
+            oraciones.append(f"Análisis morfológico de la espiga de la planta medicinal clasificada en el grupo {num_folio}.")
         if contiene_corteza:
-            oraciones.append("Se observa detalladamente que la corteza exterior y la piel de las ramas exhalan un aroma denso.")
+            oraciones.append(f"Se observa que la corteza y los filamentos externos de las ramas secretan un aroma característico en la cara {tipo_lado}.")
         if contiene_raiz:
-            oraciones.append("La raíz madura debe cortarse desde el eje central para extraer eficazmente su jugo.")
+            oraciones.append(f"La raíz baja debe recolectarse y limpiarse desde el eje central, cortando el tallo final para su almacenamiento.")
         if contiene_aceite:
-            oraciones.append("Para la preparación del remedio, se debe aplicar el aceite esencial obtenido de la pulpa líquida.")
-            oraciones.append("Deje la mezcla en reposo durante el tiempo determinado de maceración antes de verterla en los vasos o recipientes.")
-            oraciones.append("Finalmente, coloque la sustancia en el hornillo de bronce para elevar el vapor y extraer la savia de la corteza.")
+            oraciones.append("Para la infusión, se procesa la pulpa y la savia líquida dejándolas en reposo durante el tiempo indicado.")
+            oraciones.append("Quémese el residuo en el hornillo de bronce para elevar el vapor y purificar los aceites esenciales.")
 
-    if not oraciones:
-        raices_encontradas = [p for p in palabras if len(p) > 2 and not p.startswith(("kedy", "vety"))]
-        if raices_encontradas:
-            oraciones.append(f"Estudio morfológico del fragmento: Se analiza la estructura de los elementos correspondientes a [{', '.join(raices_encontradas[:3])}].")
-        oraciones.append("El manuscrito detalla en esta sección los pasos indicados para la manipulación y corte de los tallos olorosos.")
+    if not oraciones or len(oraciones) <= 1:
+        oraciones.append(f"Instrucción de boticario: Cortar y separar ordenadamente los tallos olorosos siguiendo las proporciones de la receta {num_folio}.")
 
-    num_folio = ''.join(filter(str.isdigit, folio_nombre))
-    tipo_lado = "recto" if "r" in folio_nombre else "verso"
     oraciones.append(f"\n[Fin de la lectura del Folio {num_folio} cara {tipo_lado}].")
     return " ".join(oraciones)
 
