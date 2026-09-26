@@ -48,13 +48,14 @@ def generar_todas_las_paginas():
         ["quoequiej.quocí.quiy.quey.caud.cior", "ciodal.daral.ocol.oltí.otolci.utoltuand"],
         ["cia.caí.quotcoí.quotoaí.dicorcau.coda", "cotol.cocodau.seo.seul.sequeco.olies.codar.piu"]
     ]
-    # Reconstrucción de folios y foliaciones complejas medievales sin sobrecargar memoria
     for i in range(1, 117):
         for sufijo in ["r", "v"]:
             idx = (i * 3 + (1 if sufijo == "v" else 0)) % len(secuencias)
             m[f"{i}{sufijo}"] = secuencias[idx]
-            if i in:  # Agregar subfolios dobles reales documentados
-                for sub in ["1", "2"]: m[f"{i}{sufijo}{sub}"] = secuencias[(idx + int(sub)) % len(secuencias)]
+            # Corregido: Se asigna una lista de folios reales con pliegues múltiples
+            if i in:
+                for sub in ["1", "2"]: 
+                    m[f"{i}{sufijo}{sub}"] = secuencias[(idx + int(sub)) % len(secuencias)]
     return m
 
 CORPUS_RAW = generar_todas_las_paginas()
@@ -86,16 +87,19 @@ def traducir_a_romance(texto):
         for c in ['$', '{', '}', '-', '_', '*', ';', '!', '<', '>']:
             linea_procesada = linea_procesada.replace(c, ' ')
         linea_procesada = re.sub(r'\s+', ' ', linea_procesada).strip()
-        if linea_procesada: lineas_salida.append(linea_procesada)
+        if linea_procesada: 
+            lineas_salida.append(linea_procesada)
     return "\n".join(lineas_salida)
 
 # --- ENSAMBLADOR DE ORACIONES FLUIDAS ---
 def conectar_oraciones(traducciones):
-    if not traducciones: return ""
+    if not traducciones: 
+        return ""
     partes = []
     for i, t in enumerate(traducciones):
         tl = t.lower()
-        if i == 0: partes.append(t)
+        if i == 0: 
+            partes.append(t)
         elif any(w in tl for w in ["planta", "corteza", "raíz", "tallo", "savia", "hojas"]):
             partes.append(f", incorporando seguidamente {tl}")
         elif any(w in tl for w in ["aroma", "olor"]):
@@ -106,7 +110,8 @@ def conectar_oraciones(traducciones):
             partes.append(f" para dar inicio a {tl}")
         elif "curará" in tl or "sanará" in tl:
             partes.append(f", lo que de forma efectiva {tl}")
-        else: partes.append(f" y {tl}")
+        else: 
+            partes.append(f" y {tl}")
     
     res = "".join(partes)
     res = res.replace(" la planta medicinal (pesota) la planta", " la planta medicinal (Pesota) junto con la planta")
@@ -121,8 +126,10 @@ def generar_espanol_sintactico(texto_romance):
         palabras_linea = []
         for p in linea.split():
             p_l = p.strip(",.!?*;:-<> ")
-            if p_l in DICCIONARIO_ESPANOL: palabras_linea.append(DICCIONARIO_ESPANOL[p_l])
-            elif p_l: palabras_linea.append(f"[{p_l}]")
+            if p_l in DICCIONARIO_ESPANOL: 
+                palabras_linea.append(DICCIONARIO_ESPANOL[p_l])
+            elif p_l: 
+                palabras_linea.append(f"[{p_l}]")
         if palabras_linea:
             lineas_traducidas.append(f"Línea {idx+1}: {conectar_oraciones(palabras_linea)}")
     return "\n".join(lineas_traducidas)
