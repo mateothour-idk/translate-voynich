@@ -3,7 +3,7 @@ import re
 
 st.set_page_config(page_title="Traductor Voynich", page_icon="📜", layout="wide")
 st.title("📜 Traductor Universal del Manuscrito Voynich")
-st.write("Explora las 240 páginas con un motor de traducción adaptativo y articulación semántica con sentido real.")
+st.write("Explora las 240 páginas con un motor de traducción adaptativo y corchetes vacíos para palabras desconocidas.")
 
 # --- DICCIONARIO HISTÓRICO DE RAÍCES COMPROBADAS ---
 DICCIONARIO_ESPANOL = {
@@ -112,7 +112,7 @@ def conectar_oraciones(traducciones):
     res = res.replace(", ,", ",")
     return res.strip().capitalize() + "."
 
-# --- MOTOR DE TRADUCCIÓN PALABRA POR PALABRA ADAPTATIVO SIN CORCHETES ---
+# --- MOTOR DE TRADUCCIÓN PALABRA POR PALABRA CON MARCADOR VACÍO ---
 def generar_espanol_sintactico(texto_romance):
     lineas_traducidas = []
     for idx, linea in enumerate(texto_romance.split('\n')):
@@ -126,8 +126,8 @@ def generar_espanol_sintactico(texto_romance):
             elif p_l in DICCIONARIO_ESPANOL:
                 palabras_linea.append(DICCIONARIO_ESPANOL[p_l])
             elif p_l:
-                # Si una sílaba fonética no está en el glosario, se limpia de corchetes para que no ensucie la pantalla
-                palabras_linea.append(p_l)
+                # Modificación: Lo que no se pueda traducir, se marca explícitamente como []
+                palabras_linea.append("[]")
                 
         if palabras_linea:
             lineas_traducidas.append(f"Línea {idx+1}: {conectar_oraciones(palabras_linea)}")
