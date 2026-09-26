@@ -5,7 +5,7 @@ import re
 st.set_page_config(page_title="Traductor Universal Voynich Completo", page_icon="📜", layout="wide")
 
 st.title("Traductor Universal del Manuscrito Voynich (Corpus Real)")
-st.write("Explora, descifra y traduce cada línea real del manuscrito completo con sentido narrativo fluido en español.")
+st.write("Explora, descifra y traduce cada línea real del manuscrito. Las palabras no descifradas se mantendrán entre [corchetes].")
 
 DICCIONARIO_ESPANOL = {
     "poisoda": "la planta medicinal (Pesota)", "puí": "la planta", "cuta": "la corteza", 
@@ -87,59 +87,27 @@ def traducir_a_romance(texto):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
-def generar_espanol_sintactico(texto_romance, folio_id):
+def generar_espanol_sintactico(texto_romance):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
-    
-    comodines_botanica = [
-        "se analiza el comportamiento de la corteza vegetal", "se añade agua para disolver los componentes", 
-        "siguiendo las normas de este recetario", "para filtrar las impurezas de la sustancia",
-        "según el orden de la preparacion medica", "manipulando la muestra con los instrumentos",
-        "para estabilizar las propiedades medicinales", "en el recipiente de maceracion"
-    ]
-    comodines_astro = [
-        "siguiendo la alineación estelar", "según el orden de los cuadrantes", 
-        "calculando la trayectoria del cuerpo celeste", "para marcar las estaciones del año",
-        "conforme indica el mapa astronomico", "observando el firmamento nocturno"
-    ]
-    
-    num_pag = int(''.join(filter(str.isdigit, folio_id))) if any(c.isdigit() for c in folio_id) else 1
-    es_astronómico = 57 <= num_pag <= 73
-    es_balneario = 75 <= num_pag <= 84
-    
-    comodines_activos = comodines_astro if es_astronómico else comodines_botanica
     
     for idx, linea in enumerate(lineas):
         palabras = linea.split()
         linea_espanol = []
-        comodines_usados = set()
         
-        for p_idx, palabra in enumerate(palabras):
+        for palabra in palabras:
             palabra_limpia = palabra.strip(",.!?*;:-")
-            
             if palabra_limpia in DICCIONARIO_ESPANOL:
                 linea_espanol.append(DICCIONARIO_ESPANOL[palabra_limpia])
             else:
-                # Modificación matemática usando el número de página para evitar que los folios se parezcan entre sí
-                comodin_idx = (len(palabra_limpia) + idx + p_idx + num_pag) % len(comodines_activos)
-                frase_comodin = comodines_activos[comodin_idx]
-                
-                if frase_comodin not in comodines_usados:
-                    linea_espanol.append(frase_comodin)
-                    comodines_usados.add(frase_comodin)
+                if palabra_limpia:
+                    linea_espanol.append(f"[{palabra_limpia}]")
         
         if linea_espanol:
             texto_linea = " ".join(linea_espanol).capitalize()
-            texto_linea = re.sub(r'\b(\s+\w+){2,}\b', lambda m: " " + m.group(1).strip() if m.group(0).strip().count(" ") <= 1 else m.group(0), texto_linea)
-            texto_linea = texto_linea.replace(" el el ", " el ").replace(" la la ", " la ").replace(" de de ", " de ")
             lineas_traducidas.append(f"Línea {idx+1}: {texto_linea}.")
             
-    seccion = "Tratado de Herbolaria Botánica"
-    if es_astronómico: seccion = "Tratado de Astronomía Celestial"
-    elif es_balneario: seccion = "Manual de Aguas e Hidroterapia"
-    
-    encabezado = f"[ANÁLISIS FILOLÓGICO DEL {seccion.upper()} - FOLIO {folio_id.upper()}]\n\n"
-    return encabezado + "\n".join(lineas_traducidas)
+    return "\n".join(lineas_traducidas)
 
 tab1, tab2 = st.tabs(["📝 Laboratorio de Texto Libre", "📖 Explorador del Corpus Real (1r a 116v)"])
 
@@ -148,7 +116,7 @@ with tab1:
     entrada = st.text_area("Pega caracteres EVA aquí:", "teeodau cseey cpair osaiin")
     if st.button("Analizar Fragmento"):
         romance = traducir_a_romance(entrada)
-        espanol = generar_espanol_sintactico(romance, "Libre")
+        espanol = generar_espanol_sintactico(romance)
         c1, c2 = st.columns(2)
         with c1:
             st.success("Fonética Romance:")
@@ -168,7 +136,7 @@ with tab2:
             texto_eva_completo = "\n".join(lineas_eva)
             
             romance_final = traducir_a_romance(texto_eva_completo)
-            espanol_final = generar_espanol_sintactico(romance_final, folio_sel)
+            espanol_final = generar_espanol_sintactico(romance_final)
             
             st.write("---")
             st.markdown(f"### Transcripción y Descifrado Real para el Folio {folio_sel}")
@@ -181,7 +149,7 @@ with tab2:
                 st.success("2. Fonética Romance (Tu Matriz):")
                 st.text_area("Romance", romance_final, height=450)
             with col_esp:
-                st.info("3. Traducción Narrativa al Español:")
+                st.info("3. Traducción Real al Español:")
                 st.text_area("Español", json_fix := espanol_final, height=450)
     else:
         st.warning("No se pudo cargar la base de datos remota.")
