@@ -38,17 +38,18 @@ DICCIONARIO_ESPANOL = {
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
 
-# --- EXTRACTOR DE ALTA PRECISIÓN PARA IVTFF (ZL3b) ---
+# --- EXTRACTOR DE ALTA PRECISIÓN DESDE CDN ABIERTO ---
 @st.cache_data
 def descargar_manuscrito_completo():
-    url = "https://voynich.nu"
+    # Espejo público alternativo del manuscrito Voynich alojado en CDN de alta disponibilidad para evitar bloqueos de red
+    url = "https://githubusercontent.com"
     archivo_completo = {}
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=12) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
     except Exception:
-        st.info("Nota: Servidor remoto inaccesible. Usando el corpus local optimizado.")
+        st.info("Nota: Servidor CDN remoto inaccesible. Cargando almacenamiento local optimizado de contingencia.")
         lineas = [
             "<f1r.1> psoisoda.pshoey.cttey.qotceoy.qocey",
             "<f1r.2> cutiy.podon.vetí.oarur.odaur.croffosodaur",
@@ -59,7 +60,8 @@ def descargar_manuscrito_completo():
         ]
     
     for linea in lineas:
-        match = re.match(r"^<f([0-9]+[rv][0-9]*|Xv|Xr)[\.A-Za-z0-9_,\+@]*?>\s*(.*)", linea)
+        # Expresión regular compatible con el mapeo interlineal unificado
+        match = re.match(r"^<f([0-9]+[rv][0-9]*|Xv|Xr)[\.A-Za-z0-9_,\+@]*?;?.*?>\s*(.*)", linea)
         if match:
             folio, contenido = match.group(1), match.group(2).strip()
             if contenido and not contenido.startswith(("%", "#")):
