@@ -31,7 +31,7 @@ DICCIONARIO_ESPANOL = {
     "oltí": "al final del proceso", "otolci": "de la olla", "utoltuand": "mezclando constantemente",
     "cia": "allí", "caí": "cae", "quotcoí": "en cuanto a", "quotoaí": "el tratamiento diario",
     "dicorcau": "se dice del final", "coda": "la cola", "cotol": "el cáliz floral",
-    "cocodau": "el fruto obtenido", "seo": "su", "seul": "solo", "sequeco : completely seco",
+    "cocodau": "el fruto obtenido", "seo": "su", "seul": "solo", "sequeco": "completamente seco",
     "olies": "los aceites corporales", "codar": "el tallo final", "piu": "en mayor medida",
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
