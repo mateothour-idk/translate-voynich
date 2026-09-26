@@ -112,14 +112,13 @@ def conectar_oraciones(traducciones):
     res = res.replace(", ,", ",")
     return res.strip().capitalize() + "."
 
-# --- MOTOR DE TRADUCCIÓN PALABRA POR PALABRA ADAPTATIVO CON SENTIDO COMPLETO ---
+# --- MOTOR DE TRADUCCIÓN PALABRA POR PALABRA ADAPTATIVO SIN CORCHETES ---
 def generar_espanol_sintactico(texto_romance):
     lineas_traducidas = []
     for idx, linea in enumerate(texto_romance.split('\n')):
         palabras_linea = []
         for p in linea.split():
             p_l = p.strip(",.!?*;:-<> ")
-            # Normalizar caracteres diacríticos comunes para asegurar cruce con diccionario
             p_norm = p_l.replace('í', 'í').replace('ó', 'oí').replace('í', 'í')
             
             if p_norm in DICCIONARIO_ESPANOL:
@@ -127,18 +126,18 @@ def generar_espanol_sintactico(texto_romance):
             elif p_l in DICCIONARIO_ESPANOL:
                 palabras_linea.append(DICCIONARIO_ESPANOL[p_l])
             elif p_l:
-                # En lugar de romper la línea, limpiamos el token desconocido para que fluya en la oración
+                # Si una sílaba fonética no está en el glosario, se limpia de corchetes para que no ensucie la pantalla
                 palabras_linea.append(p_l)
                 
         if palabras_linea:
             lineas_traducidas.append(f"Línea {idx+1}: {conectar_oraciones(palabras_linea)}")
     return "\n".join(lineas_traducidas)
 
-# --- ORDENAMIENTO ALFANUMÉRICO SEGURO ---
+# --- ORDENAMIENTO ALFANUMÉRICO SEGURO CORREGIDO ---
 def ordenar_folios_natural(lista):
     def clave(x):
         numeros = re.findall(r'\d+', str(x))
-        num = int(numeros) if numeros else 999
+        num = int(numeros[0]) if numeros else 999
         letra = 0 if "r" in str(x) else 1
         return (num, letra)
     return sorted(lista, key=clave)
