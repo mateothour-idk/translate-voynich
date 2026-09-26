@@ -6,7 +6,7 @@ st.set_page_config(page_title="Traductor Voynich", page_icon="📜", layout="wid
 st.title("📜 Traductor Universal del Manuscrito Voynich")
 st.write("Explora las 240 páginas con un traductor avanzado externo aplicado sobre las líneas romances completas.")
 
-# --- BASE DE DATOS COMPLETA DE ALTA DISPONIBILIDAD (TODAS LAS PÁGINAS REALES) ---
+# --- BASE DE DATOS COMPRENSIVA CON LAS PÁGINAS REALES MAPPED ---
 def generar_todas_las_paginas():
     m = {}
     secuencias = [
@@ -77,14 +77,9 @@ def traducir_a_romance(texto):
 
 # --- TRADUCTOR AVANZADO CON VERIFICACIÓN DE LLAVES ---
 def traducir_linea_inteligente(linea_romance):
-    # Limpiar diacríticos de control internos para emparejar con el diccionario de líneas estables
-    llave_limpia = linea_romance.replace('í', 'í').replace('ó', 'oí').replace('í', 'í')
-    llave_limpia = re.sub(r'\s+', ' ', llave_limpia).strip()
-    
+    llave_limpia = re.sub(r'\s+', ' ', linea_romance).strip()
     if llave_limpia in DICCIONARIO_LINEAS:
         return DICCIONARIO_LINEAS[llave_limpia]
-    
-    # Si ingresas texto libre diferente, la IA externa intenta darle sentido procedimental
     try:
         traduccion_externa = GoogleTranslator(source='auto', target='es').translate(linea_romance)
         return traduccion_externa.capitalize()
@@ -99,12 +94,16 @@ def generar_espanol_sintactico(texto_romance):
             lineas_traducidas.append(f"Línea {idx+1}: {resultado_linea}")
     return "\n".join(lineas_traducidas)
 
+# --- ORDENAMIENTO ALFANUMÉRICO CORREGIDO DE RAÍZ (EXTRACCIÓN DE ÍNDICE) ---
 def ordenar_folios_natural(lista):
     def clave(x):
         numeros = re.findall(r'\d+', str(x))
-        return (int(numeros) if numeros else 999, 0 if "r" in str(x) else 1)
+        num = int(numeros[0]) if numeros else 999
+        letra = 0 if "r" in str(x) else 1
+        return (num, letra)
     return sorted(lista, key=clave)
 
+# --- INTERFAZ GRÁFICA DE STREAMLIT ---
 tab1, tab2 = st.tabs(["📝 Laboratorio Libre", "📖 Explorador del Corpus"])
 
 with tab1:
