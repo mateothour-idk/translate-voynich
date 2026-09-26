@@ -1,9 +1,9 @@
 import streamlit as st
-import urllib.request
 import re
+import os
 
 st.set_page_config(page_title="Traductor Voynich Completo", page_icon="📜", layout="wide")
-st.title("📜 Traductor Universal del Manuscrito Voynich (Corpus Real)")
+st.title("📜 Traductor Universal del Manuscrito Voynich (Corpus Local)")
 st.write("Explora cada línea real del manuscrito. Las palabras no descifradas se mantendrán entre [corchetes].")
 
 # --- DICCIONARIO HISTÓRICO DE RAÍCES COMPROBADAS ---
@@ -37,33 +37,30 @@ DICCIONARIO_ESPANOL = {
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
 
-# --- DESCARGA AUTOMÁTICA DEL CORPUS COMPLETO (SOLUCIÓN AL PESO) ---
+# --- EXTRACTOR DESDE ARCHIVO DE TEXTO LOCAL ---
 @st.cache_data
-def descargar_corpus_completo():
-    # Descarga directa del repositorio público de transcripciones en EVA
-    url = "https://githubusercontent.com"
+def cargar_corpus_local():
     archivo_completo = {}
-    try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=15) as response:
-            lineas = response.read().decode('utf-8', errors='ignore').splitlines()
-        
-        for linea in lineas:
-            match = re.match(r"^<f(\d+[rv])[\.A-Za-z0-9_]*?;.*?>\s*(.*)", linea)
-            if match:
-                folio = match.group(1)
-                contenido = match.group(2).strip()
-                contenido = re.sub(r"[\=\+\*\?]", "", contenido)
-                if contenido and not contenido.startswith(("#", "%")):
-                    if folio not in archivo_completo:
-                        archivo_completo[folio] = []
-                    archivo_completo[folio].append(contenido)
-        return archivo_completo
-    except Exception as e:
-        st.error(f"Error de red al cargar el manuscrito original: {e}")
+    nombre_archivo = "interlinear.txt"
+    
+    if not os.path.exists(nombre_archivo):
         return {}
+        
+    with open(nombre_archivo, "r", encoding="utf-8", errors="ignore") as f:
+        lineas = f.splitlines() if hasattr(f, 'splitlines') else f.read().splitlines()
+        
+    for linea in lineas:
+        match = re.match(r"^<f(\d+[rv])[\.A-Za-z0-9_]*?;.*?>\s*(.*)", linea)
+        if match:
+            folio, contenido = match.group(1), match.group(2).strip()
+            contenido = re.sub(r"[\=\+\*\?]", "", contenido)
+            if contenido and not contenido.startswith(("#", "%")):
+                if folio not in archivo_completo:
+                    archivo_completo[folio] = []
+                archivo_completo[folio].append(contenido)
+    return archivo_completo
 
-CORPUS_RAW = descargar_corpus_completo()
+CORPUS_RAW = cargar_corpus_local()
 
 # --- MOTOR DE DESCRIPCIÓN FONÉTICA ---
 def traducir_a_romance(texto):
@@ -126,7 +123,7 @@ with tab1:
 with tab2:
     if CORPUS_RAW:
         lista_folios = ordenar_folios_natural(list(CORPUS_RAW.keys()))
-        folio_sel = st.selectbox("Selecciona un folio del manuscrito real:", lista_folios)
+        folio_sel = st.selectbox("Selecciona un folio real:", lista_folios)
         if st.button(f"Descifrar Folio Real {folio_sel}"):
             texto_eva = "\n".join(CORPUS_RAW[folio_sel])
             rom_f = traducir_a_romance(texto_eva)
@@ -143,4 +140,4 @@ with tab2:
                 st.info("3. Traducción Real al Español")
                 st.text_area("Español", esp_f, height=400)
     else:
-        st.warning("Cargando el manuscrito desde el repositorio... Por favor actualiza la página.")
+        st.error("No se encontró el archivo 'interlinear.txt' en el directorio de la aplicación.")
