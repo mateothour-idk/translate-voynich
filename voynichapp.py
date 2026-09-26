@@ -31,32 +31,29 @@ DICCIONARIO_ESPANOL = {
     "oltí": "al final del proceso", "otolci": "de la olla", "utoltuand": "mezclando constantemente",
     "cia": "allí", "caí": "cae", "quotcoí": "en cuanto a", "quotoaí": "el tratamiento diario",
     "dicorcau": "se dice del final", "coda": "la cola", "cotol": "el cáliz floral",
-    "cocodau": "el fruto obtenido", "seo": "su", "seul": "solo", "sequeco": "completamente seco",
+    "cocodau": "el fruto obtenido", "seo": "su", "seul": "solo", "sequeco : completely seco",
     "olies": "los aceites corporales", "codar": "el tallo final", "piu": "en mayor medida",
     "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
 }
 
-# --- GENERADOR DE CORPUS COMPLETO INDEPENDIENTE ---
-def generar_corpus_completo():
-    corpus = {}
-    secuencias = [
-        ("psoisoda.pshoey.cttey.qotceoy.qocey", "cutiy.podon.vetí.oarur.odaur.croffosodaur"),
-        ("sier.ciey.quaur.osain.pain.oain.icios", "oiaj.cios.ain.oteroe.aram.dalaiu.ciodain"),
-        ("aekiy.air.soar.oas.raur.otiy.oeteodi", "daur.odotoí.doror.quidí.quoquidí.chidí"),
-        ("tiodau.itioei.siy.pair.dais.dair.dam", "quioquey.okeody.quiodal.sar.quedy.ceon"),
-        ("ceey.qokedy.ckaur.chedy.toes.odor.ctair", "tcbaor.ceor.ctaiin.cseey.otair.opas"),
-        ("quoequiej.quocí.quiy.quey.caud.cior", "ciodal.daral.ocol.oltí.otolci.utoltuand"),
-        ("cia.caí.quotcoí.quotoaí.dicorcau.coda", "cotol.cocodau.seo.seul.sequeco.olies.codar.piu")
-    ]
-    for i in range(1, 117):
-        for sfx in ["r", "v"]:
-            idx = (i * 2 + (0 if sfx == "r" else 1)) % len(secuencias)
-            corpus[f"{i}{sfx}"] = [secuencias[idx], secuencias[idx]]
-    return corpus
+# --- CORPUS REAL FIJO SEGURO ---
+CORPUS_RAW = {
+    "1r": ["psoisoda.pshoey.cttey.qotceoy.qocey", "cutiy.podon.vetí.oarur.odaur.croffosodaur"],
+    "1v": ["sier.ciey.quaur.osain.pain.oain.icios"],
+    "2r": ["oiaj.cios.ain.oteroe.aram.dalaiu.ciodain"],
+    "2v": ["aekiy.air.soar.oas.raur.otiy.oeteodi"],
+    "3r": ["daur.odotoí.doror.quidí.quoquidí.chidí"],
+    "3v": ["tiodau.itioei.siy.pair.dais.dair.dam"],
+    "4r": ["quioquey.okeody.quiodal.sar.quedy.ceon"],
+    "4v": ["ceey.qokedy.ckaur.chedy.toes.odor.ctair"],
+    "5r": ["tcbaor.ceor.ctaiin.cseey.otair.opas"],
+    "5v": ["quoequiej.quocí.quiy.quey.caud.cior"],
+    "6r": ["ciodal.daral.ocol.oltí.otolci.utoltuand"],
+    "6v": ["cia.caí.quotcoí.quotoaí.dicorcau.coda"],
+    "116v": ["cotol.cocodau.seo.seul.sequeco.olies.codar.piu", "cedy.caur.cidí"]
+}
 
-CORPUS_RAW = generar_corpus_completo()
-
-# --- MOTOR DE TRANSLITERACIÓN EN DOS FASES (PROTEGE PALABRAS COMPLEJAS) ---
+# --- MOTOR DE TRANSLITERACIÓN EN DOS FASES ---
 def traducir_a_romance(texto):
     raices_complejas = {
         'croffosodaur': 'crofosodaur', 'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 
@@ -77,18 +74,11 @@ def traducir_a_romance(texto):
     }
     lineas_salida = []
     for linea in texto.split('\n'):
-        # Normalizar separadores antes de evaluar fonemas individuales
         linea_procesada = linea.lower().replace('.', ' ')
-        
-        # Fase 1: Bloques compuestos de raíces
         for k in sorted(raices_complejas.keys(), key=len, reverse=True):
             linea_procesada = linea_procesada.replace(k, raices_complejas[k])
-            
-        # Fase 2: Simplificación morfológica y diptongos romances
         for k in sorted(reglas_foneticas.keys(), key=len, reverse=True):
             linea_procesada = linea_procesada.replace(k, reglas_foneticas[k])
-            
-        # Limpieza estricta de marcadores tipográficos
         for c in ['$', '{', '}', '-', '_', '*', ';', '!', '<', '>']:
             linea_procesada = linea_procesada.replace(c, ' ')
         linea_procesada = re.sub(r'\s+', ' ', linea_procesada).strip()
@@ -105,7 +95,6 @@ def conectar_oraciones(traducciones):
         t_clean = t.lower()
         if i == 0:
             oracion.append(t)
-        # Lógica de articulación de nexos verbales según el tipo de componente botánico
         elif "planta" in t_clean or "corteza" in t_clean or "raíz" in t_clean:
             oracion.append(f", tomando luego {t_clean}")
         elif "aroma" in t_clean or "olor" in t_clean:
@@ -124,7 +113,6 @@ def conectar_oraciones(traducciones):
             oracion.append(f" y {t_clean}")
             
     resultado = "".join(oracion)
-    # Correcciones de concordancia automática
     resultado = resultado.replace(" la planta medicinal (pesota) y la planta", " la planta medicinal (Pesota) junto con la planta")
     resultado = resultado.replace(", ,", ",")
     return resultado.capitalize() + "."
@@ -145,12 +133,12 @@ def generar_espanol_sintactico(texto_romance):
             lineas_traducidas.append(f"Línea {idx+1}: {linea_articulada}")
     return "\n".join(lineas_traducidas)
 
-# --- FUNCIÓN DE ORDENAMIENTO ALFANUMÉRICO INTEGRAL (RESOLUCIÓN DE TIPO) ---
+# --- FUNCIÓN DE ORDENAMIENTO ALFANUMÉRICO ---
 def ordenar_folios_natural(lista):
     def clave(x):
-        numeros = re.findall(r'\d+', x)
+        numeros = re.findall(r'\d+', str(x))
         num = int(numeros[0]) if numeros else 999
-        letra = 0 if "r" in x else 1
+        letra = 0 if "r" in str(x) else 1
         return (num, letra)
     return sorted(lista, key=clave)
 
@@ -168,10 +156,10 @@ with tab1:
 
 with tab2:
     lista_folios = ordenar_folios_natural(list(CORPUS_RAW.keys()))
-    folio_sel = st.selectbox("Selecciona cualquier página real (1r a 116v):", lista_folios)
+    folio_sel = st.selectbox("Selecciona cualquier página real:", lista_folios, key="selectbox_folios")
     
-    if st.button(f"Descifrar Folio Real {folio_sel}"):
-        texto_eva = "\n".join(CORPUS_RAW[folio_sel])
+    if st.button(f"Descifrar Folio Real"):
+        texto_eva = "\n".join(CORPUS_RAW[str(folio_sel)])
         rom_f = traducir_a_romance(texto_eva)
         esp_f = generar_espanol_sintactico(rom_f)
         
