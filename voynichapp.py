@@ -41,7 +41,7 @@ DICCIONARIO_ESPANOL = {
 # --- EXTRACTOR DE ALTA PRECISIÓN PARA IVTFF (ZL3b) ---
 @st.cache_data
 def descargar_manuscrito_completo():
-    url = "http://www.voynich.nu/data/ZL3b-n.txt"
+    url = "https://voynich.nu"
     archivo_completo = {}
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -59,7 +59,8 @@ def descargar_manuscrito_completo():
         ]
     
     for linea in lineas:
-        match = re.match(r"^<f(\d+[rv]\d*)[\.A-Za-z0-9_,\+@]*?>\s*(.*)", linea)
+        # Expresión regular ajustada para capturar cualquier variación alfanumérica de los folios
+        match = re.match(r"^<f([0-9]+[rv][0-9]*|Xv|Xr)[\.A-Za-z0-9_,\+@]*?>\s*(.*)", linea)
         if match:
             folio, contenido = match.group(1), match.group(2).strip()
             if contenido and not contenido.startswith(("%", "#")):
@@ -91,7 +92,7 @@ def traducir_a_romance(texto):
     }
     texto_limpio = texto.lower()
     for k in sorted(reglas.keys(), key=len, reverse=True):
-        texto_limpio = texto_limpio.replace(k, reglas[k])
+        texto_limpio = texto_limpio.replace(k, rules := reglas[k])
     for caracter in ['$', '.', '{', '}', '-', '_', '*', ';', '!', '<', '>']:
         texto_limpio = texto_limpio.replace(caracter, ' ')
     return re.sub(r'\s+', ' ', texto_limpio).strip()
@@ -115,6 +116,17 @@ def generar_espanol_sintactico(texto_romance):
             lineas_traducidas.append(f"Línea {idx+1}: {texto_linea}")
     return "\n".join(lineas_traducidas)
 
+# --- FUNCIÓN DE ORDENAMIENTO ALFANUMÉRICO NATURAL ---
+def ordenar_folios_natural(lista_folios):
+    def extraer_clave(texto_folio):
+        # Aísla los números para un orden numérico puro y los sufijos r/v independientes
+        numeros = re.findall(r'\d+', texto_folio)
+        num = int(numeros[0]) if numeros else 999
+        sufijo = ''.join(re.findall(r'[a-zA-Z]+', texto_folio))
+        sub_num = int(numeros[1]) if len(numeros) > 1 else 0
+        return (num, sufijo, sub_num)
+    return sorted(lista_folios, key=extraer_clave)
+
 # --- INTERFAZ GRÁFICA ---
 tab1, tab2 = st.tabs(["📝 Laboratorio de Texto Libre", "📖 Explorador del Corpus Real (1r a 116v)"])
 
@@ -135,8 +147,10 @@ with tab1:
 with tab2:
     st.subheader("Navegador de Transcripciones Académicas")
     if CORPUS_MANUSCRITO:
-        lista_folios = sorted(list(CORPUS_MANUSCRITO.keys()), key=lambda x: (int(''.join(filter(str.isdigit, x))), x[-1]))
+        # Se aplica la función de ordenación natural para asegurar el indexado de todo el manuscrito
+        lista_folios = ordenar_folios_natural(list(CORPUS_MANUSCRITO.keys()))
         folio_sel = st.selectbox("Selecciona un folio real:", lista_folios)
+        
         if st.button(f"Descifrar Folio Real {folio_sel}"):
             lineas_eva = CORPUS_MANUSCRITO[folio_sel]
             texto_eva_completo = "\n".join(lineas_eva)
