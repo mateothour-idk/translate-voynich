@@ -31,14 +31,15 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = texto.replace("tc", "ch")     # Tc con sonido de Ch
     texto = texto.replace("ct", "cut")
     texto = texto.replace("ph", "f")
-    texto = texto.replace("sh", "x")
+    # REGLA REMOVIDA: texto = texto.replace("sh", "x") -> Eliminada por el usuario
+    texto = texto.replace("sh", "s")       # Al quitar sh=x, sh se procesa por defecto como 's' antes de limpiar h
     texto = texto.replace("th", "t")
     texto = texto.replace("ch", "c")      # Ch = C (Prioriza raíz consonántica limpia)
     texto = texto.replace("ck", "qu")
     
     # Reglas Vocálicas y Consonánticas secundarias de 2 letras
     texto = texto.replace("ee", "i")
-    texto = texto.replace("oe", "ue")     # Oe = Ue (Diptongo romance como en 'huevo'/'rueda')
+    texto = texto.replace("oe", "ue")     # Oe = Ue (Diptongo romance común)
     texto = texto.replace("iu", "u")
     texto = texto.replace("oi", "oi")
     texto = texto.replace("ii", "i")
@@ -107,7 +108,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     }
     
     for palabra in palabras:
-        # --- NUEVA FUNCIÓN: DETECTOR Y SEPARADOR DE COMPUESTAS (Ej: diccut) ---
+        # --- DETECTOR Y SEPARADOR DE COMPUESTAS ---
         palabra_compuesta_detectada = False
         for i in range(2, len(palabra) - 1):
             sub1 = palabra[:i]
@@ -116,11 +117,9 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
                 trad1 = diccionario_maestro[sub1][idioma]
                 trad2 = diccionario_maestro[sub2][idioma]
                 
-                # Se añade a la oración como una frase unida de forma lógica
                 palabras_oracion.append(f"{trad1}+{trad2}")
                 palabra_compuesta_detectada = True
                 
-                # Registrar en la tabla el hallazgo compuesto estructurado
                 analisis_estructurado.append({
                     "Morfología Filtrada": palabra.upper(),
                     "Interpretación / Semántica": f"{trad1} / {trad2}",
@@ -142,11 +141,11 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             tipo = "Match Exacto" if idioma == "es" else "Exact Match"
         elif len(palabra) > 2 and palabra[:3] in diccionario_maestro:
             traducida = diccionario_maestro[palabra[:3]][idioma]
-            palabra_para_oracion = traducida + f"({palabra[3:].upper()})"
+            palabra_para_oracion = traducida + f"(= {palabra[3:].upper()})"
             tipo = "Match Raíz (3L)" if idioma == "es" else "Root Match (3L)"
         elif len(palabra) > 1 and palabra[:2] in diccionario_maestro:
             traducida = diccionario_maestro[palabra[:2]][idioma]
-            palabra_para_oracion = traducida + f"({palabra[2:].upper()})"
+            palabra_para_oracion = traducida + f"(= {palabra[2:].upper()})"
             tipo = "Match Raíz (2L)" if idioma == "es" else "Root Match (2L)"
             
         analisis_estructurado.append({
