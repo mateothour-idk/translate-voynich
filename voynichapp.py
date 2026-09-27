@@ -4,73 +4,81 @@ import re
 from voynichdata import aplicar_matriz_sustitucion, motor_prosa_fluida
 
 st.set_page_config(
-    page_title="Traductor Voynich Cloud Pro",
+    page_title="Traductor Voynich Unificado",
     page_icon="📜",
     layout="centered"
 )
 
-st.title("📜 Traductor Dinámico del Manuscrito Voynich")
-st.write("Esta herramienta procesa el corpus en la nube mediante tu matriz adaptativa de reducción paleográfica.")
+st.title("📜 Traductor Dinámico de Todo el Manuscrito Voynich")
+st.write("Esta herramienta descarga el corpus completo unificado desde los servidores académicos y lo indexa automáticamente.")
 
-# --- COMPONENTE: GENERADOR AUTOMÁTICO DE FOLIOS DEL LIBRO ---
-def generar_lista_folios():
-    folios = ["Manual (Texto Libre)"]
-    for i in range(1, 117):
-        folios.append(f"f{i}r")
-        folios.append(f"f{i}v")
-    return folios
-
-# --- COMPONENTE: WEB SCRAPING CON FILTRADO DE METADATA ---
-@st.cache_data(show_spinner=False)
-def descargar_folio_online(folio_raw):
+# --- DESCARGA E INDEXACIÓN DEL CORPUS COMPLETO (SOLO UNA VEZ) ---
+@st.cache_data(show_spinner=True)
+def descargar_y_parsear_corpus():
     """
-    Aísla completamente los parámetros numéricos y de orientación para blindar
-    la construcción de la URL e impedir fusiones con el host.
+    Descarga el archivo completo voyn_101.txt e indexa el contenido por folios reales.
     """
-    # Forzar limpieza total de strings y extraer los tokens numéricos
-    folio_limpio = str(folio_raw).strip().lower()
-    match = re.search(r"f(\d+)([rv])", folio_limpio)
-    
-    if not match:
-        return f"Error: Formato de folio inválido o no reconocido ({folio_raw})"
-        
-    num_pagina = match.group(1)
-    lado = match.group(2)
-    
-    # Formatear el número con ceros a la izquierda (ej: '51' -> '051')
-    num_tres_digitos = str(num_pagina).zfill(3)
-    
-    # Construcción estricta y hardcodeada de la ruta del archivo
-    nombre_archivo = f"f{num_tres_digitos}{lado}_tr.txt"
-    url_final = f"https://voynich.nu{nombre_archivo}"
+    url_maestra = "https://www.voynich.nu/data/voyn_101.txt"
+    diccionario_folios = {}
     
     try:
-        respuesta = requests.get(url_final, timeout=8)
+        respuesta = requests.get(url_maestra, timeout=15)
         if respuesta.status_code == 200:
             lineas = respuesta.text.split("\n")
-            texto_pag = []
+            folio_actual = None
+            
             for linea in lineas:
-                if not linea.strip() or linea.startswith("#"):
+                linea_str = linea.strip()
+                # Ignorar comentarios del archivo
+                if not linea_str or linea_str.startswith("#"):
                     continue
-                # Limpiar etiquetas xml/interlineales como <f1r.P1.1> o comentarios {}
-                limpio = re.sub(r'<[^>]+>', '', linea)
+                
+                # Detectar marcas de folio del corpus interlineal, ej: <f1r.P1.1> o <f48r.1>
+                match_folio = re.search(r"<f(\d+[rv])", linea_str)
+                if match_folio:
+                    folio_actual = f"f{match_folio.group(1)}"
+                    if folio_actual not in diccionario_folios:
+                        diccionario_folios[folio_actual] = []
+                
+                # Limpiar metadatos internos de las líneas y comentarios entre corchetes/llaves
+                limpio = re.sub(r'<[^>]+>', '', linea_str)
                 limpio = re.sub(r'\{[^}]+\}', '', limpio)
+                limpio = re.sub(r'\[[^\]]+\]', '', limpio)
                 limpio = limpio.replace(".", " ").replace(",", " ").strip()
-                if limpio:
-                    texto_pag.append(limpio)
-            return " ".join(texto_pag)
+                
+                if folio_actual and limpio:
+                    diccionario_folios[folio_actual].append(limpio)
+            
+            # Unificar arreglos de strings en bloques de prosa por página
+            return {folio: " ".join(lineas_pag) for folio, lineas_pag in diccionario_folios.items()}
         else:
-            return f"Error 404: El folio no está disponible en el servidor (URL intentada: {url_final})"
+            st.error(f"Error del servidor al obtener el corpus (Código {respuesta.status_code})")
+            return {}
     except Exception as e:
-        return f"Error de red crítico: No se pudo resolver la conexión. URL intentada: {url_final}. Detalles: {str(e)}"
+        st.error(f"Fallo crítico de conexión con el repositorio: {str(e)}")
+        return {}
 
-# --- CONFIGURACIÓN DE CONTROLES (BARRA LATERAL) ---
-st.sidebar.header("Parámetros del Sistema")
+# Ejecutar el cargador inteligente en caché
+mapa_completo_folios = descargar_y_parsear_corpus()
 
-lista_folios = generar_lista_folios()
+# --- CONFIGURACIÓN DE LA BARRA LATERAL ---
+st.sidebar.header("Control de Folios")
+
+# Población dinámica del selector con los folios indexados reales
+opciones_selector = ["Manual (Texto Libre)"]
+if mapa_completo_folios:
+    # Ordenar las páginas numéricamente para facilitar la navegación del usuario
+    paginas_ordenadas = sorted(
+        mapa_completo_folios.keys(), 
+        key=lambda x: (int(re.sub(r'\D', '', x)), x[-1])
+    )
+    opciones_selector.extend(paginas_ordenadas)
+else:
+    st.sidebar.warning("Usando modo manual debido a un fallo en la descarga del corpus.")
+
 folio_seleccionado = st.sidebar.selectbox(
     "Selecciona una página (Folio):",
-    lista_folios
+    opciones_selector
 )
 
 idioma_destino = st.sidebar.radio(
@@ -80,25 +88,20 @@ idioma_destino = st.sidebar.radio(
 cod_idioma = "es" if "Español" in idioma_destino else "en"
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Desarrollado con arquitectura cloud dinámica y optimizador de n-gramas v2.4")
+st.sidebar.caption("Motor Unificado de Corpus v2.5 (Sin peticiones fragmentadas)")
 
-# --- CONTROL DEL FLUJO DE DATOS ---
+# --- MANEJO DEL CONTENIDO DE LA PÁGINA ---
 if folio_seleccionado == "Manual (Texto Libre)":
     texto_usuario = st.text_area(
         "Introduce código EVA libre para pruebas:",
         placeholder="Ejemplo: qokched dcectth shol pcs..."
     )
 else:
-    texto_usuario = descargar_folio_online(folio_seleccionado)
-    
-    if "Error" in texto_usuario:
-        st.error(texto_usuario)
-        texto_usuario = ""
-    else:
-        st.info(f"📖 **Texto EVA oficial extraído para el Folio {folio_seleccionado}:**")
-        st.code(texto_usuario, wrap_lines=True)
+    texto_usuario = mapa_completo_folios.get(folio_seleccionado, "")
+    st.info(f"📖 **Texto EVA oficial extraído de memoria para el Folio {folio_seleccionado}:**")
+    st.code(texto_usuario, wrap_lines=True)
 
-# --- BOTÓN Y LÓGICA DE PROCESAMIENTO ---
+# --- EJECUCIÓN DEL PIPELINE ---
 if st.button("Procesar y Traducir", type="primary"):
     if not texto_usuario.strip():
         st.warning("El búfer de texto está vacío. Proporciona datos de entrada.")
