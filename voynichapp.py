@@ -6,14 +6,14 @@ st.set_page_config(page_title="Traductor Voynich DB Pro", page_icon="📜", layo
 st.title("📜 Traductor Universal y Corpus Completo del Manuscrito Voynich")
 st.write("Explora el manuscrito completo folio por folio mediante un motor adaptativo en la nube.")
 
-# --- GLOSARIO ESTRUCTURADO (DICCIONARIO NATIVO) ---
+# --- GLOSARIO ESTRUCTURADO (DICCIONARIO NATIVO EXTENDIDO) ---
 if "diccionario" not in st.session_state:
     st.session_state.diccionario = {
         "poisoda": "la planta medicinal (Pesota)", "puí": "la planta", "cuta": "la corteza",
         "cutiy": "la corteza o piel", "podon": "la raíz o el pie", "vetí": "maduro o viejo",
         "oarur": "el aroma", "odaur": "el olor", "crofosodaur": "el aroma resinoso",
         "sier": "las hojas dentadas", "ciey": "la savia", "quaur": "el agua caliente",
-        "osain": "el aceite esencial", "pain": "la pulpa o sustancia", "oain": "el jugo",
+        "osain": "el aceite essencial", "pain": "la pulpa o sustancia", "oain": "el jugo",
         "icios": "los vasos", "oiaj": "la esencia", "cios": "los recipientes",
         "ain": "el líquido", "oteroe": "el proceso", "aram": "el hornillo de bronce",
         "dalaiu": "destilar", "ciodain": "los canales", "aekiy": "la mezcla",
@@ -24,7 +24,11 @@ if "diccionario" not in st.session_state:
         "chidí": "canalizar", "tiodau": "en el tiempo determinado", "itioei": "la estación",
         "siy": "si se presenta", "pair": "por medio de", "dais": "se debe aplicar",
         "dair": "dar", "dam": "entregar", "quioquey": "y el corazón",
-        "okeody": "lo que dicta el tratado", "quiodal": "el texto o contenido"
+        "okeody": "lo que dicta el tratado", "quiodal": "el texto o contenido",
+        # --- NUEVO SOPORTE DE PALABRAS ---
+        "tararain": "el brote superior", "idain": "el tallo interno", "dole": "duele o duele la",
+        "criquy": "brote agudo", "arain": "la envoltura externa", "chedí": "purificar",
+        "qokeody": "la regla del boticario", "daba": "infundir", "pheador": "el pectoral"
     }
 
 # --- GENERACIÓN AUTOMÁTICA DEL CORPUS COMPLETO (FOLIOS 1R A 116V) ---
@@ -48,26 +52,20 @@ if "manuscrito" not in st.session_state:
         "Recetas Cortas (Estrellas)": {}
     }
     
-    # Rellenar automáticamente el resto de folios para abarcar la totalidad del manuscrito
+    # Bucle para poblar las secciones y garantizar que aparezcan TODAS las páginas
     for i in range(1, 67):
-        folio_r = f"Folio {i}r"
-        folio_v = f"Folio {i}v"
-        if folio_r not in corpus["Herbario (Botánica)"]:
-            corpus["Herbario (Botánica)"][folio_r] = "poisoda cutiy podon vetí oarur sier ciey"
-        if folio_v not in corpus["Herbario (Botánica)"]:
-            corpus["Herbario (Botánica)"][folio_v] = "oteroe aram dalaiu ciodain aekiy air soar"
+        fr, fv = f"Folio {i}r", f"Folio {i}v"
+        if fr not in corpus["Herbario (Botánica)"]: corpus["Herbario (Botánica)"][fr] = "poisoda cutiy podon vetí oarur sier ciey"
+        if fv not in corpus["Herbario (Botánica)"]: corpus["Herbario (Botánica)"][fv] = "oteroe aram dalaiu ciodain aekiy air soar"
             
     for i in range(67, 74):
         corpus["Astronomía (Zodíaco)"][f"Folio {i}r"] = "doror odotoí daur tiodau quioquey okeody air soar oiaj cios"
         corpus["Astronomía (Zodíaco)"][f"Folio {i}v"] = "odotoí quidí quoquidí chidí tiodau itioei doror quiodal"
         
     for i in range(74, 85):
-        folio_r = f"Folio {i}r"
-        folio_v = f"Folio {i}v"
-        if folio_r not in corpus["Balneología (Fisiología)"]:
-            corpus["Balneología (Fisiología)"][folio_r] = "icios cios ain ciodain quaur oteroe oas pain"
-        if folio_v not in corpus["Balneología (Fisiología)"]:
-            corpus["Balneología (Fisiología)"][folio_v] = "ain ciodain quaur oteroe dalaiu aekiy air soar"
+        fr, fv = f"Folio {i}r", f"Folio {i}v"
+        if fr not in corpus["Balneología (Fisiología)"]: corpus["Balneología (Fisiología)"][fr] = "icios cios ain ciodain quaur oteroe oas pain"
+        if fv not in corpus["Balneología (Fisiología)"]: corpus["Balneología (Fisiología)"][fv] = "ain ciodain quaur oteroe dalaiu aekiy air soar"
 
     for i in range(85, 100):
         corpus["Farmacéutica (Recetas)"][f"Folio {i}r"] = "poisoda cuta podon vetí oarur osain pain oain"
@@ -108,7 +106,7 @@ def descifrar_texto_completo(texto):
         palabras_traducidas = [traducir_palabra(p) for p in palabras]
         frase_sucia = " ".join(palabras_traducidas)
         
-        # Filtro de post-procesamiento sintáctico para limpiar artículos repetidos consecutivos
+        # Filtro sintáctico para artículos repetidos consecutivos
         frase_limpia = re.sub(r'\b(los|el|la|las|un|una)\b\s+(?=\b\1\b)', '', frase_sucia, flags=re.IGNORECASE)
         frase_limpia = re.sub(r'\s+', ' ', frase_limpia).strip()
         lineas_traducidas.append(frase_limpia)
@@ -142,6 +140,14 @@ with tab1:
         st.success(f"**Descifrado Semántico Automatizado**")
         texto_descifrado = descifrar_texto_completo(texto_editable)
         st.text_area("Resultado obtenido:", texto_descifrado, height=150, disabled=True)
+        
+        # --- BOTÓN DE DESCARGA INCORPORADO ---
+        st.download_button(
+            label="💾 Descargar Traducción (.txt)",
+            data=f"--- TRADUCCIÓN DEL {folio_elegido.upper()} ---\n\nTexto Original:\n{texto_editable}\n\nTraducción Obtenida:\n{texto_descifrado}",
+            file_name=f"traduccion_voynich_{folio_elegido.lower().replace(' ', '_')}.txt",
+            mime="text/plain"
+        )
 
     st.caption("*Simbología: Las palabras con `¿?` no están en la BD; las `[]*` son aproximaciones por raíces.*")
 
