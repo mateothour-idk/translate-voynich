@@ -3,9 +3,8 @@ import re
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
     Aplica las reglas de sustitución paleográfica al texto EVA de forma segura.
-    Las reglas se ejecutan estrictamente de mayor a menor longitud para evitar
-    conflictos o mutilaciones de dígrafos, y las reglas vocálicas se ejecutan 
-    antes que Q/K para evitar duplicaciones indebidas (eliminando el bug quu).
+    Cada regla tiene asignada la opción fonética más coherente para evitar ambigüedades.
+    Las sustituciones se ejecutan estrictamente de mayor a menor longitud.
     """
     if not texto_eva:
         return ""
@@ -18,48 +17,49 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     
     # --- 2. REGLAS DE 3 CARACTERES (Trigramas) ---
     texto = texto.replace("iii", "í")
-    texto = texto.replace("eee", "ie")
+    texto = texto.replace("eee", "ie")     # Eee = Ie (Evolución romance común)
     texto = texto.replace("dce", "dic")
     texto = texto.replace("cee", "ci")
-    texto = texto.replace("eey", "ai")
+    texto = texto.replace("eey", "ai")     # Eey = Ai (Diptongo estable)
     texto = texto.replace("pcs", "pes")
     
     # --- 3. REGLAS DE 2 CARACTERES (Bigramas y Dígrafos) ---
     texto = texto.replace("pc", "p")
     texto = texto.replace("ps", "p")
     texto = texto.replace("cp", "p")
-    texto = texto.replace("dc", "ch") 
-    texto = texto.replace("tc", "ch") 
+    texto = texto.replace("dc", "ch")     # Dc con sonido de Ch
+    texto = texto.replace("tc", "ch")     # Tc con sonido de Ch
     texto = texto.replace("ct", "cut")
     texto = texto.replace("ph", "f")
     texto = texto.replace("sh", "x")
     texto = texto.replace("th", "t")
-    texto = texto.replace("ch", "c")   
+    texto = texto.replace("ch", "c")      # Ch = C (Prioriza raíz consonántica limpia)
+    texto = texto.replace("ck", "qu")
     
-    # Reglas Vocálicas
+    # Reglas Vocálicas y Consonánticas secundarias de 2 letras
     texto = texto.replace("ee", "i")
-    texto = texto.replace("oe", "ue")  
+    texto = texto.replace("oe", "ue")     # Oe = Ue (Diptongo romance como en 'huevo'/'rueda')
     texto = texto.replace("iu", "u")
-    texto = texto.replace("oi", "oi")  
+    texto = texto.replace("oi", "oi")
     texto = texto.replace("ii", "i")
-    texto = texto.replace("ae", "e")   
-    texto = texto.replace("oo", "u")
+    texto = texto.replace("ae", "e")      # Ae = E (Monoptongación clásica del latín vulgar)
+    texto = texto.replace("oo", "u")      # Oo = U (Frecuente en romances tempranos)
     texto = texto.replace("cs", "s")
     texto = texto.replace("ll", "y")
-    texto = texto.replace("ey", "a")   
+    texto = texto.replace("ey", "a")      # Ey = A corta
     texto = texto.replace("ce", "c")
-    texto = texto.replace("ai", "i")
+    texto = texto.replace("ai", "i")      # Ai = I
     
-    # --- 4. REGLAS DE 1 CARÁCTER CON CONTEXTO ---
+    # --- 4. REGLAS DE 1 CARÁCTER CON CONTEXTO (Y inicial/final) ---
     texto = re.sub(r'\by\b', 'i', texto) 
     texto = re.sub(r'\by', 'i', texto)  
     texto = re.sub(r'y\b', 'i', texto)  
     
-    # --- 5. SUSTITUCIÓN FINAL DE CONSONANTES Q / K / CK ---
-    texto = texto.replace("ck", "qu")
+    # --- 5. SUSTITUCIÓN FINAL DE CONSONANTES Q / K ---
     texto = texto.replace("k", "qu")
     texto = texto.replace("q", "qu")
-    texto = texto.replace("m", "m")    
+    texto = texto.replace("m", "m")       # M = M
+    texto = texto.replace("l", "l")       # L = L
     
     # --- 6. LIMPIEZA TOTAL DE HACHES (H) HUÉRFANAS ---
     texto = texto.replace("h", "")
@@ -70,14 +70,15 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     """
-    Procesa el texto y devuelve una TUPLA:
-    1. Una lista de diccionarios para armar la tabla detallada.
-    2. Un string con la ORACIÓN COMPLETA armada continuamente (Incógnitas entre comillas).
+    Procesa el texto limpio y devuelve una tupla:
+    1. Una lista de diccionarios para la tabla analítica.
+    2. La oración armada continuamente con las incógnitas entre comillas.
     """
     palabras = texto_limpio.split()
     analisis_estructurado = []
     palabras_oracion = []
     
+    # Glosario con significados unificados y coherentes
     diccionario_maestro = {
         "cut": {"es": "cortar", "en": "cut"},
         "ci": {"es": "aquí", "en": "here"},
@@ -107,8 +108,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     
     for palabra in palabras:
         traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
-        # Modificación: Si es incógnita, en la oración se encierra entre comillas dobles
-        palabra_para_oracion = f'"{palabra.upper()}"'  
+        palabra_para_oracion = f'"{palabra.upper()}"'  # Incógnita por defecto entre comillas
         tipo = "Desconocido" if idioma == "es" else "Unknown"
         
         # 1. Match Exacto
