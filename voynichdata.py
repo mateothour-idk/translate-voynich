@@ -55,8 +55,6 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = re.sub(r'y\b', 'i', texto)  
     
     # --- 5. SUSTITUCIÓN FINAL DE CONSONANTES Q / K / CK ---
-    # Al estar aquí abajo, la 'u' de 'qu' no vuelve a procesarse por las vocales,
-    # eliminando para siempre el bug que generaba "quu".
     texto = texto.replace("ck", "qu")
     texto = texto.replace("k", "qu")
     texto = texto.replace("q", "qu")
@@ -79,7 +77,6 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> str:
     palabras = texto_limpio.split()
     resultado = []
     
-    # Glosario bilingüe de raíces basado en las equivalencias de tu cuadro
     diccionario_maestro = {
         "cut": {"es": "cortar / incisión", "en": "cut / incision"},
         "ci": {"es": "aquí / cercano", "en": "here / nearby"},
@@ -98,7 +95,6 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> str:
         elif len(palabra) > 2 and palabra[:3] in diccionario_maestro:
             resultado.append(diccionario_maestro[palabra[:3]][idioma])
         else:
-            # Fallback: Deja la palabra limpia en mayúsculas si no hay traducción exacta
             resultado.append(palabra.upper())
             
     return " ".join(resultado)
