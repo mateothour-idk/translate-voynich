@@ -58,8 +58,8 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     # --- 5. SUSTITUCIÓN FINAL DE CONSONANTES Q / K ---
     texto = texto.replace("k", "qu")
     texto = texto.replace("q", "qu")
-    texto = texto.replace("m", "m")       # M = M
-    texto = texto.replace("l", "l")       # L = L
+    texto = texto.replace("m", "m")       
+    texto = texto.replace("l", "l")       
     
     # --- 6. LIMPIEZA TOTAL DE HACHES (H) HUÉRFANAS ---
     texto = texto.replace("h", "")
@@ -72,13 +72,13 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     """
     Procesa el texto limpio y devuelve una tupla:
     1. Una lista de diccionarios para la tabla analítica.
-    2. La oración armada continuamente con las incógnitas entre comillas.
+    2. La oración armada continuamente, separando palabras compuestas de forma inteligente.
     """
     palabras = texto_limpio.split()
     analisis_estructurado = []
     palabras_oracion = []
     
-    # Glosario con significados unificados y coherentes
+    # Glosario estable de raíces
     diccionario_maestro = {
         "cut": {"es": "cortar", "en": "cut"},
         "ci": {"es": "aquí", "en": "here"},
@@ -107,21 +107,43 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     }
     
     for palabra in palabras:
+        # --- NUEVA FUNCIÓN: DETECTOR Y SEPARADOR DE COMPUESTAS (Ej: diccut) ---
+        palabra_compuesta_detectada = False
+        for i in range(2, len(palabra) - 1):
+            sub1 = palabra[:i]
+            sub2 = palabra[i:]
+            if sub1 in diccionario_maestro and sub2 in diccionario_maestro:
+                trad1 = diccionario_maestro[sub1][idioma]
+                trad2 = diccionario_maestro[sub2][idioma]
+                
+                # Se añade a la oración como una frase unida de forma lógica
+                palabras_oracion.append(f"{trad1}+{trad2}")
+                palabra_compuesta_detectada = True
+                
+                # Registrar en la tabla el hallazgo compuesto estructurado
+                analisis_estructurado.append({
+                    "Morfología Filtrada": palabra.upper(),
+                    "Interpretación / Semántica": f"{trad1} / {trad2}",
+                    "Diagnóstico": "Compuesta Separada" if idioma == "es" else "Split Compound"
+                })
+                break
+                
+        if palabra_compuesta_detectada:
+            continue
+            
+        # --- PROCESAMIENTO ESTÁNDAR SI NO ES COMPUESTA ---
         traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
-        palabra_para_oracion = f'"{palabra.upper()}"'  # Incógnita por defecto entre comillas
+        palabra_para_oracion = f'"{palabra.upper()}"'  # Incógnita entre comillas
         tipo = "Desconocido" if idioma == "es" else "Unknown"
         
-        # 1. Match Exacto
         if palabra in diccionario_maestro:
             traducida = diccionario_maestro[palabra][idioma]
             palabra_para_oracion = traducida
             tipo = "Match Exacto" if idioma == "es" else "Exact Match"
-        # 2. Match Raíz 3 Letras
         elif len(palabra) > 2 and palabra[:3] in diccionario_maestro:
             traducida = diccionario_maestro[palabra[:3]][idioma]
             palabra_para_oracion = traducida + f"({palabra[3:].upper()})"
             tipo = "Match Raíz (3L)" if idioma == "es" else "Root Match (3L)"
-        # 3. Match Raíz 2 Letras
         elif len(palabra) > 1 and palabra[:2] in diccionario_maestro:
             traducida = diccionario_maestro[palabra[:2]][idioma]
             palabra_para_oracion = traducida + f"({palabra[2:].upper()})"
