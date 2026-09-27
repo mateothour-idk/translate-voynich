@@ -1,41 +1,40 @@
 import streamlit as st
 import sqlite3
 import re
-from deep_translator import GoogleTranslator
 import voynichdata
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(page_title="Traductor Voynich DB Pro", page_icon="📜", layout="wide")
 st.title("📜 Traductor Universal y Corpus Completo del Manuscrito Voynich")
-st.write("Explora el manuscrito mediante tu técnica de reducción de caracteres y traducción multiidioma.")
+st.write("Explora el manuscrito completo mediante tu técnica de reducción de caracteres y traducción instantánea.")
 
 # --- CONEXIÓN Y ESTRUCTURACIÓN DE LA BASE DE DATOS LOCAL ---
 conn = sqlite3.connect("voynich_matrix.db", check_same_thread=False)
 cursor = conn.cursor()
 
-# Forzar la recreación limpia de las tablas para eliminar registros mal indexados del pasado
+# Forzar la recreación limpia de las tablas para limpiar registros antiguos del pasado
 cursor.execute("DROP TABLE IF EXISTS diccionario")
 cursor.execute("DROP TABLE IF EXISTS manuscrito")
 
-cursor.execute("CREATE TABLE IF NOT EXISTS diccionario (clave TEXT PRIMARY KEY, valor TEXT)")
+# La tabla diccionario ahora guarda de forma bilingüe el español y el inglés de forma segura
+cursor.execute("CREATE TABLE IF NOT EXISTS diccionario (clave TEXT PRIMARY KEY, valor_es TEXT, valor_en TEXT)")
 cursor.execute("CREATE TABLE IF NOT EXISTS manuscrito (folio TEXT PRIMARY KEY, seccion TEXT, texto_voynich TEXT)")
 
 # Inserción masiva inicial desde el archivo de datos externos
-cursor.executemany("INSERT OR IGNORE INTO diccionario VALUES (?, ?)", voynichdata.glosario_inicial)
+cursor.executemany("INSERT OR IGNORE INTO diccionario VALUES (?, ?, ?)", voynichdata.glosario_inicial)
 cursor.executemany("INSERT OR IGNORE INTO manuscrito VALUES (?, ?, ?)", voynichdata.obtener_corpus_completo())
 conn.commit()
 
 # --- CONFIGURACIÓN DE IDIOMA EN LA BARRA LATERAL ---
-st.sidebar.header("🌍 Traducción Global")
+st.sidebar.header("🌍 Idioma del Descifrado")
 idioma_destino = st.sidebar.selectbox(
-    "Traducir resultados al idioma:",
-    ["Español", "English (Inglés)", "Latín", "Italiano", "Français (Francés)", "Deutsch (Alemán)", "Português"]
+    "Mostrar resultados en:",
+    ["Español", "English (Inglés)"]
 )
 
-codigos_idiomas = {
-    "Español": "es", "English (Inglés)": "en", "Latín": "la", 
-    "Italiano": "it", "Français (Francés)": "fr", "Deutsch (Alemán)": "de", "Português": "pt"
-}
+# Definir qué columna de la base de datos consultar según la elección del usuario
+columna_idioma = "valor_es" if idioma_destino == "Español" else "valor_en"
+
 
 # --- MOTOR DE TRADUCCIÓN E INTELIGENCIA DE TU TÉCNICA ---
 def aplicar_tecnica_y_traducir(palabra):
@@ -50,8 +49,8 @@ def aplicar_tecnica_y_traducir(palabra):
     significado_final = None
     es_aproximado = False
     
-    # 1. Búsqueda exacta (Corregido agregando [0] para extraer la cadena de texto limpia fuera de la tupla)
-    cursor.execute("SELECT valor FROM diccionario WHERE clave = ?", (palabra_limpia,))
+    # 1. Búsqueda exacta limpia extrayendo el idioma deseado directamente de la BD
+    cursor.execute(f"SELECT {columna_idioma} FROM diccionario WHERE clave = ?", (palabra_limpia,))
     resultado = cursor.fetchone()
     if resultado:
         significado_final = resultado[0]
@@ -60,23 +59,15 @@ def aplicar_tecnica_y_traducir(palabra):
         if len(palabra_limpia) > 3:
             for i in range(len(palabra_limpia), 2, -1):
                 sub_raiz = palabra_limpia[:i]
-                cursor.execute("SELECT valor FROM diccionario WHERE clave LIKE ?", (f"{sub_raiz}%",))
+                cursor.execute(f"SELECT {columna_idioma} FROM diccionario WHERE clave LIKE ?", (f"{sub_raiz}%",))
                 res_raiz = cursor.fetchone()
                 if res_raiz:
                     significado_final = res_raiz[0]
                     es_aproximado = True
                     break
                     
-    # 3. Procesamiento seguro de traducción en bloque mediante la API
+    # 3. Retornar el resultado estructurado sin errores de red
     if significado_final:
-        if idioma_destino != "Español":
-            try:
-                # Envío exclusivo de texto plano sin interferencias sintácticas de SQLite
-                traduccion = GoogleTranslator(source='es', target=codigos_idiomas[idioma_destino]).translate(significado_final)
-                return f"[{traduccion}]*" if es_aproximado else traduccion
-            except Exception:
-                # Retorno de seguridad en español ante fallas de red
-                return f"[{significado_final}]*" if es_aproximado else significado_final
         return f"[{significado_final}]*" if es_aproximado else significado_final
         
     return f"¿{palabra}?"
