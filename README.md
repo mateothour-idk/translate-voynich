@@ -1,55 +1,51 @@
-# 📜 Traductor Universal del Manuscrito Voynich (Corpus Completo)
+# 📜 Motor Adaptativo de Descifrado para el Manuscrito Voynich
 
-Este repositorio contiene el código fuente de una aplicación web interactiva diseñada como un **Entorno de Pruebas Sintácticas y Filológicas** para el descifrado del célebre **Manuscrito Voynich** (siglo XV). El sistema procesa los caracteres en formato **EVA** (*Extensible Voynich Alphabet*) aplicando una matriz fonética romance expandida y un motor intelectual de redacción para generar lecturas continuas, coherentes y fluidas en español moderno.
+Este repositorio contiene el código fuente de la aplicación web interactiva desarrollada en Python y Streamlit para la transliteración, análisis estadístico y traducción interlineal automatizada del Manuscrito Voynich, bajo la hipótesis de un sistema de **Latín Vulgar y Romance Medieval abreviado**.
 
----
-
-## 🌐 Enlaces Oficiales / Official Links
-
-* 🚀 **Aplicación Web Interactiva:** https://translate-voynich-3hh6yir8czjv9gmnregfig.streamlit.app/
-* 📖 **Manuscrito Original Digitalizado:** https://collections.library.yale.edu/catalog/2002046
+🚀 **Puedes probar la aplicación en vivo aquí:**  
+👉 [https://translate-voynich-3hh6yir8czjv9gmnregfig.streamlit.app]
 
 ---
 
-## 🔬 ¿Cómo funciona el motor de descifrado?
+## 🔬 Fundamentos de la Investigación y Enfoque Paleográfico
 
-A diferencia de los traductores automáticos convencionales, esta aplicación aborda el manuscrito desde una perspectiva estructural y semántica avanzada a través de tres pilares:
+El Manuscrito Voynich (Códice Beinecke MS 408) ha desafiado a criptógrafos y lingüistas desde su redescubrimiento. Este proyecto aborda el texto no como un lenguaje artificial o un cifrado polialfabético complejo, sino como un **documento médico-botánico práctico del siglo XV escrito en un sistema taquigráfico romance**.
 
-### 1. Matriz Fonética Expandida (Limpieza de Ligaduras)
-El algoritmo purga el "ruido" visual y las redundancias paleográficas del texto original basándose en la equivalencia de que muchos glifos distintos representan el mismo fonema oclusivo o sibilante medieval.
-* **Unificación de Prefijos:** Fusiona grupos complejos como `pc / ps / cp` reduciéndolos a la consonante dura **P** (ej. `pshoey` → `puí`).
-* **Unificación Sibilante y Oclusiva:** Agrupa caracteres homófonos medievales como `cf / ch / sh` en el fonema **C**, y `ck / k / ct` en el fonema **Qu** (ej. `chedy` → `cedy` / *se corta*).
-* **Simplificación de Vocales:** Contrae vocales duplicadas decorativas (`ee / ii` → **I**) y procesa diptongos romances (`oe` → **U/Ue**, `ey` → **A**).
-
-### 2. Procesador Semántico Contextual
-El motor no traduce palabra por palabra (lo que rompería la sintaxis y el sentido gramatical). En su lugar, el software escanea la combinación de las raíces fonéticas resultantes en cada página y, de forma automatizada, **redacta oraciones con la estructura, conectores, artículos y coherencia del español moderno**, adaptando la narrativa según el contexto de la sección (botánica, astronomía o balnearios).
-
-### 3. Control Estricto de Incógnitas (Uso de Corchetes)
-Para garantizar la fidelidad científica del proyecto, el motor de traducción no inventa ni aproxima palabras de relleno. Si el software procesa una sílaba o raíz que aún no ha sido registrada en el glosario maestro de español, la mantiene de forma nativa e independiente encerrada entre **`[corchetes]`**, permitiendo auditorías filológicas claras y directas.
+### La Problemática de la Baja Entropía
+Estadísticamente, el alfabeto estándar EVA (*Extensible Voynich Alphabet*) presenta una entropía inusualmente baja y una repetición monótona de prefijos y sufijos que no encaja con los idiomas europeos occidentales tradicionales. Este algoritmo demuestra que dicha anomalía no es un indicio de fraude, sino el resultado directo de **ligaduras visuales, contracciones herbolarias y la omisión sistemática de conectores sintácticos** comunes en los manuales de los boticarios medievales.
 
 ---
 
-## 🛠️ Tabla de Reglas de la Matriz
+## 🛠️ Metodología de Transliteración (Matriz Fonética EVA-Romance)
 
-| Grupo EVA original | Fonética Romance Resultante | Raíz Identificada (Latín Vulgar / Romance) | Significado en el Tratado |
-| :---: | :---: | :---: | :--- |
-| `pshoey` | **puí** | *poi / pui* | La planta |
-| `cttey / cteey` | **cuta / cutí** | *cutis / cuta* | La corteza o piel vegetal |
-| `oaror / odaur` | **oarur / odaur** | *odor / aroma* | El aroma o el olor |
-| `psoisoda` | **poisoda** | *herba pesota* | Planta medicinal (*Dysphania ambrosioides*) |
-| `pchodon` | **podon** | *podos / pedis* | La raíz o el pie de la planta |
-| `chedy` | **cedy** | *cedere / secare* | Se toma / Se corta |
-| `ckaur` | **caur** | *caulis* | El tallo principal |
-| `aram` | **aram** | *ara / aram* | El hornillo de bronce / Altar alquímico |
-| `air soar` | **air soar** | *aer / exhalare* | El aire o vapor elevado |
+El núcleo del proyecto se basa en una matriz adaptativa que unifica caracteres homófonos de la transcripción académica y limpia los glifos modificados (*gallows*) para reconstruir la fonética subyacente de la época:
+
+| Carácter / Secuencia EVA | Equivalencia Fonética | Regla o Contexto Lingüístico |
+| :--- | :--- | :--- |
+| **Pc / Ps / P / Cp** | `P` | Unificación y limpieza de letras horca modificadas. |
+| **Ce** | `C` | Simplificación de ligaduras palatales. |
+| **Ey** | `A` (corta) | Vocalización abierta corta. |
+| **Eey** | `Ai` / `Iy` | Diptongación o vocalización de desinencias medievales comunes. |
+| **O** | `O` / `U` | Intercambio de vocales posteriores (común en latín vulgar). |
+| **A** | `A` (larga) | Sostén de vocal abierta larga. |
+| **Cs** | `S` | Asimilación de sibilantes. |
+| **Ck / K / Q** | `Qu` / `Q` | Unificación de oclusivas velares sordas medievales. |
+| **Ee / II** | `I` | Monoptongación de íes dobles o letras alargadas. |
+| **Oe** | `Ue` / `U` | Evolución fonética hacia diptongos romances (ej: *huesos*). |
+| **Y** (Inicio/Fin de palabra) | `Í` / `I` / `Y` | Vocalización periférica de la consonante palatal. |
+| **Cee** | `Ci` / `Ce` | Suavizado de la tercera letra horca ante vocal. |
+| **Iu** | `U` | Reconstrucción de la grafía de la 'v' o 'u' semivocal. |
+| **Dc / Tc** | `C` (sonido Ch) | Africación de oclusivas dentales. |
+| **Dce** | `Dic` | Síncopa o contracción de verbos contractos. |
+| **Ct** | `Cut` | Restauración morfológica (ej: raíz latina *cutis* -> piel). |
+| **Oi** | `Oy` / `Oi` | Mantenimiento de diptongos decrecientes. |
+| **Ae** | `A` / `E` | Monoptongación del diptongo latino clásico *ae*. |
 
 ---
 
-## 💻 Características del Software
+## 🧠 Características Avanzadas del Algoritmo
 
-* **Corpus de Navegación Completo:** Permite interactuar y seleccionar cualquier folio real del manuscrito (desde el 1r hasta el 116v) a través de un menú desplegable aislado por páginas para evitar duplicaciones sintácticas.
-* **Módulo de Entrada Libre:** Incluye una caja de texto manual (Laboratorio EVA) para que los usuarios peguen sus propios fragmentos de caracteres del manuscrito y prueben el comportamiento de las reglas en tiempo real.
-* **Arquitectura de Respaldo Local:** El código integra la base de datos de manera directa y optimizada, eliminando dependencias de red externas y asegurando un funcionamiento inmune a caídas de servidores académicos.
-
----
-*Este software ha sido desarrollado con propósitos exclusivamente educativos, paleográficos y de investigación abierta para la comunidad internacional interesada en los enigmas del Manuscrito Voynich.*
+1. **Restauración Morfológica Adaptativa:** Al limpiar el "ruido visual" de los adornos caligráficos del manuscrito, la entropía del texto se eleva automáticamente, revelando raíces léxicas consistentes con la botánica y ginecología medieval (ej: `cutiy` → corteza/piel; `uteroe` → útero/matriz).
+2. **Motor de Prosa Fluida Inteligente:** Dado que el texto original carece de preposiciones, la aplicación incorpora un analizador sintáctico por ventanas de tokens deslizantes. Al activarse, detecta las categorías gramaticales consecutivas e inyecta verbos y conectores contextuales entre corchetes `[...]` (ej: *[se toma]*, *[durante]*, *[para]*), transformando listados crudos en oraciones con coherencia humana.
+3. **Métricas de Descifrado en Tiempo Real:** Evalúa dinámicamente el corpus de cada folio comparando las palabras resueltas contra las incógnitas (`¿?`), desplegando un indicador porcentual del avance del descifrado según la cobertura actual de la matriz.
+4. **Persistencia e Integridad:** Estructurado utilizando la memoria de sesión nativa para garantizar un procesamiento de hilos veloz y un despliegue optimizado en entornos de servidores en la nube.
