@@ -66,6 +66,10 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
 
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> list:
+    """
+    Analiza y traduce la morfología limpia de las palabras usando tu 
+    diccionario maestro de raíces con soporte dual (español e inglés).
+    """
     palabras = texto_limpio.split()
     analisis_estructurado = []
     
@@ -78,7 +82,12 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> list:
         "quoqu": {"es": "cocinar / preparar", "en": "cook / prepare"},
         "f": {"es": "hacer / propiedad", "en": "make / property"},
         "x": {"es": "seco / planta", "en": "dry / plant"},
-        "pes": {"es": "pie / base", "en": "foot / base"}
+        "pes": {"es": "pie / base", "en": "foot / base"},
+        "quar": {"es": "porque / por lo cual", "en": "because / wherefore"},
+        "oqui": {"es": "aquí (adverbio)", "en": "here (adverb)"},
+        "oquad": {"es": "que / el cual", "en": "that / which"},
+        "seol": {"es": "sol / astro", "en": "sun / star"},
+        "siedi": {"es": "sede / asiento", "en": "seat / position"}
     }
     
     for palabra in palabras:
