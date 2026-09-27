@@ -35,7 +35,7 @@ def obtener_corpus_completo():
         ("Folio 116v", "Hojas Sueltas (Final)", "quiodal oteroe aram dalaiu ciodain aekiy air soar oas raur")
     ]
     
-    # Rellenar los 240 folios estructurales sin ocupar líneas de código escritas a mano
+    # Rellenar automáticamente hasta cubrir la estructura completa
     for i in range(3, 67):
         paginas.append((f"Folio {i}r", "Herbario (Botánica)", "poisoda cutiy podon vetí oarur sier ciey"))
         paginas.append((f"Folio {i}v", "Herbario (Botánica)", "oteroe aram dalaiu ciodain aekiy air soar"))
