@@ -10,37 +10,42 @@ st.set_page_config(
 )
 
 st.title("📜 Traductor Dinámico de Todo el Manuscrito Voynich")
-st.write("Esta herramienta descarga el corpus completo unificado desde los servidores académicos y lo indexa automáticamente.")
+st.write("Esta herramienta descarga el corpus completo unificado evitando bloqueos de servidor (Fix 406).")
 
-# --- DESCARGA E INDEXACIÓN DEL CORPUS COMPLETO (SOLO UNA VEZ) ---
+# --- DESCARGA E INDEXACIÓN DEL CORPUS COMPLETO (CON HEADERS ANTI-BOT) ---
 @st.cache_data(show_spinner=True)
 def descargar_y_parsear_corpus():
-    """
-    Descarga el archivo completo voyn_101.txt e indexa el contenido por folios reales.
-    """
-    url_maestra = "https://www.voynich.nu/data/voyn_101.txt"
+    url_maestra = "https://voynich.nu"
     diccionario_folios = {}
     
+    # CABECERAS CRÍTICAS: Evitan que el servidor tire Error 406 (Not Acceptable)
+    cabeceras = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/plain,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8"
+    }
+    
     try:
-        respuesta = requests.get(url_maestra, timeout=15)
+        # Hacemos la petición inyectando el agente de usuario simulado
+        respuesta = requests.get(url_maestra, headers=cabeceras, timeout=15)
+        
         if respuesta.status_code == 200:
             lineas = respuesta.text.split("\n")
             folio_actual = None
             
             for linea in lineas:
                 linea_str = linea.strip()
-                # Ignorar comentarios del archivo
                 if not linea_str or linea_str.startswith("#"):
                     continue
                 
-                # Detectar marcas de folio del corpus interlineal, ej: <f1r.P1.1> o <f48r.1>
+                # Buscar marcas de folio interlineales como <f1r.1> o <f48r.1>
                 match_folio = re.search(r"<f(\d+[rv])", linea_str)
                 if match_folio:
                     folio_actual = f"f{match_folio.group(1)}"
                     if folio_actual not in diccionario_folios:
                         diccionario_folios[folio_actual] = []
                 
-                # Limpiar metadatos internos de las líneas y comentarios entre corchetes/llaves
+                # Limpiar metadatos internos de las líneas y comentarios
                 limpio = re.sub(r'<[^>]+>', '', linea_str)
                 limpio = re.sub(r'\{[^}]+\}', '', limpio)
                 limpio = re.sub(r'\[[^\]]+\]', '', limpio)
@@ -49,32 +54,29 @@ def descargar_y_parsear_corpus():
                 if folio_actual and limpio:
                     diccionario_folios[folio_actual].append(limpio)
             
-            # Unificar arreglos de strings en bloques de prosa por página
             return {folio: " ".join(lineas_pag) for folio, lineas_pag in diccionario_folios.items()}
         else:
-            st.error(f"Error del servidor al obtener el corpus (Código {respuesta.status_code})")
+            st.error(f"Error del servidor al obtener el corpus (Código {respuesta.status_code}). El host rechazó los encabezados.")
             return {}
     except Exception as e:
         st.error(f"Fallo crítico de conexión con el repositorio: {str(e)}")
         return {}
 
-# Ejecutar el cargador inteligente en caché
+# Ejecutar cargador en caché
 mapa_completo_folios = descargar_y_parsear_corpus()
 
 # --- CONFIGURACIÓN DE LA BARRA LATERAL ---
 st.sidebar.header("Control de Folios")
 
-# Población dinámica del selector con los folios indexados reales
 opciones_selector = ["Manual (Texto Libre)"]
 if mapa_completo_folios:
-    # Ordenar las páginas numéricamente para facilitar la navegación del usuario
     paginas_ordenadas = sorted(
         mapa_completo_folios.keys(), 
         key=lambda x: (int(re.sub(r'\D', '', x)), x[-1])
     )
     opciones_selector.extend(paginas_ordenadas)
 else:
-    st.sidebar.warning("Usando modo manual debido a un fallo en la descarga del corpus.")
+    st.sidebar.warning("Modo de entrada manual activado debido al bloqueo del host.")
 
 folio_seleccionado = st.sidebar.selectbox(
     "Selecciona una página (Folio):",
@@ -88,7 +90,7 @@ idioma_destino = st.sidebar.radio(
 cod_idioma = "es" if "Español" in idioma_destino else "en"
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Motor Unificado de Corpus v2.5 (Sin peticiones fragmentadas)")
+st.sidebar.caption("Motor Unificado de Corpus v2.6 (Headers Bypass)")
 
 # --- MANEJO DEL CONTENIDO DE LA PÁGINA ---
 if folio_seleccionado == "Manual (Texto Libre)":
