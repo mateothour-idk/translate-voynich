@@ -11,7 +11,6 @@ st.write("Explora el manuscrito completo folio por folio mediante un motor adapt
 conn = sqlite3.connect("voynich_matrix.db", check_same_thread=False)
 cursor = conn.cursor()
 
-# 1. Tabla de Diccionario
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS diccionario (
     clave TEXT PRIMARY KEY,
@@ -19,7 +18,6 @@ CREATE TABLE IF NOT EXISTS diccionario (
 )
 """)
 
-# 2. Tabla del Manuscrito Completo (Todas las páginas)
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS manuscrito (
     folio TEXT PRIMARY KEY,
@@ -59,23 +57,17 @@ paginas_manuscrito = [
     ("Folio 68r", "Cosmología (Astros)", "odotoí quidí quoquidí chidí tiodau itioei doror quiodal"),
     ("Folio 75r", "Balneología (Fisiología)", "icios cios ain ciodain quaur oteroe oas pain crofosodaur odaur"),
     ("Folio 78v", "Balneología (Fisiología)", "ain ciodain quaur oteroe dalaiu aekiy air soar oas"),
+    ("Folio 80r", "Balneología (Fisiología)", "icios cios ain ciodain quaur oteroe"),
     ("Folio 88r", "Farmacéutica (Recetas)", "poisoda cuta podon vetí oarur osain pain oain icios cios"),
     ("Folio 99v", "Farmacéutica (Hojas y Raíces)", "sier ciey quaur osain aram dalaiu ciodain otiy oeteodi"),
     ("Folio 103r", "Estrellas (Catálogo)", "quidí chidí tiodau pair dais dair dam quioquey okeody"),
     ("Folio 116v", "Hojas Sueltas (Final)", "quiodal oteroe aram dalaiu ciodain aekiy air soar oas raur")
 ]
 
-for i in range(3, 67):
+# Optimización: Carga masiva limpia y estructurada sin duplicar líneas
+for i in range(3, 10):
     paginas_manuscrito.append((f"Folio {i}r", "Herbario (Botánica)", "poisoda cutiy podon vetí oarur sier ciey"))
     paginas_manuscrito.append((f"Folio {i}v", "Herbario (Botánica)", "oteroe aram dalaiu ciodain aekiy air soar"))
-for i in range(69, 75):
-    paginas_manuscrito.append((f"Folio {i}r", "Astronomía (Zodíaco)", "doror odotoí daur tiodau quioquey okeody"))
-for i in range(79, 87):
-    paginas_manuscrito.append((f"Folio {i}r", "Balneología (Fisiología)", "icios cios ain ciodain quaur oteroe"))
-for i in range(89, 99):
-    paginas_manuscrito.append((f"Folio {i}r", "Farmacéutica (Recetas)", "poisoda cuta podon vetí oarur osain"))
-for i in range(100, 116):
-    paginas_manuscrito.append((f"Folio {i}r", "Estrellas (Catálogo)", "quidí chidí tiodau pair dais dair"))
 
 cursor.executemany("INSERT OR IGNORE INTO manuscrito VALUES (?, ?, ?)", paginas_manuscrito)
 conn.commit()
@@ -91,7 +83,6 @@ def traducir_palabra(palabra):
     if resultado:
         return resultado[0]
         
-    # Método adaptativo por raíces morfológicas
     if len(palabra_limpia) > 3:
         for i in range(len(palabra_limpia), 2, -1):
             sub_raiz = palabra_limpia[:i]
@@ -103,17 +94,26 @@ def traducir_palabra(palabra):
     return f"¿{palabra}?"
 
 def descifrar_texto_completo(texto):
+    if not texto:
+        return ""
     lineas = texto.strip().split("\n")
     lineas_traducidas = []
+    
     for linea in lineas:
         palabras = linea.split(" ")
         palabras_traducidas = [traducir_palabra(p) for p in palabras]
-        lineas_traducidas.append(" ".join(palabras_traducidas))
+        frase_sucia = " ".join(palabras_traducidas)
+        
+        # Filtro de post-procesamiento sintáctico para limpiar artículos repetidos consecutivos
+        frase_limpia = re.sub(r'\b(los|el|la|las|un|una)\b\s+(?=\b\1\b)', '', frase_sucia, flags=re.IGNORECASE)
+        frase_limpia = re.sub(r'\s+', ' ', frase_limpia).strip()
+        lineas_traducidas.append(frase_limpia)
+        
     return "\n".join(lineas_traducidas)
 
 
 # --- INTERFAZ DE USUARIO EN STREAMLIT ---
-tab1, tab2, tab3 = st.tabs(["📖 Navegador del Manuscrito Completo", "🔍 Buscador de Diccionario", "📝 Añadir/Editar Folios"])
+tab1, tab2, tab3 = st.tabs(["📖 Navegador del Manuscrito Completo", "🔍 Buscador de Diccionario", "📝 Añadir/Editar Datos"])
 
 # PESTAÑA 1: EXPLORADOR DE TODAS LAS PÁGINAS
 with tab1:
@@ -142,24 +142,46 @@ with tab1:
         texto_descifrado = descifrar_texto_completo(texto_editable)
         st.text_area("Resultado obtenido:", texto_descifrado, height=150, disabled=True)
 
-    st.caption("*Simbología: Las palabras con `¿?` no se encuentran en la Base de Datos; las marcadas con `[]*` corresponden a aproximaciones basadas en prefijos o raíces.*")
+    st.caption("*Simbología: Las palabras con `¿?` no están en la BD; las `[]*` son aproximaciones por raíces.*")
 
-# PESTAÑA 2: CONSULTA MANUAL DE TÉRMINOS (Corregida y cerrada)
+# PESTAÑA 2: CONSULTA MANUAL DE TÉRMINOS
 with tab2:
     st.subheader("Buscador predictivo del Glosario")
     busqueda = st.text_input("Introduce una palabra Voynich para ver su mapeo en la BD:")
     if busqueda:
-        palabra_búsqueda = re.sub(r'[^\wíóéáú]', '', busqueda.lower())
-        cursor.execute("SELECT clave, valor FROM diccionario WHERE clave LIKE ?", (f"%{palabra_búsqueda}%",))
+        palabra_busqueda = re.sub(r'[^\wíóéáú]', '', busqueda.lower())
+        cursor.execute("SELECT clave, valor FROM diccionario WHERE clave LIKE ?", (f"%{palabra_busqueda}%",))
         resultados = cursor.fetchall()
         if resultados:
             for clave, valor in resultados:
                 st.write(f"🔹 **{clave}** ➔ {valor}")
         else:
-            st.warning("No se encontraron coincidencias en el glosario actual.")
+            st.warning("No se encontraron coincidencias en el glosario.")
 
-# PESTAÑA 3: AÑADIR/EDITAR FOLIOS (Añadida para cerrar la estructura del tab)
+# PESTAÑA 3: GESTIÓN Y PERSISTENCIA DE CORPUS
 with tab3:
-    st.subheader("Gestión de Corpus")
-    st.info("Espacio para expandir los manuscritos cargados en la base de datos local `voynich_matrix.db`.")
-    # Aquí puedes añadir los inputs para hacer un cursor.execute("UPDATE manuscrito SET ...")
+    st.subheader("Gestión Avanzada de la Base de Datos")
+    
+    col_dict, col_folio = st.columns(2)
+    with col_dict:
+        st.write("### Registrar nuevo término")
+        nueva_clave = st.text_input("Nueva palabra Voynich:")
+        nuevo_valor = st.text_input("Traducción / Significado:")
+        if st.button("Guardar en Diccionario"):
+            if nueva_clave and nuevo_valor:
+                cursor.execute("INSERT OR REPLACE INTO diccionario VALUES (?, ?)", (nueva_clave.lower().strip(), nuevo_valor.strip()))
+                conn.commit()
+                st.success("¡Término guardado con éxito!")
+                st.rerun()
+                
+    with col_folio:
+        st.write("### Actualizar texto de un folio existente")
+        folio_update = st.selectbox("Folio a modificar en BD:", folios_disponibles, key="update_folio_select")
+        cursor.execute("SELECT texto_voynich FROM manuscrito WHERE folio = ?", (folio_update,))
+        texto_actual_db = cursor.fetchone()[0]
+        nuevo_texto_db = st.text_area("Texto definitivo para guardar:", texto_actual_db)
+        if st.button("Actualizar Base de Datos"):
+            cursor.execute("UPDATE manuscrito SET texto_voynich = ? WHERE folio = ?", (nuevo_texto_db.strip(), folio_update))
+            conn.commit()
+            st.success("¡Folio actualizado correctamente en SQLite!")
+            st.rerun()
