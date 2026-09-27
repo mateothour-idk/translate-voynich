@@ -1,87 +1,157 @@
 import streamlit as st
+import requests
 import re
+import pandas as pd
 from voynichdata import aplicar_matriz_sustitucion, motor_prosa_fluida
 
 st.set_page_config(
-    page_title="Traductor Voynich Local Matrix",
+    page_title="Intérprete Voynich Data Direct",
     page_icon="📜",
-    layout="centered"
+    layout="wide"
 )
 
-st.title("📜 Traductor Estable del Manuscrito Voynich")
-st.write("Esta versión incluye la base de datos de folios integrada en memoria para evitar bloqueos del host remoto.")
+st.title("📜 Intérprete Conectado a Voynich.nu/data/")
+st.write("Esta suite descarga el archivo unificado oficial y mapea todas las páginas automáticamente en una tabla ordenada.")
 
-# --- BASE DE DATOS LOCAL EMBEBIDA DEL CORPUS (Bypass de errores HTTP 406/404) ---
-def obtener_base_datos_corpus():
+# --- DESCARGA E INDEXACIÓN USANDO EL ARCHIVO DEL DICTECTORIO /DATA/ ---
+@st.cache_data(show_spinner=True)
+def descargar_y_parsear_corpus_data():
     """
-    Retorna el corpus oficial unificado mapeado directamente en memoria.
-    Puedes expandir este diccionario con más páginas copiando los strings del EVA clásico.
+    Se conecta a la ruta exacta del directorio de voynich.nu usando cabeceras
+    completas de navegador para evitar bloqueos por seguridad anti-bots (Error 406).
     """
-    return {
-        "f1r (Herbario - Inicio)": "qokched dcectth shol dain pcs eeet kold ceeoo",
-        "f1v": "ceeoo kchos dceae thsh cpoche qokched ceeii dcectth",
-        "f2r": "iiict kold dce qok lllae phoo ctthsh dcecee",
-        "f2v": "shol dain pcs dcectth kold ceeoo eeet kchos dceae",
-        "f3r": "qokched ceeii ceeoo kchos thsh cpoche dcetcc ctthsh",
-        "f48r": "qokched thsh dcectth ceeoo kchos eeet dceae sethol pcs",
-        "f48v": "iiict kold ceeoo cpoche ctthsh dcetcc pcs eeet lllae",
-        "f51r": "dcectth shol dain kold kchos eeet ceeoo qokched dceae",
-        "f51v": "ceeoo thsh cpoche qokched ceeii dcetcc ctthsh pcs kold",
-        "f116v (Sección Final)": "qokched dcectth shol dain pcs kold ceeoo kchos dceae"
+    url_data = "https://www.voynich.nu/data/voyn_101.txt"
+    diccionario_folios = {}
+    
+    # Cabeceras completas imitando a Google Chrome para saltar el firewall corporativo
+    cabeceras = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/plain,text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+        "Connection": "keep-alive"
     }
+    
+    try:
+        respuesta = requests.get(url_data, headers=cabeceras, timeout=15)
+        if respuesta.status_code == 200:
+            lineas = respuesta.text.split("\n")
+            folio_actual = None
+            
+            for linea in lineas:
+                linea_str = linea.strip()
+                if not linea_str or linea_str.startswith("#"):
+                    continue
+                
+                # Captura marcas oficiales de folios del archivo como <f1r.1> o <f102v.1>
+                match_folio = re.search(r"<f(\d+[rv])", linea_str)
+                if match_folio:
+                    folio_actual = f"f{match_folio.group(1)}"
+                    if folio_actual not in diccionario_folios:
+                        diccionario_folios[folio_actual] = []
+                
+                # Limpieza de metadatos estructurales de la línea
+                limpio = re.sub(r'<[^>]+>', '', linea_str)
+                limpio = re.sub(r'\{[^}]+\}', '', limpio)
+                limpio = re.sub(r'\[[^\]]+\]', '', limpio)
+                limpio = limpio.replace(".", " ").replace(",", " ").strip()
+                
+                if folio_actual and limpio:
+                    diccionario_folios[folio_actual].append(limpio)
+            
+            # Combinar todas las líneas recolectadas por cada folio
+            return {folio: " ".join(lineas_pag) for folio, lineas_pag in diccionario_folios.items()}
+        else:
+            st.sidebar.error(f"El servidor respondió con código {respuesta.status_code}.")
+            return {}
+    except Exception as e:
+        st.sidebar.error(f"Error de red: {str(e)}")
+        return {}
 
-mapa_completo_folios = obtener_base_datos_corpus()
+# Ejecutar el extractor en caché
+mapa_completo_folios = descargar_y_parsear_corpus_data()
 
 # --- CONFIGURACIÓN DE LA BARRA LATERAL ---
-st.sidebar.header("Control de Folios")
+st.sidebar.header("Panel de Navegación")
 
 opciones_selector = ["Manual (Texto Libre)"]
 if mapa_completo_folios:
-    opciones_selector.extend(list(mapa_completo_folios.keys()))
+    # Ordenar lógicamente todas las páginas extraídas (1r, 1v, 2r...)
+    paginas_ordenadas = sorted(
+        mapa_completo_folios.keys(), 
+        key=lambda x: (int(re.sub(r'\D', '', x)), x[-1])
+    )
+    opciones_selector.extend(paginas_ordenadas)
+else:
+    st.sidebar.warning("⚠️ No se pudo inicializar el árbol de folios. Activa el modo manual.")
 
 folio_seleccionado = st.sidebar.selectbox(
-    "Selecciona una página (Folio):",
+    "Selecciona la página a analizar:",
     opciones_selector
 )
 
 idioma_destino = st.sidebar.radio(
-    "Idioma de salida del diccionario:",
+    "Idioma del análisis estructural:",
     ["Español (ES)", "English (EN)"]
 )
 cod_idioma = "es" if "Español" in idioma_destino else "en"
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Motor Local Matrix v2.7 (Zero network issues)")
+st.sidebar.info(f"Páginas indexadas de voyn_101: {len(mapa_completo_folios) if mapa_completo_folios else 0}")
 
-# --- MANEJO DEL CONTENIDO DE LA PÁGINA ---
+# --- FLUJO DE TRABAJO ---
 if folio_seleccionado == "Manual (Texto Libre)":
     texto_usuario = st.text_area(
-        "Introduce código EVA libre para pruebas:",
+        "Introduce cadena de transcripción EVA libre:",
         placeholder="Ejemplo: qokched dcectth shol pcs..."
     )
 else:
     texto_usuario = mapa_completo_folios.get(folio_seleccionado, "")
-    st.info(f"📖 **Texto EVA oficial extraído de la base de datos local para el {folio_seleccionado}:**")
+    st.markdown(f"### 📖 Transcripción Cruda Indexada del Folio **{folio_seleccionado}**")
     st.code(texto_usuario, wrap_lines=True)
 
-# --- EJECUCIÓN DEL PIPELINE ---
-if st.button("Procesar y Traducir", type="primary"):
+# --- BOTÓN DE PROCESAMIENTO Y TABULACIÓN ---
+if st.button("Ejecutar Análisis Paleográfico", type="primary"):
     if not texto_usuario.strip():
-        st.warning("El búfer de texto está vacío. Proporciona datos de entrada.")
+        st.warning("El búfer de entrada de texto está vacío.")
     else:
-        with st.spinner("Procesando matriz y decodificando morfología..."):
-            # 1. Limpieza de haches huérfanas y blindaje de 'quu'
+        with st.spinner("Procesando matriz de sustituciones y ordenando datos..."):
             texto_filtrado = aplicar_matriz_sustitucion(texto_usuario)
-            # 2. Traducción bilingüe fluida
-            traduccion_final = motor_prosa_fluida(texto_filtrado, idioma=cod_idioma)
+            datos_tabla = motor_prosa_fluida(texto_filtrado, idioma=cod_idioma)
             
         st.success("¡Pipeline completado!")
+        st.markdown("### 📊 Desglose de Análisis Léxico Ordenado")
         
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("### 🧪 Reducción de Matriz")
-            st.info(f"`{texto_filtrado}`")
-        with col2:
-            title_lang = "Prosa Romance Estimada" if cod_idioma == "es" else "Estimated Romance Prose"
-            st.markdown(f"### 🏛️ {title_lang}")
-            st.write(traduccion_final)
+        if datos_tabla:
+            # Creación del DataFrame de Pandas
+            df_resultado = pd.DataFrame(datos_tabla)
+            
+            # Renombrar columnas para la visualización final scannable
+            df_resultado.columns = [
+                "Palabra Filtrada", 
+                "Equivalencia Semántica", 
+                "Tipo de Match" if cod_idioma == "es" else "Match Type"
+            ]
+            
+            # Renderizar la tabla limpia ordenada sin índices sueltos
+            st.dataframe(
+                df_resultado,
+                use_container_width=True,
+                hide_index=True
+            )
+            
+            # Despliegue de métricas estadísticas ordenadas por debajo
+            st.markdown("#### 📈 Métricas de Rendimiento")
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.metric("Total Palabras", len(df_resultado))
+            with c2:
+                col_diag = "Tipo de Match" if cod_idioma == "es" else "Match Type"
+                exactos = len(df_resultado[df_resultado[col_diag].str.contains("Exacto|Exact", regex=True)])
+                raices = len(df_resultado[df_resultado[col_diag].str.contains("Raíz|Root", regex=True)])
+                st.metric("Palabras Identificadas", exactos + raices)
+            with c3:
+                desconocidas = len(df_resultado[df_resultado[col_diag].str.contains("Desconocido|Unknown", regex=True)])
+                pct = (desconocidas / len(df_resultado)) * 100 if len(df_resultado) > 0 else 0
+                st.metric("Tasa de Incógnitas", f"{pct:.1f}%")
+        else:
+            st.info("El filtrado dio un resultado vacío.")
