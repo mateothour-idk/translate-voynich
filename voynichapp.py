@@ -13,14 +13,13 @@ st.set_page_config(
 st.title("📜 Intérprete Analítico de Todo el Manuscrito Voynich")
 st.write("Esta suite procesa las **240 páginas completas** del corpus local organizando las equivalencias fonéticas en tablas ordenadas.")
 
-# --- COMPONENTE: PARSER INTELIGENTE CON TOLERANCIA A EXTENSIONES MALA NOMBRE ---
+# --- COMPONENTE: PARSER INTELIGENTE CON VARIABLE CORREGIDA ---
 @st.cache_data(show_spinner=True)
 def cargar_y_parsear_corpus_local():
     """
     Busca variaciones del archivo de texto en el directorio actual para mitigar 
     problemas de extensiones ocultas o nombres duplicados en sistemas operativos.
     """
-    # Lista de nombres alternativos comunes que Windows o el usuario suelen crear sin querer
     posibles_nombres = ["voyn_101.txt", "voyn_101", "voyn_101.txt.txt", "voyn_101.TXT"]
     nombre_valido = None
     
@@ -29,7 +28,6 @@ def cargar_y_parsear_corpus_local():
             nombre_valido = nombre
             break
             
-    # Si no se encuentra con los nombres exactos, busca cualquier archivo que contenga 'voyn'
     if not nombre_valido:
         for archivo in os.listdir('.'):
             if 'voyn' in archivo.lower() and archivo.endswith(('.txt', '')):
@@ -41,7 +39,8 @@ def cargar_y_parsear_corpus_local():
         
     diccionario_folios = {}
     try:
-        with open(nombre_valid, "r", encoding="utf-8", errors="ignore") as f:
+        # CORREGIDO: Se usa el nombre de la variable correcta detectada arriba
+        with open(nombre_valido, "r", encoding="utf-8", errors="ignore") as f:
             folio_actual = None
             for linea in f:
                 linea_str = linea.strip()
