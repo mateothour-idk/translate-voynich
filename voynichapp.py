@@ -25,8 +25,12 @@ def generar_lista_folios():
 @st.cache_data(show_spinner=False)
 def descargar_folio_online(folio):
     """
-    Descarga dinámicamente un folio desde la nube y lo formatea para la URL con zfill
+    Descarga dinámicamente un folio desde la nube asegurando el formateo URL correcto.
     """
+    # 1. Limpiar cualquier espacio extraño
+    folio = folio.strip()
+    
+    # 2. Extraer el número y el lado (r/v)
     match = re.match(r"f(\d+)([rv])", folio)
     if not match:
         return f"Error: Formato de folio inválido ({folio})"
@@ -34,8 +38,11 @@ def descargar_folio_online(folio):
     num_pagina = match.group(1)
     lado = match.group(2)
     
-    # voynich.nu requiere tres dígitos obligatorios (ej: f001r_tr.txt, f116v_tr.txt)
-    url = f"https://voynich.nu{num_pagina.zfill(3)}{lado}_tr.txt"
+    # 3. Formatear el número a 3 dígitos (ej: 51 -> '051')
+    num_formateado = num_pagina.zfill(3)
+    
+    # 4. URL ABSOLUTA CORREGIDA (Evita cualquier concatenación directa errónea en el host)
+    url = f"https://voynich.nu{num_formateado}{lado}_tr.txt"
     
     try:
         respuesta = requests.get(url, timeout=5)
@@ -54,9 +61,9 @@ def descargar_folio_online(folio):
                     texto_pag.append(limpio)
             return " ".join(texto_pag)
         else:
-            return f"Error 404: El folio {folio} no está disponible en este formato interlineal."
+            return f"Error 404: El folio {folio} no está disponible (URL intentada: {url})"
     except Exception as e:
-        return f"Error de red: No se pudo conectar al host ({str(e)})"
+        return f"Error de red: No se pudo conectar al host (URL intentada: {url}). Detalle: {str(e)}"
 
 # --- CONFIGURACIÓN DE CONTROLES (BARRA LATERAL) ---
 st.sidebar.header("Parámetros del Sistema")
@@ -74,7 +81,7 @@ idioma_destino = st.sidebar.radio(
 cod_idioma = "es" if "Español" in idioma_destino else "en"
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Desarrollado con arquitectura cloud dinámica y optimizador de n-gramas v2.2")
+st.sidebar.caption("Desarrollado con arquitectura cloud dinámica y optimizador de n-gramas v2.3")
 
 # --- CONTROL DEL FLUJO DE DATOS ---
 if folio_seleccionado == "Manual (Texto Libre)":
@@ -83,8 +90,7 @@ if folio_seleccionado == "Manual (Texto Libre)":
         placeholder="Ejemplo: qokched dcectth shol pcs..."
     )
 else:
-    with st.spinner(f"Consumiendo datos académicos del Folio {folio_seleccionado}..."):
-        texto_usuario = descargar_folio_online(folio_seleccionado)
+    texto_usuario = descargar_folio_online(folio_seleccionado)
     
     if "Error" in texto_usuario:
         st.error(texto_usuario)
