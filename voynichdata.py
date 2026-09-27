@@ -13,7 +13,7 @@ glosario_inicial = [
     ("raur", "la raíz"), ("otiy", "la maceración"), ("oeteodi", "el reposo"),
     ("daur", "la duración del ciclo"), ("odotoí", "la rueda del año"), 
     ("doror", "el nacimiento del astro"), ("quidí", "diariamente"), ("quoquidí", "cada día"),
-    ("chidí", "canalizar"), ("tiodau", "en el tiempo determinado"), ("itioei", "la estación"),
+    ("chidí", "canalizar"), ("tiodau", "en el tempo determinado"), ("itioei", "la estación"),
     ("siy", "si se presenta"), ("pair", "por medio de"), ("dais", "se debe aplicar"),
     ("dair", "dar"), ("dam", "entregar"), ("quioquey", "y el corazón"),
     ("okeody", "lo que dicta el tratado"), ("quiodal", "el texto o contenido")
@@ -35,7 +35,7 @@ def obtener_corpus_completo():
         ("Folio 116v", "Hojas Sueltas (Final)", "quiodal oteroe aram dalaiu ciodain aekiy air soar oas raur")
     ]
     
-    # Rellenar automáticamente los folios restantes de forma masiva
+    # Rellenar automáticamente los folios restantes para la simulación masiva del corpus
     for i in range(3, 67):
         paginas.append((f"Folio {i}r", "Herbario (Botánica)", "poisoda cutiy podon vetí oarur sier ciey"))
         paginas.append((f"Folio {i}v", "Herbario (Botánica)", "oteroe aram dalaiu ciodain aekiy air soar"))
