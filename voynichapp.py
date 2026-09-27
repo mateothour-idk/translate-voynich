@@ -13,35 +13,49 @@ st.set_page_config(
 st.title("📜 Intérprete Analítico de Todo el Manuscrito Voynich")
 st.write("Esta suite procesa las **240 páginas completas** del corpus local organizando las equivalencias fonéticas en tablas ordenadas.")
 
-# --- COMPONENTE: PARSER DEL CORPUS LOCAL INDEPENDIENTE ---
+# --- COMPONENTE: PARSER INTELIGENTE CON TOLERANCIA A EXTENSIONES MALA NOMBRE ---
 @st.cache_data(show_spinner=True)
 def cargar_y_parsear_corpus_local():
     """
-    Lee de forma nativa el archivo plano local voyn_101.txt, saltando cortafuegos 
-    e indexando la totalidad de folios de forma robusta e instantánea.
+    Busca variaciones del archivo de texto en el directorio actual para mitigar 
+    problemas de extensiones ocultas o nombres duplicados en sistemas operativos.
     """
-    nombre_archivo = "voyn_101.txt"
-    diccionario_folios = {}
+    # Lista de nombres alternativos comunes que Windows o el usuario suelen crear sin querer
+    posibles_nombres = ["voyn_101.txt", "voyn_101", "voyn_101.txt.txt", "voyn_101.TXT"]
+    nombre_valido = None
     
-    if not os.path.exists(nombre_archivo):
+    for nombre in posibles_nombres:
+        if os.path.exists(nombre):
+            nombre_valido = nombre
+            break
+            
+    # Si no se encuentra con los nombres exactos, busca cualquier archivo que contenga 'voyn'
+    if not nombre_valido:
+        for archivo in os.listdir('.'):
+            if 'voyn' in archivo.lower() and archivo.endswith(('.txt', '')):
+                nombre_valido = archivo
+                break
+
+    if not nombre_valido:
         return {}
         
+    diccionario_folios = {}
     try:
-        with open(nombre_archivo, "r", encoding="utf-8", errors="ignore") as f:
+        with open(nombre_valid, "r", encoding="utf-8", errors="ignore") as f:
             folio_actual = None
             for linea in f:
                 linea_str = linea.strip()
                 if not linea_str or linea_str.startswith("#"):
                     continue
                 
-                # Captura marcas oficiales de folios en el archivo (ej: <f1r.1> o <f102v.1>)
+                # Captura marcas oficiales de folios (<f1r.1>, etc.)
                 match_folio = re.search(r"<f(\d+[rv])", linea_str)
                 if match_folio:
                     folio_actual = f"f{match_folio.group(1)}"
                     if folio_actual not in diccionario_folios:
                         diccionario_folios[folio_actual] = []
                 
-                # Limpieza de metadatos estructurales de la línea interlineal
+                # Limpieza de metadatos estructurales de la línea
                 limpio = re.sub(r'<[^>]+>', '', linea_str)
                 limpio = re.sub(r'\{[^}]+\}', '', limpio)
                 limpio = re.sub(r'\[[^\]]+\]', '', limpio)
@@ -50,12 +64,11 @@ def cargar_y_parsear_corpus_local():
                 if folio_actual and limpio:
                     diccionario_folios[folio_actual].append(limpio)
                     
-            # Combinar líneas por cada página indexada
             return {folio: " ".join(lineas_pag) for folio, lineas_pag in diccionario_folios.items()}
     except Exception:
         return {}
 
-# Carga instantánea de memoria interna
+# Carga de la base de datos local
 mapa_completo_folios = cargar_y_parsear_corpus_local()
 
 # --- CONFIGURACIÓN DE LA BARRA LATERAL ---
@@ -63,14 +76,13 @@ st.sidebar.header("Panel de Navegación")
 
 opciones_selector = ["Manual (Texto Libre)"]
 if mapa_completo_folios:
-    # Ordenar las páginas numéricamente para facilitar la experiencia de usuario (1r, 1v, 2r...)
     paginas_ordenadas = sorted(
         mapa_completo_folios.keys(), 
         key=lambda x: (int(re.sub(r'\D', '', x)), x[-1])
     )
     opciones_selector.extend(paginas_ordenadas)
 else:
-    st.sidebar.error("⚠️ No se encontró 'voyn_101.txt' en el directorio. Colócalo junto a tus scripts.")
+    st.sidebar.error("⚠️ No se detectó el archivo del corpus. Asegúrate de colocar el archivo de texto en la misma carpeta del proyecto.")
 
 folio_seleccionado = st.sidebar.selectbox(
     "Selecciona la página a analizar:",
@@ -84,7 +96,7 @@ idioma_destino = st.sidebar.radio(
 cod_idioma = "es" if "Español" in idioma_destino else "en"
 
 st.sidebar.markdown("---")
-st.sidebar.info(f"Páginas indexadas de voyn_101: {len(mapa_completo_folios) if mapa_completo_folios else 0}")
+st.sidebar.info(f"Páginas indexadas: {len(mapa_completo_folios) if mapa_completo_folios else 0}")
 
 # --- FLUJO DE TRABAJO ---
 if folio_seleccionado == "Manual (Texto Libre)":
@@ -110,24 +122,19 @@ if st.button("Ejecutar Análisis Paleográfico", type="primary"):
         st.markdown("### 📊 Desglose de Análisis Léxico Ordenado")
         
         if datos_tabla:
-            # Creación del DataFrame de Pandas
             df_resultado = pd.DataFrame(datos_tabla)
-            
-            # Renombrar columnas para la visualización final scannable
             df_resultado.columns = [
                 "Palabra Filtrada", 
                 "Equivalencia Semántica", 
                 "Tipo de Match" if cod_idioma == "es" else "Match Type"
             ]
             
-            # Renderizar la tabla limpia ordenada sin índices sueltos
             st.dataframe(
                 df_resultado,
                 use_container_width=True,
                 hide_index=True
             )
             
-            # Despliegue de métricas estadísticas ordenadas por debajo
             st.markdown("#### 📈 Métricas de Rendimiento")
             c1, c2, c3 = st.columns(3)
             with c1:
