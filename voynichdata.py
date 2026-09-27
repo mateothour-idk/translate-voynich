@@ -1,20 +1,13 @@
 import re
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
-    """
-    Aplica las reglas de sustitución paleográfica al texto EVA.
-    Ordenado de mayor a menor longitud para evitar conflictos de n-gramas.
-    """
     if not texto_eva:
         return ""
         
-    # Pasar a minúsculas para estandarizar la entrada del corpus
     texto = texto_eva.lower()
     
-    # --- 1. REGLAS DE 4 CARACTERES ---
+    # 1. PROCESAR TRIGRAMAS Y TETRAGRAMAS PRIMERO
     texto = texto.replace("qok", "quoqu")
-    
-    # --- 2. REGLAS DE 3 CARACTERES ---
     texto = texto.replace("iii", "í")
     texto = texto.replace("eee", "ie")
     texto = texto.replace("dce", "dic")
@@ -22,7 +15,7 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = texto.replace("eey", "ai")
     texto = texto.replace("pcs", "pes")
     
-    # --- 3. REGLAS DE 2 CARACTERES ---
+    # 2. PROCESAR BIGRAMAS DE CONSONANTES Y LIGADURAS (Protegiendo raíces)
     texto = texto.replace("pc", "p")
     texto = texto.replace("ps", "p")
     texto = texto.replace("cp", "p")
@@ -33,7 +26,8 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = texto.replace("sh", "x")
     texto = texto.replace("th", "t")
     texto = texto.replace("ch", "c")   
-    texto = texto.replace("ck", "qu")
+    
+    # 3. PROCESAR VOCALES COMPUESTAS (Antes de generar nuevas 'u' con Q/K)
     texto = texto.replace("ee", "i")
     texto = texto.replace("oe", "ue")  
     texto = texto.replace("iu", "u")
@@ -46,49 +40,54 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = texto.replace("ey", "a")   
     texto = texto.replace("ce", "c")
     
-    # --- 4. REGLAS DE 1 CARÁCTER CON CONTEXTO (Y inicial/final) ---
+    # 4. CONTEXTO PARA LA 'Y'
     texto = re.sub(r'\by\b', 'i', texto) 
     texto = re.sub(r'\by', 'i', texto)  
     texto = re.sub(r'y\b', 'i', texto)  
     
-    # --- 5. REGLAS DE 1 CARÁCTER GENERALES ---
+    # 5. REGLAS DE Q / K / CK INTERCALADAS AL FINAL
+    # Al ponerlas aquí abajo, la 'u' generada por 'qu' YA NO SERÁ AFECTADA 
+    # por las reglas de vocales anteriores, eliminando el bug de "quu".
+    texto = texto.replace("ck", "qu")
     texto = texto.replace("k", "qu")
     texto = texto.replace("q", "qu")
     texto = texto.replace("m", "m")    
     
-    # --- 6. FILTRO CRÍTICO: LIMPIEZA DE HACHES (H) HUÉRFANAS ---
+    # 6. LIMPIEZA DE HACHES HUÉRFANAS
     texto = texto.replace("h", "")
+    
+    # Arreglo de seguridad por si alguna otra regla duplicó la u al final
+    texto = texto.replace("quu", "qu")
     
     return texto.strip()
 
-def motor_prosa_fluida(texto_limpio: str) -> str:
+def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> str:
     """
-    Simulación adaptativa de traducción basada en raíces romances/latín.
-    Sustituye esta lógica por la base de datos de palabras reales que usas.
+    Motor adaptativo que ahora soporta traducción tanto a Español ('es') como Inglés ('en').
     """
     palabras = texto_limpio.split()
     resultado = []
     
-    # Diccionario de prueba basado en las raíces de tu cuadro
-    diccionario_romance = {
-        "cut": "cortar / incisión",
-        "ci": "aquí / cercano",
-        "ch": "clave / llamada",
-        "ie": "ir / viaje",
-        "dic": "decir / ley",
-        "quoqu": "cocinar / preparar",
-        "f": "hacer / propiedad",
-        "x": "seco / planta"
+    # Diccionario bilingüe expandido con las raíces de tu cuadro
+    diccionario_maestro = {
+        "cut": {"es": "cortar / incisión", "en": "cut / incision"},
+        "ci": {"es": "aquí / cercano", "en": "here / nearby"},
+        "ch": {"es": "clave / llamada", "en": "key / call"},
+        "ie": {"es": "ir / viaje", "en": "go / journey"},
+        "dic": {"es": "decir / ley", "en": "say / law"},
+        "quoqu": {"es": "cocinar / preparar", "en": "cook / prepare"},
+        "f": {"es": "hacer / propiedad", "en": "make / property"},
+        "x": {"es": "seco / planta", "en": "dry / plant"},
+        "pes": {"es": "pie / base", "en": "foot / base"}
     }
     
     for palabra in palabras:
-        # Busca coincidencias aproximadas o literales
-        if palabra in diccionario_romance:
-            resultado.append(diccionario_romance[palabra])
-        elif len(palabra) > 2 and palabra[:3] in diccionario_romance:
-            resultado.append(diccionario_romance[palabra[:3]])
+        if palabra in diccionario_maestro:
+            resultado.append(diccionario_maestro[palabra][idioma])
+        elif len(palabra) > 2 and palabra[:3] in diccionario_maestro:
+            resultado.append(diccionario_maestro[palabra[:3]][idioma])
         else:
-            # Si no hay traducción exacta, devuelve la transliteración limpia en mayúsculas
+            # Si no se encuentra, deja el token limpio estructurado
             resultado.append(palabra.upper())
             
     return " ".join(resultado)
