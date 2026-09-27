@@ -1,54 +1,80 @@
 import streamlit as st
+import requests  # Preparado para cuando conectes el raspado de folios completos
 from voynichdata import aplicar_matriz_sustitucion, motor_prosa_fluida
 
-# Configuración de la página de Streamlit
 st.set_page_config(
-    page_title="Traductor del Manuscrito Voynich",
+    page_title="Traductor Voynich Matrix",
     page_icon="📜",
     layout="centered"
 )
 
-# Título y descripción de tu aplicación
 st.title("📜 Traductor Adaptativo del Manuscrito Voynich")
-st.write(
-    "Esta aplicación procesa texto transliterado en formato **EVA (Extensible Voynich Alphabet)**, "
-    "aplica una matriz de reducción paleográfica y busca correspondencias en raíces de Latín Vulgar y Romance."
+
+# --- NUEVA FUNCIÓN: PARA EXTRAER CUALQUIER PÁGINA (Estructura base) ---
+def obtener_texto_folio_voynich(folio):
+    """
+    Función para automatizar la traducción de todas las páginas desde voynich.nu.
+    Por ahora devuelve un mock-up, pero puedes activarla con requests.
+    """
+    # Ejemplo de URL: f"http://voynich.nu"
+    # Aquí iría tu scraping por expresiones regulares para limpiar los comentarios del corpus.
+    mock_corpus = {
+        "f1r": "qokched dcectth shol dain pcs eeet",
+        "f1v": "ceeoo kchos dceae thsh cpoche",
+        "f2r": "iiict kold dce qok lllae phoo"
+    }
+    return mock_corpus.get(folio, "qokched dcectth shol")
+
+# --- BARRA LATERAL (CONTROLES DE PÁGINAS E IDIOMA) ---
+st.sidebar.header("Configuración del Intérprete")
+
+# Selector de todas las páginas del Manuscrito
+folio_seleccionado = st.sidebar.selectbox(
+    "Selecciona la página (Folio):",
+    ["Manual (Texto Libre)", "f1r (Herbario - Inicio)", "f1v", "f2r"]
 )
 
-st.markdown("---")
-
-# Área de entrada para el usuario
-texto_usuario = st.text_area(
-    "Introduce el texto en EVA aquí:",
-    placeholder="Ejemplo: qokched dcectth shol...",
-    help="Escribe o pega los caracteres correspondientes a la transcripción oficial de los folios."
+# Selector de Idioma de Salida solicitado
+idioma_destino = st.sidebar.radio(
+    "Idioma del resultado:",
+    ["Español (ES)", "English (EN)"],
+    index=0
 )
+cod_idioma = "es" if "Español" in idioma_destino else "en"
 
-# Botón de acción principal
+st.sidebar.markdown("---")
+st.sidebar.caption("Modificaciones de matriz v2.1 (Fix quu bug)")
+
+# --- ÁREA DE TRABAJO PRINCIPAL ---
+if folio_seleccionado == "Manual (Texto Libre)":
+    texto_usuario = st.text_area(
+        "Introduce texto en EVA:",
+        placeholder="Ejemplo: qokched dcectth shol..."
+    )
+else:
+    # Carga automáticamente el texto de la página seleccionada
+    texto_usuario = obtener_texto_folio_voynich(folio_seleccionado.split()[0])
+    st.info(f"**Texto oficial en EVA cargado para el Folio {folio_seleccionado}:**")
+    st.code(texto_usuario)
+
 if st.button("Procesar y Traducir", type="primary"):
-    if texto_usuario.strip() == "":
-        st.warning("Por favor, introduce algún fragmento de texto en EVA para comenzar.")
+    if not texto_usuario.strip():
+        st.warning("No hay texto para procesar.")
     else:
-        with st.spinner("Aplicando matriz de sustitución y limpiando haches huérfanas..."):
-            
-            # 1. PASO CRÍTICO: Aplicamos tu nueva matriz de sustituciones ordenada
+        with st.spinner("Procesando matriz..."):
+            # 1. Aplicamos la matriz blindada contra el bug "quu"
             texto_filtrado = aplicar_matriz_sustitucion(texto_usuario)
             
-            # 2. SEGUNDO PASO: Procesamos el resultado con el diccionario adaptativo
-            traduccion_final = motor_prosa_fluida(texto_filtrado)
+            # 2. Pasamos el idioma seleccionado al motor
+            traduccion_final = motor_prosa_fluida(texto_filtrado, idioma=cod_idioma)
             
-        # Despliegue de resultados en contenedores visuales de Streamlit
-        st.success("¡Procesamiento completado con éxito!")
+        st.success("¡Completado!")
         
         col1, col2 = st.columns(2)
-        
         with col1:
-            st.markdown("### 🧪 Texto Filtrado (Matriz)")
-            st.info(f"`{texto_filtrado}`" if texto_filtrado else "*El texto quedó vacío tras los filtros*")
-            
+            st.markdown("### 🧪 Texto Tras la Matriz")
+            st.info(f"`{texto_filtrado}`")
         with col2:
-            st.markdown("### 🏛️ Prosa Romance Estimada")
+            title_lang = "Prosa Romance" if cod_idioma == "es" else "Estimated Romance Prose"
+            st.markdown(f"### 🏛️ {title_lang}")
             st.write(traduccion_final)
-
-st.markdown("---")
-st.caption("Proyecto Beta Experimental independiente desarrollado por Mateo Thour-idk. Todos los derechos reservados.")
