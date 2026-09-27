@@ -72,7 +72,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     """
     Procesa el texto y devuelve una TUPLA:
     1. Una lista de diccionarios para armar la tabla detallada.
-    2. Un string con la ORACIÓN COMPLETA armada continuamente.
+    2. Un string con la ORACIÓN COMPLETA armada continuamente (Incógnitas entre comillas).
     """
     palabras = texto_limpio.split()
     analisis_estructurado = []
@@ -107,7 +107,8 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     
     for palabra in palabras:
         traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
-        palabra_para_oracion = palabra.upper()  # Por defecto si no se conoce
+        # Modificación: Si es incógnita, en la oración se encierra entre comillas dobles
+        palabra_para_oracion = f'"{palabra.upper()}"'  
         tipo = "Desconocido" if idioma == "es" else "Unknown"
         
         # 1. Match Exacto
@@ -133,6 +134,5 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         })
         palabras_oracion.append(palabra_para_oracion)
             
-    # Armar la oración continua separada por espacios y con un punto final
     oracion_completa = " ".join(palabras_oracion) + "."
     return analisis_estructurado, oracion_completa
