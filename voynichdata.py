@@ -68,60 +68,62 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     return texto.strip()
 
 
-def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> list:
+def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     """
-    Glosario Maestro Expandido. Compara el texto filtrado contra raíces extendidas 
-    derivadas del cuadro de sustituciones del autor.
+    Procesa el texto y devuelve una TUPLA:
+    1. Una lista de diccionarios para armar la tabla detallada.
+    2. Un string con la ORACIÓN COMPLETA armada continuamente.
     """
     palabras = texto_limpio.split()
     analisis_estructurado = []
+    palabras_oracion = []
     
-    # DICCIONARIO EXPANDIDO: Añade aquí todas las palabras que vayas descubriendo
     diccionario_maestro = {
-        # Raíces originales de tu cuadro
-        "cut": {"es": "cortar / incisión", "en": "cut / incision"},
-        "ci": {"es": "aquí / cercano / este", "en": "here / nearby / this"},
-        "ch": {"es": "clave / llamada / secreto", "en": "key / call / secret"},
-        "ie": {"es": "ir / viaje / avanzar", "en": "go / journey / advance"},
-        "dic": {"es": "decir / ley / dictamen", "en": "say / law / dictate"},
-        "quoqu": {"es": "cocinar / preparar / hervir", "en": "cook / prepare / boil"},
-        "f": {"es": "hacer / propiedad / fuerza", "en": "make / property / force"},
-        "x": {"es": "seco / planta / ungüento", "en": "dry / plant / ointment"},
-        "pes": {"es": "pie / base / soporte", "en": "foot / base / support"},
-        
-        # Nuevas raíces agregadas basadas en las palabras recurrentes del Voynich tras tu matriz
-        "col": {"es": "recolectar / reunir / colar", "en": "collect / gather / strain"},
-        "quok": {"es": "cocimiento / extracto", "en": "decoction / extract"},
-        "old": {"es": "antiguo / viejo / maduro", "en": "ancient / old / mature"},
-        "sho": {"es": "mostrar / revelar / mirar", "en": "show / reveal / look"},
-        "dai": {"es": "dar / donar / aplicar", "en": "give / donate / apply"},
-        "tth": {"es": "tierra / raíz terráquea", "en": "earth / root from soil"},
-        "cue": {"es": "cuerpo / contenedor", "en": "body / container"},
-        "xol": {"es": "sol / calor / infusión caliente", "en": "sun / heat / hot infusion"},
-        "tit": {"es": "título / sección / receta", "en": "title / section / recipe"},
-        "pci": {"es": "pequeño / pizca", "en": "small / pinch"},
-        "ole": {"es": "aceite / óleo medicinal", "en": "oil / medicinal oil"},
-        "sol": {"es": "disolver / solución líquida", "en": "dissolve / liquid solution"},
-        "an": {"es": "año / ciclo / estación", "en": "year / cycle / season"},
-        "ue": {"es": "fuente / origen / agua", "en": "source / origin / water"},
-        "ic": {"es": "imagen / figura / signo", "en": "image / figure / sign"}
+        "cut": {"es": "cortar", "en": "cut"},
+        "ci": {"es": "aquí", "en": "here"},
+        "ch": {"es": "clave", "en": "key"},
+        "ie": {"es": "ir", "en": "go"},
+        "dic": {"es": "decir", "en": "say"},
+        "quoqu": {"es": "cocinar", "en": "cook"},
+        "f": {"es": "hacer", "en": "make"},
+        "x": {"es": "seco", "en": "dry"},
+        "pes": {"es": "pie", "en": "foot"},
+        "col": {"es": "recolectar", "en": "collect"},
+        "quok": {"es": "cocimiento", "en": "decoction"},
+        "old": {"es": "antiguo", "en": "ancient"},
+        "sho": {"es": "mostrar", "en": "show"},
+        "dai": {"es": "dar", "en": "give"},
+        "tth": {"es": "tierra", "en": "earth"},
+        "cue": {"es": "cuerpo", "en": "body"},
+        "xol": {"es": "sol", "en": "sun"},
+        "tit": {"es": "título", "en": "title"},
+        "pci": {"es": "pequeño", "en": "small"},
+        "ole": {"es": "aceite", "en": "oil"},
+        "sol": {"es": "disolver", "en": "dissolve"},
+        "an": {"es": "año", "en": "year"},
+        "ue": {"es": "fuente", "en": "source"},
+        "ic": {"es": "imagen", "en": "image"}
     }
     
     for palabra in palabras:
         traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
+        palabra_para_oracion = palabra.upper()  # Por defecto si no se conoce
         tipo = "Desconocido" if idioma == "es" else "Unknown"
         
-        # 1. Intenta buscar la palabra completa
+        # 1. Match Exacto
         if palabra in diccionario_maestro:
             traducida = diccionario_maestro[palabra][idioma]
+            palabra_para_oracion = traducida
             tipo = "Match Exacto" if idioma == "es" else "Exact Match"
-        # 2. Si no la encuentra entera, corta los primeros 3 caracteres buscando la raíz
+        # 2. Match Raíz 3 Letras
         elif len(palabra) > 2 and palabra[:3] in diccionario_maestro:
             traducida = diccionario_maestro[palabra[:3]][idioma]
+            palabra_para_oracion = traducida + f"({palabra[3:].upper()})"
             tipo = "Match Raíz (3L)" if idioma == "es" else "Root Match (3L)"
-        # 3. Si sigue sin encontrarla, intenta con los primeros 2 caracteres
+        # 3. Match Raíz 2 Letras
         elif len(palabra) > 1 and palabra[:2] in diccionario_maestro:
             traducida = diccionario_maestro[palabra[:2]][idioma]
+            palabra_para_oracion = traducida + f"({palabra[2:].upper()})"
             tipo = "Match Raíz (2L)" if idioma == "es" else "Root Match (2L)"
             
         analisis_estructurado.append({
@@ -129,5 +131,8 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> list:
             "Interpretación / Semántica": traducida,
             "Diagnóstico": tipo
         })
+        palabras_oracion.append(palabra_para_oracion)
             
-    return analisis_estructurado
+    # Armar la oración continua separada por espacios y con un punto final
+    oracion_completa = " ".join(palabras_oracion) + "."
+    return analisis_estructurado, oracion_completa
