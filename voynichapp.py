@@ -1,122 +1,130 @@
 import streamlit as st
-import random
+import sqlite3
 import re
+from deep_translator import GoogleTranslator
+import voynichdata  # Importación de los datos masivos protegidos
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(page_title="Traductor Voynich DB Pro", page_icon="📜", layout="wide")
 st.title("📜 Traductor Universal y Corpus Completo del Manuscrito Voynich")
-st.write("Explora el manuscrito completo folio por folio conectado a la matriz adaptativa local.")
+st.write("Explora el manuscrito mediante tu técnica de reducción de caracteres y traducción multiidioma.")
 
-# --- GLOSARIO ESTRUCTURADO (DICCIONARIO EXTENDIDO DEFINITIVO) ---
-if "diccionario_v12" not in st.session_state:
-    st.session_state.diccionario_v12 = {
-        "poisoda": "la planta medicinal", "puí": "la planta", "cuta": "la corteza",
-        "cutiy": "la corteza o piel", "podon": "la raíz o el pie", "vetí": "maduro o viejo",
-        "oarur": "el aroma", "odaur": "el olor", "crofosodaur": "el aroma resinoso",
-        "sier": "las hojas dentadas", "ciey": "la savia", "quaur": "el agua caliente",
-        "osain": "el aceite esencial", "pain": "la pulpa o sustancia", "oain": "el jugo",
-        "icios": "los vasos", "oiaj": "la esencia", "cios": "los recipientes",
-        "ain": "el líquido", "oteroe": "el proceso", "aram": "el hornillo de bronce",
-        "dalaiu": "destilar", "ciodain": "los canales", "aekiy": "la mezcla",
-        "air": "el aire", "soar": "el vapor elevado", "oas": "la vasija",
-        "raur": "la raíz", "otiy": "la maceración", "oeteodi": "el reposo",
-        "daur": "la duración del ciclo", "odotoí": "la rueda del año", 
-        "doror": "el nacimiento del astro", "quidí": "diariamente", "quoquidí": "cada día",
-        "chidí": "canalizar", "tiodau": "en el tiempo determinado", "itioei": "la estación",
-        "siy": "si se presenta", "pair": "por medio de", "dais": "se debe aplicar",
-        "dair": "dar", "dam": "entregar", "quioquey": "y el corazón",
-        "okeody": "lo que dicta el tratado", "quiodal": "el texto o contenido",
-        "tararain": "el brote superior", "idain": "el tallo interno", "dole": "duele la",
-        "criquy": "brote agudo", "arain": "la envoltura externa", "chedí": "purificar",
-        "qokeody": "la regla del boticario", "daba": "infundir", "pheador": "el pectoral"
-    }
+# --- CONEXIÓN Y ESTRUCTURACIÓN DE LA BASE DE DATOS LOCAL ---
+conn = sqlite3.connect("voynich_matrix.db", check_same_thread=False)
+cursor = conn.cursor()
 
-# --- GENERADOR INTEGRAL DEL CORPUS (TODAS LAS PÁGINAS INDIVIDUALES REALES) ---
-if "corpus_definitivo_completo" not in st.session_state:
-    corpus = {
-        "Herbario (Botánica)": {
-            "Folio 33v": "tararain idain cutiy dole criquy arain" # Tu folio del Girasol asegurado
-        },
-        "Astronomía (Zodíaco)": {},
-        "Cosmología (Astros)": {
-            "Folio 68r": "odotoí quidí quoquidí chidí tiodau itioei doror quiodal"
-        },
-        "Balneología (Fisiología)": {
-            "Folio 80r": "icios cios ain ciodain quaur oteroe" # Tu folio de las piscinas asegurado
-        },
-        "Farmacéutica (Recetas)": {},
-        "Recetas Cortas (Estrellas)": {}
-    }
-    
-    vocab = list(st.session_state.diccionario_v12.keys()) + ["olad", "oror", "ctey", "tane"]
-    
-    def gen_txt(seed):
-        random.seed(seed)
-        return " ".join(random.sample(vocab, min(8, len(vocab))))
+cursor.execute("CREATE TABLE IF NOT EXISTS diccionario (clave TEXT PRIMARY KEY, valor TEXT)")
+cursor.execute("CREATE TABLE IF NOT EXISTS manuscrito (folio TEXT PRIMARY KEY, seccion TEXT, texto_voynich TEXT)")
+
+# Inserción segura e inteligente desde el archivo de datos
+cursor.executemany("INSERT OR IGNORE INTO diccionario VALUES (?, ?)", voynichdata.glosario_inicial)
+cursor.executemany("INSERT OR IGNORE INTO manuscrito VALUES (?, ?, ?)", voynichdata.obtener_corpus_completo())
+conn.commit()
+
+# --- CONFIGURACIÓN DE IDIOMA EN LA BARRA LATERAL ---
+st.sidebar.header("🌍 Traducción Global")
+idioma_destino = st.sidebar.selectbox(
+    "Traducir resultados al idioma:",
+    ["Español", "English (Inglés)", "Latín", "Italiano", "Français (Francés)", "Deutsch (Alemán)", "Português"]
+)
+
+codigos_idiomas = {
+    "Español": "es", "English (Inglés)": "en", "Latín": "la", 
+    "Italiano": "it", "Français (Francés)": "fr", "Deutsch (Alemán)": "de", "Português": "pt"
+}
+
+# --- MOTOR DE TRADUCCIÓN E INTELIGENCIA DE TU TÉCNICA ---
+def aplicar_tecnica_y_traducir(palabra):
+    palabra_limpia = re.sub(r'[^\wíóéáú]', '', palabra.lower())
+    if not palabra_limpia:
+        return palabra
         
-    # Población matemática exhaustiva de folios del 1 al 116 (recto y verso por sección oficial)
-    for i in range(1, 67):
-        fr, fv = f"Folio {i}r", f"Folio {i}v"
-        if fr not in corpus["Herbario (Botánica)"]: corpus["Herbario (Botánica)"][fr] = gen_txt(i * 10)
-        if fv not in corpus["Herbario (Botánica)"]: corpus["Herbario (Botánica)"][fv] = gen_txt(i * 11)
-            
-    for i in range(67, 74):
-        corpus["Astronomía (Zodíaco)"][f"Folio {i}r"] = gen_txt(i * 12)
-        corpus["Astronomía (Zodíaco)"][f"Folio {i}v"] = gen_txt(i * 13)
+    # TU TÉCNICA DE LIGADURAS: Reducción automática antes de consultar la BD
+    palabra_limpia = palabra_limpia.replace("pc", "p")
+    
+    significado_final = None
+    
+    cursor.execute("SELECT valor FROM diccionario WHERE clave = ?", (palabra_limpia,))
+    resultado = cursor.fetchone()
+    if resultado:
+        significado_final = resultado[0]
+    else:
+        if len(palabra_limpia) > 3:
+            for i in range(len(palabra_limpia), 2, -1):
+                sub_raiz = palabra_limpia[:i]
+                cursor.execute("SELECT valor FROM diccionario WHERE clave LIKE ?", (f"{sub_raiz}%",))
+                res_raiz = cursor.fetchone()
+                if res_raiz:
+                    significado_final = f"[{res_raiz[0]}]*"
+                    break
+                    
+    if significado_final:
+        if idioma_destino != "Español":
+            try:
+                es_aproximado = significado_final.startswith("[")
+                texto_a_traducir = significado_final.replace("[", "").replace("]*", "") if es_aproximado else significado_final
+                traduccion = GoogleTranslator(source='es', target=codigos_idiomas[idioma_destino]).translate(texto_a_traducir)
+                return f"[{traduccion}]*" if es_aproximado else traduccion
+            except Exception:
+                return significado_final
+        return significado_final
         
-    for i in range(74, 85):
-        fr, fv = f"Folio {i}r", f"Folio {i}v"
-        if fr not in corpus["Balneología (Fisiología)"]: corpus["Balneología (Fisiología)"][fr] = gen_txt(i * 14)
-        if fv not in corpus["Balneología (Fisiología)"]: corpus["Balneología (Fisiología)"][fv] = gen_txt(i * 15)
+    return f"¿{palabra}?"
 
-    for i in range(85, 100):
-        corpus["Farmacéutica (Recetas)"][f"Folio {i}r"] = gen_txt(i * 16)
-        corpus["Farmacéutica (Recetas)"][f"Folio {i}v"] = gen_txt(i * 17)
+def descifrar_texto_completo(texto):
+    lineas = texto.strip().split("\n")
+    lineas_traducidas = []
+    for linea in lineas:
+        palabras = linea.split(" ")
+        palabras_traducidas = [aplicar_tecnica_y_traducir(p) for p in palabras]
+        lineas_traducidas.append(" ".join(palabras_traducidas))
+    return "\n".join(lineas_traducidas)
 
-    for i in range(100, 117):
-        corpus["Recetas Cortas (Estrellas)"][f"Folio {i}r"] = gen_txt(i * 18)
-        corpus["Recetas Cortas (Estrellas)"][f"Folio {i}v"] = gen_txt(i * 19)
+# --- INTERFAZ GRÁFICA DE USUARIO (TABS) ---
+tab1, tab2, tab3 = st.tabs(["📖 Navegador del Manuscrito Completo", "🔍 Buscador de Diccionario", "📝 Añadir/Editar Folios"])
 
-    st.session_state.corpus_definitivo_completo = corpus
-
-# --- MOTOR DE TRADUCCIÓN CON CONECTORES ---
-def traducir_frase(texto, modo_fluido):
-    if not texto: return "", 0, 0
-    palabras = [p for p in texto.strip().split(" ") if p]
-    res, inc = [], 0
-    for idx, p in enumerate(palabras):
-        p_limpia = re.sub(r'[^\wíóéáú]', '', p.lower())
-        trad = st.session_state.diccionario_v12.get(p_limpia, f"¿{p}?")
-        if "¿" in trad: inc += 1
-        res.append(trad)
-        if modo_fluido and idx < len(palabras) - 1:
-            if p_limpia in ["quidí", "quoquidí"]: res.append("[se toma]")
-            elif p_limpia in ["raur", "idain", "cutiy", "sier"]: res.append("[en]")
-            elif p_limpia in ["cios", "icios", "oas"]: res.append("[para]")
-            elif p_limpia in ["chedí", "dalaiu", "daba"]: res.append("[durante]")
-    texto_final = re.sub(r'\b(los|el|la|las)\b\s+(?=\b\1\b)', '', " ".join(res))
-    return re.sub(r'\s+', ' ', texto_final).strip(), len(palabras), inc
-
-# --- INTERFAZ GRÁFICA INTERACTIVA ---
-tab1, tab2 = st.tabs(["📖 Navegador", "🔍 Glosario"])
 with tab1:
-    sec = st.selectbox("Sección:", list(st.session_state.corpus_definitivo_completo.keys()))
-    fol = st.selectbox("Folio:", sorted(list(st.session_state.corpus_definitivo_completo[sec].keys())))
-    modo = st.toggle("✨ Activar Modo Prosa Fluida con conectores [...]", value=True)
+    st.subheader("Selector e Índice General de Folios")
     
-    txt_f, tot, inc = traducir_frase(st.session_state.corpus_definitivo_completo[sec][fol], modo)
-    porc = int(((tot - inc) / tot) * 100) if tot > 0 else 0
-    st.metric(label="📊 Grado de Descifrado", value=f"{porc}% ({inc} incógnitas de {tot} palabras)")
-    st.progress(porc / 100.0)
+    cursor.execute("SELECT DISTINCT seccion FROM manuscrito")
+    secciones = [res[0] for res in cursor.fetchall()]
+    seccion_elegida = st.selectbox("Filtrar por sección temática:", secciones)
     
+    cursor.execute("SELECT folio FROM manuscrito WHERE seccion = ?", (seccion_elegida,))
+    folios_disponibles = [res[0] for res in cursor.fetchall()]
+    folio_elegido = st.selectbox("Selecciona el Folio de la página a descifrar:", folios_disponibles)
+    
+    cursor.execute("SELECT texto_voynich FROM manuscrito WHERE folio = ?", (folio_elegido,))
+    texto_folio = cursor.fetchone()[0]
+    
+    st.markdown("---")
     col1, col2 = st.columns(2)
-    with col1: txt_edit = st.text_area("Texto Original:", st.session_state.corpus_definitivo_completo[sec][fol], height=150)
+    
+    with col1:
+        st.info(f"**Texto Transcrito Original del `{folio_elegido}`**")
+        texto_editable = st.text_area("Puedes modificar o escribir código en vivo (prueba con 'pc'):", texto_folio, height=150)
+        
     with col2:
-        txt_out, _, _ = traducir_frase(txt_edit, modo)
-        st.text_area("Descifrado:", txt_out, height=150, disabled=True)
-        st.download_button("💾 Descargar (.txt)", txt_out, file_name=f"trad_{fol.lower()}.txt")
+        st.success(f"**Descifrado Semántico Automatizado ({idioma_destino})**")
+        texto_descifrado = descifrar_texto_completo(texto_editable)
+        st.text_area("Resultado obtenido:", texto_descifrado, height=150, disabled=True)
+
 with tab2:
-    busq = st.text_input("Buscar palabra:")
-    if busq:
-        for k, v in st.session_state.diccionario_v12.items():
-            if busq.lower() in k: st.write(f"🔹 **{k}** ➔ {v}")
+    st.subheader("Buscador del Glosario con Traducción Integrada")
+    busqueda = st.text_input("Introduce una palabra Voynich única para comprobar tu técnica:")
+    if busqueda:
+        resultado_individual = aplicar_tecnica_y_traducir(busqueda)
+        st.write(f"➔ **Resultado en {idioma_destino}:** {resultado_individual}")
+
+with tab3:
+    st.subheader("Indexar o Actualizar Folios del Manuscrito")
+    with st.form("nuevo_folio_form"):
+        f_nombre = st.text_input("Identificador del Folio (Ej: Folio 117r):")
+        f_seccion = st.selectbox("Categoría/Sección:", ["Herbario (Botánica)", "Astronomía (Zodíaco)", "Cosmología (Astros)", "Balneológica (Fisiología)", "Farmacéutica (Recetas)", "Estrellas (Catálogo)"])
+        f_texto = st.text_area("Contenido en texto codificado:")
+        submit = st.form_submit_button("Guardar/Actualizar Folio en SQLite")
+        
+        if submit and f_nombre and f_texto:
+            cursor.execute("INSERT OR REPLACE INTO manuscrito VALUES (?, ?, ?)", (f_nombre.strip(), f_seccion, f_texto.strip()))
+            conn.commit()
+            st.success(f"El `{f_nombre}` ha sido guardado exitosamente.")
