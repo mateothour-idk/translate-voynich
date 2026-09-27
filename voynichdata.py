@@ -3,81 +3,85 @@ import re
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
     Aplica las reglas de sustitución paleográfica al texto EVA de forma segura.
-    Ordenado de mayor a menor longitud para evitar solapamientos destructivos.
+    Las reglas se ejecutan estrictamente de mayor a menor longitud para evitar
+    conflictos o mutilaciones de dígrafos, y las reglas vocálicas se ejecutan 
+    antes que Q/K para evitar duplicaciones indebidas (eliminando el bug quu).
     """
     if not texto_eva:
         return ""
         
+    # Estandarizar a minúsculas
     texto = texto_eva.lower()
     
     # --- 1. REGLAS DE 4 CARACTERES (Tetragramas) ---
+    # Procesamos 'pcee' aquí arriba para que 'pc' o 'cee' no la muten antes de tiempo
+    texto = texto.replace("pcee", "pi")
     texto = texto.replace("qok", "quoqu")
     
     # --- 2. REGLAS DE 3 CARACTERES (Trigramas) ---
     texto = texto.replace("iii", "í")
-    texto = texto.replace("eee", "ie")  # Alternativa: ei
-    # Procesamiento de variaciones de eey de forma directa
-    texto = texto.replace("eey", "ai")  # Alternativa: iy
+    texto = texto.replace("eee", "ie")
     texto = texto.replace("dce", "dic")
-    texto = texto.replace("cee", "ci")  # Alternativa: ce
+    texto = texto.replace("cee", "ci")
+    texto = texto.replace("eey", "ai")
     texto = texto.replace("pcs", "pes")
     
     # --- 3. REGLAS DE 2 CARACTERES (Bigramas y Dígrafos) ---
+    # Combinaciones Consonánticas
     texto = texto.replace("pc", "p")
     texto = texto.replace("ps", "p")
     texto = texto.replace("cp", "p")
-    texto = texto.replace("dc", "ch")  # Sonido Ch
-    texto = texto.replace("tc", "ch")  # Sonido Ch
+    texto = texto.replace("dc", "ch") 
+    texto = texto.replace("tc", "ch") 
     texto = texto.replace("ct", "cut")
     texto = texto.replace("ph", "f")
     texto = texto.replace("sh", "x")
     texto = texto.replace("th", "t")
-    texto = texto.replace("ch", "ch")  # Alternativa: c
+    texto = texto.replace("ch", "c")   
     
-    # Reglas Vocálicas y Consonánticas dobles
+    # Reglas Vocálicas (Se integra la nueva reducción 'ai' -> 'i')
     texto = texto.replace("ee", "i")
-    texto = texto.replace("oe", "ue")  # Alternativa: u
+    texto = texto.replace("oe", "ue")  
     texto = texto.replace("iu", "u")
-    texto = texto.replace("oi", "oi")  # Alternativa: oy
+    texto = texto.replace("oi", "oi")  
     texto = texto.replace("ii", "i")
-    texto = texto.replace("ae", "e")   # Alternativa: a
-    texto = texto.replace("oo", "u")   # Alternativa: oo
+    texto = texto.replace("ae", "e")   
+    texto = texto.replace("oo", "u")
     texto = texto.replace("cs", "s")
     texto = texto.replace("ll", "y")
-    texto = texto.replace("ey", "a")   # A corta
-    texto = texto.replace("ce", "c")   # Alternativa: ce
+    texto = texto.replace("ey", "a")   
+    texto = texto.replace("ce", "c")
+    texto = texto.replace("ai", "i")
     
-    # --- 4. REGLAS DE 1 CARÁCTER CON CONTEXTO (Límites de Palabra) ---
-    # Tratamiento estricto de la 'Y' al inicio y al final de los tokens
+    # --- 4. REGLAS DE 1 CARÁCTER CON CONTEXTO ---
     texto = re.sub(r'\by\b', 'i', texto) 
     texto = re.sub(r'\by', 'i', texto)  
     texto = re.sub(r'y\b', 'i', texto)  
     
-    # --- 5. SUSTITUCIÓN DE CONSONANTES Q / K / CK ---
+    # --- 5. SUSTITUCIÓN FINAL DE CONSONANTES Q / K / CK ---
+    # Al estar aquí abajo, la 'u' de 'qu' no vuelve a procesarse por las vocales,
+    # eliminando para siempre el bug que generaba "quu".
     texto = texto.replace("ck", "qu")
     texto = texto.replace("k", "qu")
     texto = texto.replace("q", "qu")
+    texto = texto.replace("m", "m")    
     
-    # Reglas complementarias simples de un carácter
-    texto = texto.replace("m", "m")    # Mapea dinámicamente m o n según fonética posterior
-    texto = texto.replace("l", "l")
-    
-    # --- 6. POST-PROCESAMIENTO Y LIMPIEZA FINAL ---
-    texto = texto.replace("h", "")     # Remueve las haches huérfanas residuales
-    texto = texto.replace("quu", "qu") # Corrige el bug duplicador generado en cadenas complejas
+    # --- 6. LIMPIEZA TOTAL DE HACHES (H) HUÉRFANAS ---
+    texto = texto.replace("h", "")
+    texto = texto.replace("quu", "qu")
     
     return texto.strip()
 
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> list:
     """
-    Analiza y traduce la morfología limpia de las palabras usando tu 
-    diccionario maestro de raíces con soporte dual (español e inglés).
+    Examina las palabras reducidas por la matriz y busca aproximaciones 
+    en un glosario maestro bilingüe (Español / Inglés).
     """
     palabras = texto_limpio.split()
     analisis_estructurado = []
     
-    # Tu base semántica con las equivalencias bilingües añadidas
+    # Glosario bilingüe de raíces basado en las equivalencias de tu cuadro
     diccionario_maestro = {
         "cut": {"es": "cortar / incisión", "en": "cut / incision"},
         "ci": {"es": "aquí / cercano", "en": "here / nearby"},
@@ -87,28 +91,18 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> list:
         "quoqu": {"es": "cocinar / preparar", "en": "cook / prepare"},
         "f": {"es": "hacer / propiedad", "en": "make / property"},
         "x": {"es": "seco / planta", "en": "dry / plant"},
-        "pes": {"es": "pie / base", "en": "foot / base"},
-        
-        # Nuevas palabras clave decodificadas de tus ejemplos romances
-        "quar": {"es": "porque / por lo cual", "en": "because / wherefore"},
-        "oqui": {"es": "aquí (adverbio)", "en": "here (adverb)"},
-        "oquad": {"es": "que / el cual", "en": "that / which"},
-        "seol": {"es": "sol / astro", "en": "sun / star"},
-        "siedi": {"es": "sede / asiento", "en": "seat / position"}
+        "pes": {"es": "pie / base", "en": "foot / base"}
     }
     
     for palabra in palabras:
-        # SOLUCIÓN AL BUG INCÓGNITA: Pasamos la variable a minúsculas para comparar con el diccionario
-        p_busqueda = palabra.lower()
-        
         traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
         tipo = "Desconocido" if idioma == "es" else "Unknown"
         
-        if p_busqueda in diccionario_maestro:
-            traducida = diccionario_maestro[p_busqueda][idioma]
+        if palabra in diccionario_maestro:
+            traducida = diccionario_maestro[palabra][idioma]
             tipo = "Match Exacto" if idioma == "es" else "Exact Match"
-        elif len(p_busqueda) > 2 and p_busqueda[:3] in diccionario_maestro:
-            traducida = diccionario_maestro[p_busqueda[:3]][idioma]
+        elif len(palabra) > 2 and palabra[:3] in diccionario_maestro:
+            traducida = diccionario_maestro[palabra[:3]][idioma]
             tipo = "Match Raíz" if idioma == "es" else "Root Match"
             
         analisis_estructurado.append({
