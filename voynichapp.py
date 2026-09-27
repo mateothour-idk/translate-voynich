@@ -1,14 +1,15 @@
 import streamlit as st
+import requests
 import re
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(page_title="Traductor Voynich DB Pro", page_icon="📜", layout="wide")
 st.title("📜 Traductor Universal y Corpus Completo del Manuscrito Voynich")
-st.write("Explora el manuscrito completo folio por folio mediante un motor adaptativo en la nube.")
+st.write("Explora el manuscrito completo folio por folio conectado al corpus real de Voynich.nu.")
 
-# --- GLOSARIO ESTRUCTURADO (DICCIONARIO NATIVO EXTENDIDO V3) ---
-if "diccionario_v3" not in st.session_state:
-    st.session_state.diccionario_v3 = {
+# --- GLOSARIO ESTRUCTURADO (DICCIONARIO NATIVO EXTENDIDO V4) ---
+if "diccionario_v4" not in st.session_state:
+    st.session_state.diccionario_v4 = {
         "poisoda": "la planta medicinal (Pesota)", "puí": "la planta", "cuta": "la corteza",
         "cutiy": "la corteza o piel", "podon": "la raíz o el pie", "vetí": "maduro o viejo",
         "oarur": "el aroma", "odaur": "el olor", "crofosodaur": "el aroma resinoso",
@@ -30,164 +31,118 @@ if "diccionario_v3" not in st.session_state:
         "qokeody": "la regla del boticario", "daba": "infundir", "pheador": "el pectoral"
     }
 
-# --- GENERACIÓN AUTOMÁTICA DEL CORPUS COMPLETO ACTUALIZADO ---
-if "manuscrito_v3" not in st.session_state:
-    corpus = {
-        "Herbario (Botánica)": {
-            "Folio 33v": "tararain idain cutiy dole criquy arain" # Tu folio del Girasol asegurado
-        },
-        "Astronomía (Zodíaco)": {},
-        "Cosmología (Astros)": {
-            "Folio 68r": "odotoí quidí quoquidí chidí tiodau itioei doror quiodal"
-        },
-        "Balneología (Fisiología)": {
-            "Folio 80r": "icios cios ain ciodain quaur oteroe" # Tu folio de las piscinas asegurado
-        },
-        "Farmacéutica (Recetas)": {},
-        "Recetas Cortas (Estrellas)": {}
+# --- DESCARGA Y PARSEO DEL CORPUS REAL DESDE VOYNICH.NU ---
+@st.cache_data(show_spinner="Descargando corpus académico real...")
+def cargar_corpus_real_voynich():
+    url = "https://www.voynich.nu/data/ZL3b-n.txt"
+    corpus_v4 = {
+        "Herbario (Botánica)": {}, "Astronomía (Zodíaco)": {}, "Cosmología (Astros)": {},
+        "Balneología (Fisiología)": {}, "Farmacéutica (Recetas)": {}, "Recetas Cortas (Estrellas)": {}
     }
-    
-    # Rellenar con precisión absoluta todas las páginas r y v para cada sección
-    for i in range(1, 67):
-        fr, fv = f"Folio {i}r", f"Folio {i}v"
-        if fr not in corpus["Herbario (Botánica)"]: corpus["Herbario (Botánica)"][fr] = "poisoda cutiy podon vetí oarur sier ciey icios oain"
-        if fv not in corpus["Herbario (Botánica)"]: corpus["Herbario (Botánica)"][fv] = "oteroe aram dalaiu ciodain aekiy air soar oas raur"
-            
-    for i in range(67, 74):
-        corpus["Astronomía (Zodíaco)"][f"Folio {i}r"] = "doror odotoí daur tiodau quioquey okeody air soar oiaj cios"
-        corpus["Astronomía (Zodíaco)"][f"Folio {i}v"] = "odotoí quidí quoquidí chidí tiodau itioei doror quiodal"
-        
-    for i in range(74, 85):
-        fr, fv = f"Folio {i}r", f"Folio {i}v"
-        if fr not in corpus["Balneología (Fisiología)"]: corpus["Balneología (Fisiología)"][fr] = "icios cios ain ciodain quaur oteroe oas pain"
-        if fv not in corpus["Balneología (Fisiología)"]: corpus["Balneología (Fisiología)"][fv] = "ain ciodain quaur oteroe dalaiu aekiy air soar"
+    try:
+        response = requests.get(url, timeout=15)
+        if response.status_code == 200:
+            for linea in response.text.split("\n"):
+                match = re.match(r'<f(\d+[rv])\..*?>\s*(.*)', linea)
+                if match:
+                    folio_id = f"Folio {match.group(1)}"
+                    texto_limpio = re.sub(r'[{}[\]!%=;@\$.,]', ' ', match.group(2).strip())
+                    texto_limpio = re.sub(r'\s+', ' ', texto_limpio).strip()
+                    if not texto_limpio or texto_limpio.startswith("#"): continue
+                    
+                    num_folio = int(re.search(r'\d+', folio_id).group())
+                    if 1 <= num_folio <= 66: seccion = "Herbario (Botánica)"
+                    elif 67 <= num_folio <= 73: seccion = "Astronomía (Zodíaco)"
+                    elif num_folio == 74: seccion = "Cosmología (Astros)"
+                    elif 75 <= num_folio <= 84: seccion = "Balneología (Fisiología)"
+                    elif 85 <= num_folio <= 99: seccion = "Farmacéutica (Recetas)"
+                    else: seccion = "Recetas Cortas (Estrellas)"
+                    
+                    if folio_id not in corpus_v4[seccion]: corpus_v4[seccion][folio_id] = texto_limpio
+                    else: corpus_v4[seccion][folio_id] += "\n" + texto_limpio
+    except Exception:
+        corpus_v4["Herbario (Botánica)"]["Folio 33v"] = "tararain idain cutiy dole criquy arain"
+    return corpus_v4
 
-    for i in range(85, 100):
-        corpus["Farmacéutica (Recetas)"][f"Folio {i}r"] = "poisoda cuta podon vetí oarur osain pain oain icios"
-        corpus["Farmacéutica (Recetas)"][f"Folio {i}v"] = "sier ciey quaur osain aram dalaiu ciodain otiy oeteodi"
-
-    for i in range(100, 117):
-        corpus["Recetas Cortas (Estrellas)"][f"Folio {i}r"] = "quidí chidí tiodau pair dais dair dam quioquey okeody"
-        corpus["Recetas Cortas (Estrellas)"][f"Folio {i}v"] = "quiodal oteroe aram dalaiu ciodain aekiy air soar oas"
-
-    st.session_state.manuscrito_v3 = corpus
+if "manuscrito_v4" not in st.session_state:
+    st.session_state.manuscrito_v4 = cargar_corpus_real_voynich()
 
 # --- MOTOR DE TRADUCCIÓN INTERLINEAL ---
 def traducir_palabra(palabra):
     palabra_limpia = re.sub(r'[^\wíóéáú]', '', palabra.lower())
-    if not palabra_limpia:
-        return palabra
-        
-    if palabra_limpia in st.session_state.diccionario_v3:
-        return st.session_state.diccionario_v3[palabra_limpia]
-        
+    if not palabra_limpia: return palabra
+    if palabra_limpia in st.session_state.diccionario_v4: return st.session_state.diccionario_v4[palabra_limpia]
     if len(palabra_limpia) > 3:
         for i in range(len(palabra_limpia), 2, -1):
             sub_raiz = palabra_limpia[:i]
-            coincidencias = [v for k, v in st.session_state.diccionario_v3.items() if k.startswith(sub_raiz)]
-            if coincidencias:
-                return f"[{coincidencias[0]}]*"
-                
+            coincidencias = [v for k, v in st.session_state.diccionario_v4.items() if k.startswith(sub_raiz)]
+            if coincidencias: return f"[{coincidencias[0]}]*"
     return f"¿{palabra}?"
 
 def descifrar_texto_completo(texto):
-    if not texto:
-        return ""
-    lineas = texto.strip().split("\n")
+    if not texto: return ""
     lineas_traducidas = []
-    
-    for linea in lineas:
-        palabras = linea.split(" ")
-        palabras_traducidas = [traducir_palabra(p) for p in palabras]
+    for linea in texto.strip().split("\n"):
+        palabras_traducidas = [traducir_palabra(p) for p in linea.split(" ")]
         frase_sucia = " ".join(palabras_traducidas)
-        
-        # Filtro sintáctico contra artículos repetidos consecutivos
         frase_limpia = re.sub(r'\b(los|el|la|las|un|una)\b\s+(?=\b\1\b)', '', frase_sucia, flags=re.IGNORECASE)
-        frase_limpia = re.sub(r'\s+', ' ', frase_limpia).strip()
-        lineas_traducidas.append(frase_limpia)
-        
+        lineas_traducidas.append(re.sub(r'\s+', ' ', frase_limpia).strip())
     return "\n".join(lineas_traducidas)
 
-
-# --- INTERFAZ DE USUARIO EN STREAMLIT ---
+# --- INTERFAZ DE USUARIO ---
 tab1, tab2, tab3 = st.tabs(["📖 Navegador del Manuscrito Completo", "🔍 Buscador de Diccionario", "📝 Añadir/Editar Datos"])
 
-# PESTAÑA 1: EXPLORADOR DE TODAS LAS PÁGINAS
 with tab1:
     st.subheader("Selector e Índice General de Folios")
+    seccion_elegida = st.selectbox("Filtrar por sección temática:", list(st.session_state.manuscrito_v4.keys()))
+    folios_disponibles = sorted(list(st.session_state.manuscrito_v4[seccion_elegida].keys()))
     
-    secciones = list(st.session_state.manuscrito_v3.keys())
-    seccion_elegida = st.selectbox("Filtrar por sección temática:", secciones)
-    
-    folios_disponibles = sorted(list(st.session_state.manuscrito_v3[seccion_elegida].keys()))
-    folio_elegido = st.selectbox("Selecciona el Folio de la página a descifrar:", folios_disponibles)
-    
-    texto_folio = st.session_state.manuscrito_v3[seccion_elegida][folio_elegido]
-    
-    st.markdown("---")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.info(f"**Texto Transcrito Original del `{folio_elegido}`**")
-        texto_editable = st.text_area("Puedes modificar el texto de la página en vivo:", texto_folio, height=150)
-        
-    with col2:
-        st.success(f"**Descifrado Semántico Automatizado**")
-        texto_descifrado = descifrar_texto_completo(texto_editable)
-        st.text_area("Resultado obtenido:", texto_descifrado, height=150, disabled=True)
-        
-        # Botón de descarga interactivo incorporado
-        st.download_button(
-            label="💾 Descargar Traducción (.txt)",
-            data=f"--- TRADUCCIÓN DEL {folio_elegido.upper()} ---\n\nTexto Original:\n{texto_editable}\n\nTraducción Obtenida:\n{texto_descifrado}",
-            file_name=f"traduccion_voynich_{folio_elegido.lower().replace(' ', '_')}.txt",
-            mime="text/plain"
-        )
+    if folios_disponibles:
+        folio_elegido = st.selectbox("Selecciona el Folio de la página a descifrar:", folios_disponibles)
+        texto_folio = st.session_state.manuscrito_v4[seccion_elegida][folio_elegido]
+        st.markdown("---")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.info(f"**Texto Transcrito Original del `{folio_elegido}`**")
+            texto_editable = st.text_area("Puedes modificar el texto en vivo:", texto_folio, height=200)
+        with col2:
+            st.success(f"**Descifrado Semántico Automatizado**")
+            texto_descifrado = descifrar_texto_completo(texto_editable)
+            st.text_area("Resultado obtenido:", texto_descifrado, height=200, disabled=True)
+            st.download_button(
+                label="💾 Descargar Traducción (.txt)",
+                data=f"--- TRADUCCIÓN DEL {folio_elegido.upper()} ---\n\nTexto Original:\n{texto_editable}\n\nTraducción:\n{texto_descifrado}",
+                file_name=f"traduccion_voynich_{folio_elegido.lower().replace(' ', '_')}.txt", mime="text/plain"
+            )
+    else: st.warning("No hay folios disponibles para esta sección.")
 
-    st.caption("*Simbología: Las palabras con `¿?` no están en la BD; las `[]*` son aproximaciones por raíces.*")
-
-# PESTAÑA 2: CONSULTA MANUAL DE TÉRMINOS
 with tab2:
     st.subheader("Buscador predictivo del Glosario")
     busqueda = st.text_input("Introduce una palabra Voynich para ver su mapeo:")
     if busqueda:
-        palabra_busqueda = re.sub(r'[^\wíóéáú]', '', busqueda.lower())
-        resultados = {k: v for k, v in st.session_state.diccionario_v3.items() if palabra_busqueda in k}
-        if resultados:
-            for clave, valor in resultados.items():
-                st.write(f"🔹 **{clave}** ➔ {valor}")
-        else:
-            st.warning("No se encontraron coincidencias en el glosario.")
+        palabra_b = re.sub(r'[^\wíóéáú]', '', busqueda.lower())
+        res = {k: v for k, v in st.session_state.diccionario_v4.items() if palabra_b in k}
+        for clave, valor in res.items(): st.write(f"🔹 **{clave}** ➔ {valor}")
 
-# PESTAÑA 3: GESTIÓN Y PERSISTENCIA DE CORPUS
 with tab3:
     st.subheader("Gestión Avanzada de Datos (En memoria de Sesión)")
-    
     col_dict, col_folio = st.columns(2)
     with col_dict:
         st.write("### Registrar nuevo término")
-        nueva_clave = st.text_input("Nueva palabra Voynich:")
-        nuevo_valor = st.text_input("Traducción / Significado:")
-        if st.button("Guardar en Diccionario"):
-            if nueva_clave and nuevo_valor:
-                st.session_state.diccionario_v3[nueva_clave.lower().strip()] = nuevo_valor.strip()
-                st.success("¡Término guardado con éxito!")
-                st.rerun()
-                
+        n_clave = st.text_input("Nueva palabra Voynich:")
+        n_valor = st.text_input("Traducción / Significado:")
+        if st.button("Guardar en Diccionario") and n_clave and n_valor:
+            st.session_state.diccionario_v4[n_clave.lower().strip()] = n_valor.strip()
+            st.success("¡Término guardado!")
+            st.rerun()
     with col_folio:
         st.write("### Actualizar texto de un folio existente")
-        todos_los_folios = []
-        for sec, f_dict in st.session_state.manuscrito_v3.items():
-            for f in f_dict.keys():
-                todos_los_folios.append(f"{sec} - {f}")
-                
-        folio_update_full = st.selectbox("Folio a modificar:", sorted(todos_los_folios))
-        sec_up, fol_up = folio_update_full.split(" - ")
-        
-        texto_actual_db = st.session_state.manuscrito_v3[sec_up][fol_up]
-        nuevo_texto_db = st.text_area("Texto definitivo para guardar:", texto_actual_db, key="area_up")
-        
-        if st.button("Actualizar Memoria"):
-            st.session_state.manuscrito_v3[sec_up][fol_up] = nuevo_texto_db.strip()
-            st.success("¡Folio modificado con éxito!")
-            st.rerun()
+        todos = [f"{s} - {f}" for s, d in st.session_state.manuscrito_v4.items() for f in d.keys()]
+        if todos:
+            f_update = st.selectbox("Folio a modificar:", sorted(todos))
+            sec_up, fol_up = f_update.split(" - ")
+            n_txt = st.text_area("Texto definitivo:", st.session_state.manuscrito_v4[sec_up][fol_up], key="area_up")
+            if st.button("Actualizar Memoria"):
+                st.session_state.manuscrito_v4[sec_up][fol_up] = n_txt.strip()
+                st.success("¡Folio modificado!")
+                st.rerun()
