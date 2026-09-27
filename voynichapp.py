@@ -29,47 +29,53 @@ if "diccionario" not in st.session_state:
 
 # --- GENERACIÓN AUTOMÁTICA DEL CORPUS COMPLETO (FOLIOS 1R A 116V) ---
 if "manuscrito" not in st.session_state:
-    # Creamos las secciones temáticas oficiales de la paleografía del Voynich
     corpus = {
-        "Herbario (Botánica)": {},
+        "Herbario (Botánica)": {
+            "Folio 1r": "poisoda cutiy podon vetí oarur sier ciey icios oain osain",
+            "Folio 1v": "oteroe aram dalaiu ciodain aekiy air soar oas raur",
+            "Folio 2r": "otiy oeteodi daur odotoí doror quidí quoquidí chidí",
+            "Folio 2v": "tiodau itioei siy pair dais dair dam quioquey okeody quiodal",
+            "Folio 33v": "tararain idain cutiy dole criquy arain" # Tu folio del Girasol
+        },
         "Astronomía (Zodíaco)": {},
-        "Cosmología (Astros)": {},
-        "Balneología (Fisiología)": {},
+        "Cosmología (Astros)": {
+            "Folio 68r": "odotoí quidí quoquidí chidí tiodau itioei doror quiodal"
+        },
+        "Balneología (Fisiología)": {
+            "Folio 80r": "icios cios ain ciodain quaur oteroe" # Tu folio de las piscinas
+        },
         "Farmacéutica (Recetas)": {},
         "Recetas Cortas (Estrellas)": {}
     }
     
-    # 1. Rellenar Sección de Botánica (Folios 1r al 66v)
+    # Rellenar automáticamente el resto de folios para abarcar la totalidad del manuscrito
     for i in range(1, 67):
-        corpus["Herbario (Botánica)"][f"Folio {i}r"] = "poisoda cutiy podon vetí oarur sier ciey icios oain osain"
-        corpus["Herbario (Botánica)"][f"Folio {i}v"] = "oteroe aram dalaiu ciodain aekiy air soar oas raur"
-    
-    # 2. Rellenar Sección de Astronomía y Zodíaco (Folios 67r al 73v)
+        folio_r = f"Folio {i}r"
+        folio_v = f"Folio {i}v"
+        if folio_r not in corpus["Herbario (Botánica)"]:
+            corpus["Herbario (Botánica)"][folio_r] = "poisoda cutiy podon vetí oarur sier ciey"
+        if folio_v not in corpus["Herbario (Botánica)"]:
+            corpus["Herbario (Botánica)"][folio_v] = "oteroe aram dalaiu ciodain aekiy air soar"
+            
     for i in range(67, 74):
         corpus["Astronomía (Zodíaco)"][f"Folio {i}r"] = "doror odotoí daur tiodau quioquey okeody air soar oiaj cios"
         corpus["Astronomía (Zodíaco)"][f"Folio {i}v"] = "odotoí quidí quoquidí chidí tiodau itioei doror quiodal"
         
-    # 3. Rellenar Sección de Cosmología (Folios 74r al 74v)
-    corpus["Cosmología (Astros)"]["Folio 74r"] = "odotoí quidí quoquidí chidí tiodau itioei doror quiodal"
-    corpus["Cosmología (Astros)"]["Folio 74v"] = "doror odotoí daur tiodau quioquey okeody"
+    for i in range(74, 85):
+        folio_r = f"Folio {i}r"
+        folio_v = f"Folio {i}v"
+        if folio_r not in corpus["Balneología (Fisiología)"]:
+            corpus["Balneología (Fisiología)"][folio_r] = "icios cios ain ciodain quaur oteroe oas pain"
+        if folio_v not in corpus["Balneología (Fisiología)"]:
+            corpus["Balneología (Fisiología)"][folio_v] = "ain ciodain quaur oteroe dalaiu aekiy air soar"
 
-    # 4. Rellenar Sección Balneológica de las Ninfas (Folios 75r al 84v)
-    for i in range(75, 85):
-        corpus["Balneología (Fisiología)"][f"Folio {i}r"] = "icios cios ain ciodain quaur oteroe oas pain crofosodaur odaur"
-        corpus["Balneología (Fisiología)"][f"Folio {i}v"] = "ain ciodain quaur oteroe dalaiu aekiy air soar oas"
-
-    # 5. Rellenar Sección Farmacéutica (Folios 85r al 99v)
     for i in range(85, 100):
-        corpus["Farmacéutica (Recetas)"][f"Folio {i}r"] = "poisoda cuta podon vetí oarur osain pain oain icios cios"
-        corpus["Farmacéutica (Recetas)"][f"Folio {i}v"] = "sier ciey quaur osain aram dalaiu ciodain otiy oeteodi"
+        corpus["Farmacéutica (Recetas)"][f"Folio {i}r"] = "poisoda cuta podon vetí oarur osain pain oain"
+        corpus["Farmacéutica (Recetas)"][f"Folio {i}v"] = "sier ciey quaur osain aram dalaiu ciodain otiy"
 
-    # 6. Rellenar Sección de Recetas Cortas o Estrellas (Folios 100r al 116v)
     for i in range(100, 117):
-        corpus["Recetas Cortas (Estrellas)"][f"Folio {i}r"] = "quidí chidí tiodau pair dais dair dam quioquey okeody"
-        corpus["Recetas Cortas (Estrellas)"][f"Folio {i}v"] = "quiodal oteroe aram dalaiu ciodain aekiy air soar oas raur"
-
-    # Forzar la carga de tu Folio 80r específico de la captura
-    corpus["Balneología (Fisiología)"]["Folio 80r"] = "icios cios ain ciodain quaur oteroe"
+        corpus["Recetas Cortas (Estrellas)"][f"Folio {i}r"] = "quidí chidí tiodau pair dais dair dam quioquey"
+        corpus["Recetas Cortas (Estrellas)"][f"Folio {i}v"] = "quiodal oteroe aram dalaiu ciodain aekiy air"
 
     st.session_state.manuscrito = corpus
 
