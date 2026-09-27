@@ -3,9 +3,8 @@ import re
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
     Aplica las reglas de sustitución paleográfica al texto EVA de forma segura.
-    Las reglas se ejecutan estrictamente de mayor a menor longitud para evitar
-    conflictos o mutilaciones de dígrafos, y las reglas vocálicas se ejecutan 
-    antes que Q/K para evitar duplicaciones indebidas (eliminando el bug quu).
+    Ordenado de mayor a menor longitud para evitar conflictos y con reglas 
+    vocálicas ejecutadas antes de Q/K para eliminar el bug 'quu'.
     """
     if not texto_eva:
         return ""
@@ -35,7 +34,7 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = texto.replace("th", "t")
     texto = texto.replace("ch", "c")   
     
-    # Reglas Vocálicas (Paso crítico: se ejecutan ANTES de generar nuevas 'u' con Q/K)
+    # Reglas Vocálicas (Paso crítico: evitan duplicaciones en Q/K)
     texto = texto.replace("ee", "i")
     texto = texto.replace("oe", "ue")  
     texto = texto.replace("iu", "u")
@@ -66,13 +65,9 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     return texto.strip()
 
 
-def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> str:
-    """
-    Examina las palabras reducidas por la matriz y busca aproximaciones 
-    en un glosario maestro bilingüe (Español / Inglés).
-    """
+def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> list:
     palabras = texto_limpio.split()
-    resultado = []
+    analisis_estructurado = []
     
     diccionario_maestro = {
         "cut": {"es": "cortar / incisión", "en": "cut / incision"},
@@ -87,11 +82,20 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> str:
     }
     
     for palabra in palabras:
+        traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
+        tipo = "Desconocido" if idioma == "es" else "Unknown"
+        
         if palabra in diccionario_maestro:
-            resultado.append(diccionario_maestro[palabra][idioma])
+            traducida = diccionario_maestro[palabra][idioma]
+            tipo = "Match Exacto" if idioma == "es" else "Exact Match"
         elif len(palabra) > 2 and palabra[:3] in diccionario_maestro:
-            resultado.append(diccionario_maestro[palabra[:3]][idioma])
-        else:
-            resultado.append(palabra.upper())
+            traducida = diccionario_maestro[palabra[:3]][idioma]
+            tipo = "Match Raíz" if idioma == "es" else "Root Match"
             
-    return " ".join(resultado)
+        analisis_estructurado.append({
+            "Morfología Filtrada": palabra.upper(),
+            "Interpretación / Semántica": traducida,
+            "Diagnóstico": tipo
+        })
+            
+    return analisis_estructurado
