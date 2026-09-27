@@ -10,7 +10,6 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     if not texto_eva:
         return ""
         
-    # Estandarizar a minúsculas
     texto = texto_eva.lower()
     
     # --- 1. REGLAS DE 4 CARACTERES (Tetragramas) ---
@@ -62,8 +61,6 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     
     # --- 6. LIMPIEZA TOTAL DE HACHES (H) HUÉRFANAS ---
     texto = texto.replace("h", "")
-    
-    # Seguro preventivo redundante
     texto = texto.replace("quu", "qu")
     
     return texto.strip()
