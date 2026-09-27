@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 import re
 from deep_translator import GoogleTranslator
-import voynichdata  # Importación de los datos masivos protegidos
+import voynichdata
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(page_title="Traductor Voynich DB Pro", page_icon="📜", layout="wide")
@@ -16,7 +16,7 @@ cursor = conn.cursor()
 cursor.execute("CREATE TABLE IF NOT EXISTS diccionario (clave TEXT PRIMARY KEY, valor TEXT)")
 cursor.execute("CREATE TABLE IF NOT EXISTS manuscrito (folio TEXT PRIMARY KEY, seccion TEXT, texto_voynich TEXT)")
 
-# Inserción segura e inteligente desde el archivo de datos
+# Inserción masiva inicial libre de duplicados
 cursor.executemany("INSERT OR IGNORE INTO diccionario VALUES (?, ?)", voynichdata.glosario_inicial)
 cursor.executemany("INSERT OR IGNORE INTO manuscrito VALUES (?, ?, ?)", voynichdata.obtener_corpus_completo())
 conn.commit()
@@ -39,16 +39,18 @@ def aplicar_tecnica_y_traducir(palabra):
     if not palabra_limpia:
         return palabra
         
-    # TU TÉCNICA DE LIGADURAS: Reducción automática antes de consultar la BD
+    # TU TÉCNICA DE LIGADURAS: Reducción automática aplicada antes de buscar en BD
     palabra_limpia = palabra_limpia.replace("pc", "p")
     
     significado_final = None
     
+    # 1. Búsqueda exacta limpia (Corregido usando [0] para desempaquetar la tupla)
     cursor.execute("SELECT valor FROM diccionario WHERE clave = ?", (palabra_limpia,))
     resultado = cursor.fetchone()
     if resultado:
         significado_final = resultado[0]
     else:
+        # 2. Fallback adaptativo por raíces morfológicas
         if len(palabra_limpia) > 3:
             for i in range(len(palabra_limpia), 2, -1):
                 sub_raiz = palabra_limpia[:i]
@@ -58,12 +60,17 @@ def aplicar_tecnica_y_traducir(palabra):
                     significado_final = f"[{res_raiz[0]}]*"
                     break
                     
+    # 3. Procesamiento y ejecución de la traducción externa
     if significado_final:
         if idioma_destino != "Español":
             try:
+                # Comprobar si proviene del fallback de raíces
                 es_aproximado = significado_final.startswith("[")
                 texto_a_traducir = significado_final.replace("[", "").replace("]*", "") if es_aproximado else significado_final
+                
+                # Traducir la cadena limpia de texto obtenida de la BD
                 traduccion = GoogleTranslator(source='es', target=codigos_idiomas[idioma_destino]).translate(texto_a_traducir)
+                
                 return f"[{traduccion}]*" if es_aproximado else traduccion
             except Exception:
                 return significado_final
