@@ -13,10 +13,14 @@ st.write("Explora el manuscrito mediante tu técnica de reducción de caracteres
 conn = sqlite3.connect("voynich_matrix.db", check_same_thread=False)
 cursor = conn.cursor()
 
+# IMPORTANTE: Forzamos la recreación de tablas para limpiar registros corruptos anteriores
+cursor.execute("DROP TABLE IF EXISTS diccionario")
+cursor.execute("DROP TABLE IF EXISTS manuscrito")
+
 cursor.execute("CREATE TABLE IF NOT EXISTS diccionario (clave TEXT PRIMARY KEY, valor TEXT)")
 cursor.execute("CREATE TABLE IF NOT EXISTS manuscrito (folio TEXT PRIMARY KEY, seccion TEXT, texto_voynich TEXT)")
 
-# Inserción masiva inicial libre de duplicados
+# Inserción masiva limpia
 cursor.executemany("INSERT OR IGNORE INTO diccionario VALUES (?, ?)", voynichdata.glosario_inicial)
 cursor.executemany("INSERT OR IGNORE INTO manuscrito VALUES (?, ?, ?)", voynichdata.obtener_corpus_completo())
 conn.commit()
@@ -39,16 +43,16 @@ def aplicar_tecnica_y_traducir(palabra):
     if not palabra_limpia:
         return palabra
         
-    # TU TÉCNICA DE LIGADURAS: Reducción automática aplicada antes de buscar en BD
+    # TU TÉCNICA DE LIGADURAS
     palabra_limpia = palabra_limpia.replace("pc", "p")
     
     significado_final = None
     
-    # 1. Búsqueda exacta limpia (Corregido usando [0] para desempaquetar la tupla)
+    # 1. Búsqueda exacta (Corregido con [0] para extraer la cadena de texto pura)
     cursor.execute("SELECT valor FROM diccionario WHERE clave = ?", (palabra_limpia,))
     resultado = cursor.fetchone()
     if resultado:
-        significado_final = resultado[0]
+        significado_final = str(resultado[0])  
     else:
         # 2. Fallback adaptativo por raíces morfológicas
         if len(palabra_limpia) > 3:
@@ -57,10 +61,10 @@ def aplicar_tecnica_y_traducir(palabra):
                 cursor.execute("SELECT valor FROM diccionario WHERE clave LIKE ?", (f"{sub_raiz}%",))
                 res_raiz = cursor.fetchone()
                 if res_raiz:
-                    significado_final = f"[{res_raiz[0]}]*"
+                    significado_final = f"[{str(res_raiz[0])}]*"
                     break
                     
-    # 3. Procesamiento y ejecución de la traducción externa
+    # 3. Procesamiento y ejecución de la traducción a la API
     if significado_final:
         if idioma_destino != "Español":
             try:
@@ -68,7 +72,7 @@ def aplicar_tecnica_y_traducir(palabra):
                 es_aproximado = significado_final.startswith("[")
                 texto_a_traducir = significado_final.replace("[", "").replace("]*", "") if es_aproximado else significado_final
                 
-                # Traducir la cadena limpia de texto obtenida de la BD
+                # Traducción del string limpio
                 traduccion = GoogleTranslator(source='es', target=codigos_idiomas[idioma_destino]).translate(texto_a_traducir)
                 
                 return f"[{traduccion}]*" if es_aproximado else traduccion
