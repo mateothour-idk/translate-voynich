@@ -14,7 +14,6 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = texto_eva.lower()
     
     # --- 1. REGLAS DE 4 CARACTERES (Tetragramas) ---
-    # Procesamos 'pcee' aquí arriba para que 'pc' o 'cee' no la muten antes de tiempo
     texto = texto.replace("pcee", "pi")
     texto = texto.replace("qok", "quoqu")
     
@@ -27,7 +26,6 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = texto.replace("pcs", "pes")
     
     # --- 3. REGLAS DE 2 CARACTERES (Bigramas y Dígrafos) ---
-    # Combinaciones Consonánticas
     texto = texto.replace("pc", "p")
     texto = texto.replace("ps", "p")
     texto = texto.replace("cp", "p")
@@ -39,7 +37,7 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = texto.replace("th", "t")
     texto = texto.replace("ch", "c")   
     
-    # Reglas Vocálicas (Se integra la nueva reducción 'ai' -> 'i')
+    # Reglas Vocálicas
     texto = texto.replace("ee", "i")
     texto = texto.replace("oe", "ue")  
     texto = texto.replace("iu", "u")
@@ -59,8 +57,6 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = re.sub(r'y\b', 'i', texto)  
     
     # --- 5. SUSTITUCIÓN FINAL DE CONSONANTES Q / K / CK ---
-    # Al estar aquí abajo, la 'u' de 'qu' no vuelve a procesarse por las vocales,
-    # eliminando para siempre el bug que generaba "quu".
     texto = texto.replace("ck", "qu")
     texto = texto.replace("k", "qu")
     texto = texto.replace("q", "qu")
@@ -74,14 +70,9 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
 
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> list:
-    """
-    Examina las palabras reducidas por la matriz y busca aproximaciones 
-    en un glosario maestro bilingüe (Español / Inglés).
-    """
     palabras = texto_limpio.split()
     analisis_estructurado = []
     
-    # Glosario bilingüe de raíces basado en las equivalencias de tu cuadro
     diccionario_maestro = {
         "cut": {"es": "cortar / incisión", "en": "cut / incision"},
         "ci": {"es": "aquí / cercano", "en": "here / nearby"},
