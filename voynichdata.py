@@ -35,6 +35,7 @@ def obtener_corpus_completo():
         ("Folio 116v", "Hojas Sueltas (Final)", "quiodal oteroe aram dalaiu ciodain aekiy air soar oas raur")
     ]
     
+    # Rellenar automáticamente los folios restantes de forma masiva
     for i in range(3, 67):
         paginas.append((f"Folio {i}r", "Herbario (Botánica)", "poisoda cutiy podon vetí oarur sier ciey"))
         paginas.append((f"Folio {i}v", "Herbario (Botánica)", "oteroe aram dalaiu ciodain aekiy air soar"))
