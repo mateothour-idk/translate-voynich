@@ -20,11 +20,11 @@ if "diccionario" not in st.session_state:
         "air": "el aire", "soar": "el vapor elevado", "oas": "la vasija",
         "raur": "la raíz", "otiy": "la maceración", "oeteodi": "el reposo",
         "daur": "la duración del ciclo", "odotoí": "la rueda del año", 
-        "doror", "el nacimiento del astro", "quidí", "diariamente", "quoquidí", "cada día",
-        "chidí", "canalizar", "tiodau", "en el tiempo determinado", "itioei", "la estación",
-        "siy", "si se presenta", "pair", "por medio de", "dais", "se debe aplicar",
-        "dair", "dar", "dam", "entregar", "quioquey", "y el corazón",
-        "okeody", "lo que dicta el tratado", "quiodal", "el texto o contenido"
+        "doror": "el nacimiento del astro", "quidí": "diariamente", "quoquidí": "cada día",
+        "chidí": "canalizar", "tiodau": "en el tiempo determinado", "itioei": "la estación",
+        "siy": "si se presenta", "pair": "por medio de", "dais": "se debe aplicar",
+        "dair": "dar", "dam": "entregar", "quioquey": "y el corazón",
+        "okeody": "lo que dicta el tratado", "quiodal": "el texto o contenido"
     }
 
 # --- GENERACIÓN AUTOMÁTICA DEL CORPUS COMPLETO (FOLIOS 1R A 116V) ---
