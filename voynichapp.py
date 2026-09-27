@@ -22,7 +22,7 @@ def descargar_y_parsear_corpus_data():
     Se conecta directamente al archivo voyn_101.txt de voynich.nu simulando
     una petición web para evitar restricciones del cortafuegos del servidor.
     """
-    url_data = "https://www.voynich.nu/data/voyn_101.txt"
+    url_data = "https://www.voynich.nu/data/ZL3b-n.txt"
     diccionario_folios = {}
     
     cabeceras = {
