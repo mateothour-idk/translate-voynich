@@ -13,14 +13,14 @@ st.write("Explora el manuscrito mediante tu técnica de reducción de caracteres
 conn = sqlite3.connect("voynich_matrix.db", check_same_thread=False)
 cursor = conn.cursor()
 
-# IMPORTANTE: Forzamos la recreación de tablas para limpiar registros corruptos anteriores
+# Forzar limpieza inicial para asegurar la eliminación de datos con formatos antiguos corruptos
 cursor.execute("DROP TABLE IF EXISTS diccionario")
 cursor.execute("DROP TABLE IF EXISTS manuscrito")
 
 cursor.execute("CREATE TABLE IF NOT EXISTS diccionario (clave TEXT PRIMARY KEY, valor TEXT)")
 cursor.execute("CREATE TABLE IF NOT EXISTS manuscrito (folio TEXT PRIMARY KEY, seccion TEXT, texto_voynich TEXT)")
 
-# Inserción masiva limpia
+# Inserción masiva limpia libre de duplicados
 cursor.executemany("INSERT OR IGNORE INTO diccionario VALUES (?, ?)", voynichdata.glosario_inicial)
 cursor.executemany("INSERT OR IGNORE INTO manuscrito VALUES (?, ?, ?)", voynichdata.obtener_corpus_completo())
 conn.commit()
@@ -39,55 +39,54 @@ codigos_idiomas = {
 
 # --- MOTOR DE TRADUCCIÓN E INTELIGENCIA DE TU TÉCNICA ---
 def aplicar_tecnica_y_traducir(palabra):
-    palabra_limpia = re.sub(r'[^\wíóéáú]', '', palabra.lower())
+    # Limpieza de caracteres y signos ortográficos periféricos
+    palabra_limpia = re.sub(r'[^\wíóéáú]', '', palabra.lower().strip())
     if not palabra_limpia:
         return palabra
         
-    # TU TÉCNICA DE LIGADURAS
+    # TU TÉCNICA DE LIGADURAS: Reducción automática aplicada antes de buscar en la BD
     palabra_limpia = palabra_limpia.replace("pc", "p")
     
     significado_final = None
+    es_aproximado = False
     
-    # 1. Búsqueda exacta (Corregido con [0] para extraer la cadena de texto pura)
+    # 1. Búsqueda exacta (Corregido con [0] para extraer el string puro de la tupla)
     cursor.execute("SELECT valor FROM diccionario WHERE clave = ?", (palabra_limpia,))
     resultado = cursor.fetchone()
     if resultado:
-        significado_final = str(resultado[0])  
+        significado_final = resultado[0]
     else:
-        # 2. Fallback adaptativo por raíces morfológicas
+        # 2. Fallback adaptativo por raíces morfológicas conocidas
         if len(palabra_limpia) > 3:
             for i in range(len(palabra_limpia), 2, -1):
                 sub_raiz = palabra_limpia[:i]
                 cursor.execute("SELECT valor FROM diccionario WHERE clave LIKE ?", (f"{sub_raiz}%",))
                 res_raiz = cursor.fetchone()
                 if res_raiz:
-                    significado_final = f"[{str(res_raiz[0])}]*"
+                    significado_final = res_raiz[0]
+                    es_aproximado = True
                     break
                     
-    # 3. Procesamiento y ejecución de la traducción a la API
+    # 3. Procesamiento y ejecución de la traducción a la API externa
     if significado_final:
         if idioma_destino != "Español":
             try:
-                # Comprobar si proviene del fallback de raíces
-                es_aproximado = significado_final.startswith("[")
-                texto_a_traducir = significado_final.replace("[", "").replace("]*", "") if es_aproximado else significado_final
-                
-                # Traducción del string limpio
-                traduccion = GoogleTranslator(source='es', target=codigos_idiomas[idioma_destino]).translate(texto_a_traducir)
-                
+                # Traducción directa del string completamente limpio obtenido de la BD
+                traduccion = GoogleTranslator(source='es', target=codigos_idiomas[idioma_destino]).translate(significado_final)
                 return f"[{traduccion}]*" if es_aproximado else traduccion
             except Exception:
-                return significado_final
-        return significado_final
+                return f"[{significado_final}]*" if es_aproximado else significado_final
+        return f"[{significado_final}]*" if es_aproximado else significado_final
         
     return f"¿{palabra}?"
 
 def descifrar_texto_completo(texto):
+    """Procesa párrafos completos y mantiene saltos de línea del manuscrito."""
     lineas = texto.strip().split("\n")
     lineas_traducidas = []
     for linea in lineas:
         palabras = linea.split(" ")
-        palabras_traducidas = [aplicar_tecnica_y_traducir(p) for p in palabras]
+        palabras_traducidas = [aplicar_tecnica_y_traducir(p) for p in palabras if p]
         lineas_traducidas.append(" ".join(palabras_traducidas))
     return "\n".join(lineas_traducidas)
 
