@@ -4,42 +4,49 @@ import re
 from voynichdata import aplicar_matriz_sustitucion, motor_prosa_fluida
 
 st.set_page_config(
-    page_title="Traductor Voynich Cloud",
+    page_title="Traductor Voynich Cloud Pro",
     page_icon="📜",
     layout="centered"
 )
 
-st.title("📜 Traductor Dinámico de Todo el Manuscrito Voynich")
-st.write("Esta alternativa extrae las transcripciones oficiales en EVA directamente desde repositorios académicos en la nube.")
+st.title("📜 Traductor Dinámico del Manuscrito Voynich")
+st.write("Esta herramienta procesa el corpus en la nube mediante tu matriz adaptativa de reducción paleográfica.")
 
-# --- GENERADOR AUTOMÁTICO DE FOLIOS ---
-# Creamos la lista completa de las 240+ páginas del manuscrito de forma matemática
+# --- COMPONENTE: GENERADOR AUTOMÁTICO DE FOLIOS DEL LIBRO ---
 def generar_lista_folios():
     folios = ["Manual (Texto Libre)"]
-    # El manuscrito va del folio 1 al 116 (con algunas páginas faltantes históricamente)
+    # Genera matemáticamente las páginas del manuscrito (1r, 1v... hasta 116v)
     for i in range(1, 117):
         folios.append(f"f{i}r")
         folios.append(f"f{i}v")
     return folios
 
-# --- FUNCIÓN DE EXTRACCIÓN EN LA NUBE (WEB SCRAPING) ---
+# --- COMPONENTE: WEB SCRAPING CON FILTRADO DE METADATA ---
 @st.cache_data(show_spinner=False)
 def descargar_folio_online(folio):
     """
-    Se conecta al repositorio y descarga el folio limpio.
+    Descarga dinámicamente un folio desde la nube y lo formatea para la URL con zfill
     """
-    # Usamos el espejo del corpus unificado Landini/Zandbergen/Currier
-    url = f"https://voynich.nu{folio[1:-1]}{folio[-1]}_tr.txt"
+    match = re.match(r"f(\d+)([rv])", folio)
+    if not match:
+        return f"Error: Formato de folio inválido ({folio})"
+        
+    num_pagina = match.group(1)
+    lado = match.group(2)
+    
+    # voynich.nu requiere tres dígitos obligatorios (ej: f001r_tr.txt, f116v_tr.txt)
+    url = f"https://voynich.nu{num_pagina.zfill(3)}{lado}_tr.txt"
+    
     try:
         respuesta = requests.get(url, timeout=5)
         if respuesta.status_code == 200:
             lineas = respuesta.text.split("\n")
             texto_pag = []
             for linea in lineas:
-                # Ignorar comentarios del corpus académico
+                # Ignorar comentarios internos del repositorio
                 if not linea.strip() or linea.startswith("#"):
                     continue
-                # Limpiar metadatos de las líneas (<f1r.P1.1>, etc.)
+                # Limpiar etiquetas xml/interlineales como <f1r.P1.1> o comentarios {}
                 limpio = re.sub(r'<[^>]+>', '', linea)
                 limpio = re.sub(r'\{[^}]+\}', '', limpio)
                 limpio = limpio.replace(".", " ").replace(",", " ").strip()
@@ -47,62 +54,63 @@ def descargar_folio_online(folio):
                     texto_pag.append(limpio)
             return " ".join(texto_pag)
         else:
-            # Fallback en caso de que la URL de voynich.nu varíe la sintaxis
-            return f"Error: No se pudo obtener el folio {folio} (Código {respuesta.status_code})"
+            return f"Error 404: El folio {folio} no está disponible en este formato interlineal."
     except Exception as e:
-        return f"Error de conexión: {str(e)}"
+        return f"Error de red: No se pudo conectar al host ({str(e)})"
 
-# --- BARRA LATERAL CONTROLES ---
-st.sidebar.header("Filtros del Manuscrito")
+# --- CONFIGURACIÓN DE CONTROLES (BARRA LATERAL) ---
+st.sidebar.header("Parámetros del Sistema")
 
 lista_folios = generar_lista_folios()
 folio_seleccionado = st.sidebar.selectbox(
-    "Selecciona cualquier página del libro:",
+    "Selecciona una página (Folio):",
     lista_folios
 )
 
 idioma_destino = st.sidebar.radio(
-    "Idioma del resultado:",
+    "Idioma de salida del diccionario:",
     ["Español (ES)", "English (EN)"]
 )
 cod_idioma = "es" if "Español" in idioma_destino else "en"
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Alternativa Cloud sin archivos locales")
+st.sidebar.caption("Desarrollado con arquitectura cloud dinámica y optimizador de n-gramas v2.2")
 
-# --- FLUJO PRINCIPAL ---
+# --- CONTROL DEL FLUJO DE DATOS ---
 if folio_seleccionado == "Manual (Texto Libre)":
     texto_usuario = st.text_area(
-        "Introduce texto libre en EVA:",
-        placeholder="Ejemplo: qokched dcectth shol..."
+        "Introduce código EVA libre para pruebas:",
+        placeholder="Ejemplo: qokched dcectth shol pcs..."
     )
 else:
-    with st.spinner(f"Descargando datos oficiales del Folio {folio_seleccionado}..."):
+    with st.spinner(f"Consumiendo datos académicos del Folio {folio_seleccionado}..."):
         texto_usuario = descargar_folio_online(folio_seleccionado)
     
     if "Error" in texto_usuario:
         st.error(texto_usuario)
         texto_usuario = ""
     else:
-        st.info(f"📖 **Texto EVA oficial descargado de internet para el Folio {folio_seleccionado}:**")
+        st.info(f"📖 **Texto EVA oficial extraído para el Folio {folio_seleccionado}:**")
         st.code(texto_usuario, wrap_lines=True)
 
+# --- BOTÓN Y LÓGICA DE PROCESAMIENTO ---
 if st.button("Procesar y Traducir", type="primary"):
     if not texto_usuario.strip():
-        st.warning("No hay texto disponible para traducir.")
+        st.warning("El búfer de texto está vacío. Proporciona datos de entrada.")
     else:
-        with st.spinner("Ejecutando matriz de sustitución..."):
-            # Llama a tu voynichdata.py (que ya tiene corregido el bug 'quu' y el filtro de la 'h')
+        with st.spinner("Procesando matriz y decodificando morfología..."):
+            # Paso 1: Ejecutar tu matriz libre del bug quu
             texto_filtrado = aplicar_matriz_sustitucion(texto_usuario)
+            # Paso 2: Pasar el idioma dinámico seleccionado al motor
             traduccion_final = motor_prosa_fluida(texto_filtrado, idioma=cod_idioma)
             
-        st.success("¡Operación completada con éxito!")
+        st.success("¡Pipeline completado!")
         
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("### 🧪 Reducción de Matriz")
             st.info(f"`{texto_filtrado}`")
         with col2:
-            title_lang = "Prosa Romance" if cod_idioma == "es" else "Estimated Romance Prose"
+            title_lang = "Prosa Romance Estimada" if cod_idioma == "es" else "Estimated Romance Prose"
             st.markdown(f"### 🏛️ {title_lang}")
             st.write(traduccion_final)
