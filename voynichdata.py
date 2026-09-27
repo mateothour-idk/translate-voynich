@@ -10,7 +10,6 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     if not texto_eva:
         return ""
         
-    # Estandarizar a minúsculas
     texto = texto_eva.lower()
     
     # --- 1. REGLAS DE 4 CARACTERES (Tetragramas) ---
