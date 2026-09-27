@@ -12,7 +12,7 @@ if "diccionario" not in st.session_state:
         "poisoda": "la planta medicinal (Pesota)", "puí": "la planta", "cuta": "la corteza",
         "cutiy": "la corteza o piel", "podon": "la raíz o el pie", "vetí": "maduro o viejo",
         "oarur": "el aroma", "odaur": "el olor", "crofosodaur": "el aroma resinoso",
-        "sier": "las hojas dentadas", "ciey", "la savia", "quaur": "el agua caliente",
+        "sier": "las hojas dentadas", "ciey": "la savia", "quaur": "el agua caliente",
         "osain": "el aceite esencial", "pain": "la pulpa o sustancia", "oain": "el jugo",
         "icios": "los vasos", "oiaj": "la esencia", "cios": "los recipientes",
         "ain": "el líquido", "oteroe": "el proceso", "aram": "el hornillo de bronce",
@@ -20,11 +20,11 @@ if "diccionario" not in st.session_state:
         "air": "el aire", "soar": "el vapor elevado", "oas": "la vasija",
         "raur": "la raíz", "otiy": "la maceración", "oeteodi": "el reposo",
         "daur": "la duración del ciclo", "odotoí": "la rueda del año", 
-        "doror": "el nacimiento del astro", "quidí": "diariamente", "quoquidí", "cada día",
-        "chidí": "canalizar", "tiodau": "en el tiempo determinado", "itioei": "la estación",
-        "siy", "si se presenta", "pair": "por medio de", "dais": "se debe aplicar",
-        "dair": "dar", "dam": "entregar", "quioquey": "y el corazón",
-        "okeody": "lo que dicta el tratado", "quiodal": "el texto o contenido"
+        "doror", "el nacimiento del astro", "quidí", "diariamente", "quoquidí", "cada día",
+        "chidí", "canalizar", "tiodau", "en el tiempo determinado", "itioei", "la estación",
+        "siy", "si se presenta", "pair", "por medio de", "dais", "se debe aplicar",
+        "dair", "dar", "dam", "entregar", "quioquey", "y el corazón",
+        "okeody", "lo que dicta el tratado", "quiodal", "el texto o contenido"
     }
 
 # --- GENERACIÓN AUTOMÁTICA DEL CORPUS COMPLETO (FOLIOS 1R A 116V) ---
