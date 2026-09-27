@@ -13,14 +13,14 @@ st.write("Explora el manuscrito mediante tu técnica de reducción de caracteres
 conn = sqlite3.connect("voynich_matrix.db", check_same_thread=False)
 cursor = conn.cursor()
 
-# Forzar limpieza inicial para asegurar la eliminación de datos con formatos antiguos corruptos
+# Forzar la recreación limpia de las tablas para eliminar registros mal indexados del pasado
 cursor.execute("DROP TABLE IF EXISTS diccionario")
 cursor.execute("DROP TABLE IF EXISTS manuscrito")
 
 cursor.execute("CREATE TABLE IF NOT EXISTS diccionario (clave TEXT PRIMARY KEY, valor TEXT)")
 cursor.execute("CREATE TABLE IF NOT EXISTS manuscrito (folio TEXT PRIMARY KEY, seccion TEXT, texto_voynich TEXT)")
 
-# Inserción masiva limpia libre de duplicados
+# Inserción masiva inicial desde el archivo de datos externos
 cursor.executemany("INSERT OR IGNORE INTO diccionario VALUES (?, ?)", voynichdata.glosario_inicial)
 cursor.executemany("INSERT OR IGNORE INTO manuscrito VALUES (?, ?, ?)", voynichdata.obtener_corpus_completo())
 conn.commit()
@@ -39,24 +39,24 @@ codigos_idiomas = {
 
 # --- MOTOR DE TRADUCCIÓN E INTELIGENCIA DE TU TÉCNICA ---
 def aplicar_tecnica_y_traducir(palabra):
-    # Limpieza de caracteres y signos ortográficos periféricos
+    # Limpieza inicial de la palabra removiendo caracteres de puntuación periféricos
     palabra_limpia = re.sub(r'[^\wíóéáú]', '', palabra.lower().strip())
     if not palabra_limpia:
         return palabra
         
-    # TU TÉCNICA DE LIGADURAS: Reducción automática aplicada antes de buscar en la BD
+    # TU TÉCNICA DE LIGADURAS: Reemplazo predictivo directo
     palabra_limpia = palabra_limpia.replace("pc", "p")
     
     significado_final = None
     es_aproximado = False
     
-    # 1. Búsqueda exacta (Corregido con [0] para extraer el string puro de la tupla)
+    # 1. Búsqueda exacta (Corregido agregando [0] para extraer la cadena de texto limpia fuera de la tupla)
     cursor.execute("SELECT valor FROM diccionario WHERE clave = ?", (palabra_limpia,))
     resultado = cursor.fetchone()
     if resultado:
         significado_final = resultado[0]
     else:
-        # 2. Fallback adaptativo por raíces morfológicas conocidas
+        # 2. Fallback por truncamiento de raíces morfológicas
         if len(palabra_limpia) > 3:
             for i in range(len(palabra_limpia), 2, -1):
                 sub_raiz = palabra_limpia[:i]
@@ -67,21 +67,22 @@ def aplicar_tecnica_y_traducir(palabra):
                     es_aproximado = True
                     break
                     
-    # 3. Procesamiento y ejecución de la traducción a la API externa
+    # 3. Procesamiento seguro de traducción en bloque mediante la API
     if significado_final:
         if idioma_destino != "Español":
             try:
-                # Traducción directa del string completamente limpio obtenido de la BD
+                # Envío exclusivo de texto plano sin interferencias sintácticas de SQLite
                 traduccion = GoogleTranslator(source='es', target=codigos_idiomas[idioma_destino]).translate(significado_final)
                 return f"[{traduccion}]*" if es_aproximado else traduccion
             except Exception:
+                # Retorno de seguridad en español ante fallas de red
                 return f"[{significado_final}]*" if es_aproximado else significado_final
         return f"[{significado_final}]*" if es_aproximado else significado_final
         
     return f"¿{palabra}?"
 
 def descifrar_texto_completo(texto):
-    """Procesa párrafos completos y mantiene saltos de línea del manuscrito."""
+    """Procesa párrafos multilínea respetando la estructura física de la página."""
     lineas = texto.strip().split("\n")
     lineas_traducidas = []
     for linea in lineas:
@@ -89,6 +90,7 @@ def descifrar_texto_completo(texto):
         palabras_traducidas = [aplicar_tecnica_y_traducir(p) for p in palabras if p]
         lineas_traducidas.append(" ".join(palabras_traducidas))
     return "\n".join(lineas_traducidas)
+
 
 # --- INTERFAZ GRÁFICA DE USUARIO (TABS) ---
 tab1, tab2, tab3 = st.tabs(["📖 Navegador del Manuscrito Completo", "🔍 Buscador de Diccionario", "📝 Añadir/Editar Folios"])
