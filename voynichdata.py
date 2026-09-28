@@ -83,7 +83,6 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     analisis_estructurado = []
     palabras_oracion = []
     
-    # Glosario maestro optimizado para no romper la gramática de la oración
     diccionario_maestro = {
         "cut": {"es": "cortar", "en": "cut"},
         "ci": {"es": "este", "en": "this"},
@@ -142,8 +141,11 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     anagramas_raices = { "".join(sorted(k)): k for k in diccionario_maestro.keys() if len(k) >= 3 }
 
     def limpiar_prosa(texto):
-        if not texto: return ""
-        return texto.split("/")[0].strip().replace("?", "").replace("*", "")
+        if not texto: 
+            return ""
+        # Corregido: Limpieza segura sin encadenar métodos incompatibles
+        primer_termino = texto.split("/")[0]
+        return primer_termino.strip().replace("?", "").replace("*", "")
 
     for palabra in palabras:
         palabra_compuesta_detectada = False
