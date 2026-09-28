@@ -4,8 +4,8 @@ from deep_translator import GoogleTranslator
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
-    Pipeline lineal estricto de transliteración.
-    Evita que las reglas se pisen entre sí en bucles infinitos.
+    Pipeline lineal estricto de transliteración sin bucles infinitos.
+    Garantiza que kooiin pase correctamente a quin.
     """
     if not texto_eva:
         return ""
@@ -40,7 +40,7 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = texto.replace("tt", "t")       
     texto = texto.replace("ts", "s")       
     
-    # --- CAPA 4: TRATAMIENTO DE VOCALES DUPLICADAS (Ej: kooiin -> kuiin) ---
+    # --- CAPA 4: TRATAMIENTO DE VOCALES DUPLICADAS ---
     texto = texto.replace("oo", "u")      
     texto = texto.replace("ii", "i")      
     texto = texto.replace("ee", "i")
@@ -122,12 +122,14 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
                 palabras_traducidas_oracion.append(glosario_auxilio[opcion])
                 encontrada = True
                 break
-        if encontramos := encontrada:
+        if encontrada:
             continue
             
         try:
             traduccion = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-            palabras_traducidas_oracion.append(traduccion.split("/")[0].strip())
+            # CORREGIDO: Tratamiento seguro de la lista devuelta por split
+            partes_traduccion = traduccion.split("/")
+            palabras_traducidas_oracion.append(partes_traduccion[0].strip())
         except Exception:
             palabras_traducidas_oracion.append(palabra)
 
@@ -149,7 +151,8 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         if significado_individual == "[Desconocido]":
             try:
                 trad = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-                significado_individual = trad.split("/")[0].strip()
+                partes_trad = trad.split("/")
+                significado_individual = partes_trad[0].strip()
                 if significado_individual.lower() == palabra_optimizada.lower():
                     significado_individual = "[Desconocido]"
             except Exception:
