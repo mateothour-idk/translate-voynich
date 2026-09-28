@@ -110,9 +110,13 @@ def descargar_manuscrito_real():
             if match:
                 folio = match.group(1)
                 contenido = match.group(2).strip()
+                
+                # --- SOLUCIÓN CRÍTICA DE INTERNET: Remover formato de puntos interlineales académicos ---
                 contenido = re.sub(r"\{.*?\}", "", contenido)
                 contenido = re.sub(r";\w+", "", contenido)
-                contenido = re.sub(r"[\=\+\-\_\,\.\;\:\(\)\d+]", "", contenido)
+                # Reemplazar los puntos estructurales académicos por texto continuo para unificar la palabra
+                contenido = contenido.replace(".", "")
+                contenido = re.sub(r"[\=\+\-\_\,\;\:\(\)\d+]", "", contenido)
                 
                 if contenido and not contenido.startswith(("#", "%", "<")):
                     if folio not in archivo_completo:
@@ -138,7 +142,7 @@ def traducir_a_romance(texto):
     }
     texto_limpio = texto.lower()
     for k in sorted(reglas.keys(), key=len, reverse=True):
-        texto_limpio = texto_limpio.replace(k, reglas[k])
+        texto_limpio = texto_limpio.replace(k, rules_sorted := reglas[k])
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
@@ -156,7 +160,6 @@ def generar_espanol_sintactico(texto_romance, lang):
         
         for palabra in palabras:
             palabra_limpia = palabra.strip(",.!?*;:- ")
-            # Ecualizar tildes y caracteres finales de control de coincidencia
             palabra_normalizada = palabra_limpia.replace("í", "i").replace("ó", "o").replace("y", "i")
             if not palabra_normalizada:
                 continue
