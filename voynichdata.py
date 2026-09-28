@@ -39,12 +39,13 @@ def resolver_contexto_palabra(palabra: str) -> str:
     return p_baja
 
 def calcular_distancia_levenshtein(str1, str2):
-    """ Mide la similitud ortográfica entre dos términos mediante matriz 100% independiente en memoria """
+    """ Mide la similitud ortográfica entre dos términos mediante matriz numérica segura """
     m, n = len(str1), len(str2)
     
-    # SOLUCIÓN DE RAÍZ: Comprensión anidada real que crea sublistas totalmente independientes
+    # Inicialización limpia de filas y columnas independientes
     dp = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
     
+    # CORREGIDO: Asignación indexando la celda exacta [i][0] y [0][j] sin romper las sublistas
     for i in range(m + 1): 
         dp[i][0] = i
     for j in range(n + 1): 
@@ -166,7 +167,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         analisis_estructurado.append({
             "Palabra Filtrada": palabra_optimizada.upper(),
             "Equivalencia Semántica": significado_individual,
-            "Tipo de Match": tipo_match
+            "Tipo de Match": type_match
         })
         
     return analisis_estructurado, oracion_completa
