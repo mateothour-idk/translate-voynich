@@ -117,7 +117,10 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     for palabra in palabras:
         palabra_optimizada = resolver_contexto_palabra(palabra)
         encontrada = False
-        for opcion in palabra_optimizada.split("/"):
+        
+        # Separación segura sin reventar la app
+        opciones = palabra_optimizada.split("/")
+        for opcion in opciones:
             if opcion in glosario_auxilio:
                 palabras_traducidas_oracion.append(glosario_auxilio[opcion])
                 encontrada = True
@@ -127,9 +130,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             
         try:
             traduccion = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-            # CORREGIDO: Tratamiento seguro de la lista devuelta por split
-            partes_traduccion = traduccion.split("/")
-            palabras_traducidas_oracion.append(partes_traduccion[0].strip())
+            palabras_traducidas_oracion.append(traduccion)
         except Exception:
             palabras_traducidas_oracion.append(palabra)
 
@@ -151,8 +152,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         if significado_individual == "[Desconocido]":
             try:
                 trad = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-                partes_trad = trad.split("/")
-                significado_individual = partes_trad[0].strip()
+                significado_individual = trad
                 if significado_individual.lower() == palabra_optimizada.lower():
                     significado_individual = "[Desconocido]"
             except Exception:
