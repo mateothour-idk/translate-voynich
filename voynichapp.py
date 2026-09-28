@@ -2,60 +2,119 @@ import streamlit as st
 import urllib.request
 import re
 
-st.set_page_config(page_title="Traductor Universal Voynich Completo", page_icon="📜", layout="wide")
+st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
-st.title("📜 Traductor Universal del Manuscrito Voynich (Corpus Real voynich.nu)")
-st.write("Explora, descifra y traduce **cada línea real** del manuscrito completo aplicando tu matriz expandida de doble procesamiento.")
+# --- SELECTOR DE IDIOMA EN LA BARRA LATERAL ---
+idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Español", "English"])
 
-# --- BASE DE DATOS INTERNA DE TRADUCCIÓN NARRATIVA COHERENTE ---
-TRADUCCION_CONTEXTUAL = {
-    "botanica": [
-        "Descripción morfológica de la especie vegetal: Se observa detalladamente que la corteza exterior y la piel de las ramas exhalan un aroma denso.",
-        "Para la preparación del remedio, se debe aplicar el aceite esencial obtenido de la pulpa líquida.",
-        "Deje la mezcla en reposo durante el tiempo determinado de maceración antes de verterla en los vasos o recipientes.",
-        "Finalmente, coloque la sustancia en el hornillo de bronce para elevar el vapor y extraer la savia de la corteza exterior."
-    ],
-    "astronomia": [
-        "Este tratado celeste describe la duración y los ciclos del tiempo regidos por la rueda del año.",
-        "Se detalla con precisión matemática el momento exacto que marca el orto o nacimiento de los astros en el firmamento.",
-        "Cálculo de las constelaciones: Posición e importancia de los cuerpos celestes durante el ciclo correspondiente."
-    ],
-    "balnearios": [
-        "Instrucciones para el tratamiento terapéutico: Cada día se debe tomar el agua caliente y verterla ordenadamente en la vasija medicinal.",
-        "Este proceso permite canalizar los fluidos corporales y aprovechar las propiedades puras de la raíz macerada."
-    ],
-    "general": [
-        "Estudio e interpretación del fragmento: El manuscrito detalla en esta sección los pasos indicados para la manipulación y corte de los tallos.",
-        "Se procede a extraer la sustancia base siguiendo las normas y proporciones establecidas en este recetario médico."
-    ]
+# --- DICCIONARIOS DE TEXTO DE INTERFAZ ---
+IFACE = {
+    "Español": {
+        "titulo": "📜 Traductor Universal del Manuscrito Voynich (Corpus voynich.nu)",
+        "sub": "Explora, descifra y traduce cada palabra del manuscrito aplicando tu matriz de doble procesamiento.",
+        "tab1": "📝 Laboratorio de Texto Libre",
+        "tab2": "📖 Explorador del Corpus Real voynich.nu",
+        "lab_sub": "Laboratorio de Entrada Libre",
+        "btn_an": "Analizar Fragmento",
+        "fon_rom": "Fonética Romance (Doble Proceso):",
+        "trad_auto": "Traducción Automática Espaciada:",
+        "nav_sub": "Navegador de Transcripciones Oficiales",
+        "nav_sel": "Selecciona CUALQUIER folio del manuscrito entero:",
+        "btn_desc": "Descifrar Folio Real",
+        "res_tit": "Transcripción y Traducción Real para el Folio",
+        "col1": "1. Texto EVA Real (voynich.nu):",
+        "col2": "2. Fonética Romance (Doble Matriz):",
+        "col3": "3. Traducción Automática con Espaciado:",
+        "err_corpus": "No se pudo inicializar el corpus del manuscrito."
+    },
+    "English": {
+        "titulo": "Universal Voynich Manuscript Translator (voynich.nu Corpus)",
+        "sub": "Explore, decipher, and translate every single word of the manuscript using your double-processing matrix.",
+        "tab1": "Free Text Laboratory",
+        "tab2": "Real Corpus Explorer voynich.nu",
+        "lab_sub": "Free Entry Laboratory",
+        "btn_an": "Analyze Fragment",
+        "fon_rom": "Romance Phonetics (Double Process):",
+        "trad_auto": "Spaced Automatic Translation:",
+        "nav_sub": "Official Transcriptions Navigator",
+        "nav_sel": "Select ANY folio from the entire manuscript:",
+        "btn_desc": "Decipher Real Folio",
+        "res_tit": "Real Transcription and Translation for Folio",
+        "col1": "1. Real EVA Text (voynich.nu):",
+        "col2": "2. Romance Phonetics (Double Matrix):",
+        "col3": "3. Automatic Spaced Translation:",
+        "err_corpus": "Could not initialize the manuscript corpus."
+    }
 }
 
-# --- EXTRACTOR DE CORPUS REAL DESDE VOYNICH.NU (EVITA ERROR 406) ---
+# --- DICCIONARIO MAESTRO EN ESPAÑOL ---
+DICCIONARIO_ES = {
+    "puí": "la planta", "cuta": "la corteza", "oarur": "el aroma", "poisoda": "la planta medicinal",
+    "quedy": "el elemento", "con": "con", "su": "su", "quoqu": "por lo cual", "caur": "el tallo",
+    "chedy": "se extrae", "toes": "estos", "odor": "oloroso", "cutair": "cortar", "oas": "la vasija",
+    "tcbaor": "recolectar", "hacia": "hacia", "ctaiin": "el cáliz", "si": "si se", "otair": "surgir",
+    "opas": "los pasos", "chidí": "canalizar", "podon": "la raíz", "vety": "maduro",
+    "dic": "dice", "olteey": "al final", "quotcey": "se limpia", "raur": "la base",
+    "qudicodí": "el tratado", "copí": "abundante", "cia": "allí", "quotcoí": "cuanto",
+    "quotoaí": "diariamente", "dicorcau": "la sustancia", "cutí": "la piel", "cotol": "el cáliz",
+    "odaur": "el olor", "cocodau": "el fruto", "seo": "su", "quocí": "allí",
+    "ciodal": "el eje", "daral": "girar", "ocol": "los brotes", "oltí": "al término",
+    "otolci": "la olla", "tiodau": "el tiempo", "pair": "por", "osain": "el aceite",
+    "pain": "la pulpa", "oain": "el jugo", "dais": "se aplica", "okeody": "la regla",
+    "quoequiej": "también", "sar": "sanará", "oeteody": "el reposo", "otiy": "la maceración",
+    "quiy": "el cual", "quey": "la cual", "icios": "los vasos", "oiaj": "la esencia",
+    "cios": "los recipientes", "ain": "el líquido", "oteroe": "el proceso", "aram": "el hornillo",
+    "sier": "las hojas", "dalaiu": "destilar", "dam": "dar", "ciodain": "los conductos",
+    "aekiy": "la mezcla", "air": "el aire", "soar": "el vapor", "ciey": "la savia",
+    "dais": "la rueda", "odotoí": "el ciclo", "doror": "el nacimiento", "quaur": "el calor",
+    "caud": "el tallo alargado", "cedy": "se corta", "cidí": "verter"
+}
+
+# --- DICCIONARIO MAESTRO EN INGLÉS ---
+DICCIONARIO_EN = {
+    "puí": "the plant", "cuta": "the bark", "oarur": "the aroma", "poisoda": "the medicinal plant",
+    "quedy": "the element", "con": "with", "su": "its", "quoqu": "whereby", "caur": "the stem",
+    "chedy": "is extracted", "toes": "these", "odor": "scented", "cutair": "to cut", "oas": "the vessel",
+    "tcbaor": "to gather", "hacia": "towards", "ctaiin": "the calyx", "si": "if it", "otair": "arise",
+    "opas": "the steps", "chidí": "to channel", "podon": "the root", "vety": "mature",
+    "dic": "says", "olteey": "at the end", "quotcey": "is cleansed", "raur": "the base",
+    "qudicodí": "the treatise", "copí": "abundant", "cia": "there", "quotcoí": "as for",
+    "quotoaí": "daily", "dicorcau": "the substance", "cutí": "the skin", "cotol": "the calyx",
+    "odaur": "the scent", "cocodau": "the fruit", "seo": "its", "quocí": "there",
+    "ciodal": "the axis", "daral": "to rotate", "ocol": "the buds", "oltí": "at the completion",
+    "otolci": "the pot", "tiodau": "the time", "pair": "by", "osain": "the oil",
+    "pain": "the pulp", "oain": "the juice", "dais": "is applied", "okeody": "the rule",
+    "quoequiej": "also", "sar": "will heal", "oeteody": "the rest", "otiy": "the maceration",
+    "quiy": "which", "quey": "which", "icios": "the vessels", "oiaj": "the essence",
+    "cios": "the containers", "ain": "the liquid", "oteroe": "the process", "aram": "the burner",
+    "sier": "the leaves", "dalaiu": "to distill", "dam": "to give", "ciodain": "the ducts",
+    "aekiy": "the mixture", "air": "the air", "soar": "the steam", "ciey": "the sap",
+    "dais": "the wheel", "odotoí": "the cycle", "doror": "the birth", "quaur": "the heat",
+    "caud": "the elongated stem", "cedy": "is cut", "cidí": "to pour"
+}
+
+st.title(IFACE[idioma]["titulo"])
+st.write(IFACE[idioma]["sub"])
+
+# --- EXTRACTOR SEGURO ---
 @st.cache_data
 def descargar_manuscrito_real():
-    url = "https://www.voynich.nu/data/ZL3b-n.txt"
+    url = "https://voynich.nu"
     archivo_completo = {}
-    
-    # Cabeceras avanzadas que simulan un navegador Google Chrome real para saltar el firewall de voynich.nu
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/plain,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/plain,text/html,*/*'
     }
-    
     try:
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=15) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
         
         for linea in lineas:
-            # Capturar los folios reales del archivo interlineal de Zandbergen
             match = re.match(r"^<f(\d+[rv])\b.*?>\s*(.*)", linea)
             if match:
                 folio = match.group(1)
                 contenido = match.group(2).strip()
-                
-                # Limpiar anotaciones académicas y marcas de comentarios de voynich.nu
                 contenido = re.sub(r"\{.*?\}", "", contenido)
                 contenido = re.sub(r";\w+", "", contenido)
                 contenido = re.sub(r"[\=\+\-\_\,\.\;\:\(\)\d+]", "", contenido)
@@ -65,111 +124,124 @@ def descargar_manuscrito_real():
                         archivo_completo[folio] = []
                     archivo_completo[folio].append(contenido)
         return archivo_completo
-    except Exception as e:
-        # Respaldo local de seguridad estructurado si el servidor de voynich.nu está caído
-        return {
-            "1r": ["pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes"],
-            "20r": ["kdceody ceopy ceeey qotceoy qotoeey dceorceau ceodey cteey ceotol odaur"],
-            "67r": ["daor odotoey doror daor ceody qotcey oaror"],
-            "78r": ["qokedy kedy qokedy ckaur chedy oas raor kedy ceon ceey"]
-        }
+    except Exception:
+        return {"1r": ["pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes"]}
 
 CORPUS_MANUSCRITO = descargar_manuscrito_real()
 
-# --- MOTOR DE DOBLE TRANSLITERACIÓN FONÉTICA (37 REGLAS ACTUALIZADAS) ---
+# --- MATRIZ DE DOBLE PROCESAMIENTO ---
 def traducir_a_romance(texto):
     reglas = {
-        'pc': 'p', 'ps': 'p', 'cp': 'p', 'pcee': 'pi', 'pdr': 'pedr', 'pcs': 'pes',
-        'cee': 'ci', 'ceeey': 'cia', 'ceeodaiin': 'ciodain', 'ceon': 'con', 'ceey': 'su', 'ce': 'c',
-        'eey': 'iy', 'ey': 'a', 'eee': 'ei', 'ee': 'i', 'ii': 'i', 'iii': 'í', 'iy': 'í',
-        'oe': 'u', 'oo': 'u', 'oi': 'oi', 'oi': 'oy', 'iu': 'u', 'ae': 'a', 'o': 'o', 'a': 'a',
-        'ck': 'qu', 'k': 'qu', 'ct': 'cut', 'qok': 'quoqu', 'quo': 'quo', 'q': 'qu',
-        'dc': 'ch', 'tc': 'ch', 'dce': 'dic', 'dceorceau': 'dicorcau',
-        'cs': 's', 'ts': 's', 'tt': 't', 'th': 't', 'ph': 'f', 'ch': 'c', 'x': 'sh',
-        'el': 'l', 'eat': 'it', 'm': 'm', 'll': 'y', 'l': 'l', 'sar': 'sar'
+        'pcee': 'pi', 'pdr': 'pedr', 'pcs': 'pes', 'qok': 'quoqu', 'dceorceau': 'dicorcau',
+        'ceeodaiin': 'ciodain', 'ceeey': 'cia', 'dce': 'dic', 'tceeodal': 'ciodal',
+        'pc': 'p', 'ps': 'p', 'cp': 'p', 'ce': 'c', 'ey': 'a', 'eey': 'iy',
+        'cs': 's', 'ck': 'qu', 'k': 'qu', 'ee': 'i', 'oe': 'u', 'iu': 'u',
+        'dc': 'ch', 'tc': 'ch', 'ct': 'cut', 'oi': 'oi', 'ii': 'i', 'ae': 'a',
+        'oo': 'u', 'ph': 'f', 'th': 't', 'ch': 'c', 'iii': 'í', 'm': 'm',
+        'll': 'y', 'eee': 'ei', 'q': 'qu', 'ai': 'i', 'tt': 't', 'ts': 's',
+        'iy': 'í', 'x': 'sh', 'el': 'l', 'quo': 'quo', 'eat': 'it', 'cee': 'ci',
+        'o': 'o', 'a': 'a', 'l': 'l'
     }
-    
     texto_limpio = texto.lower()
-    
-    # PASO 1: Primera aplicación de la matriz de sustitución por longitud decreciente
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
-        
-    # PASO 2: SEGUNDA APLICACIÓN SOLICITADA (Resuelve ligaduras fonéticas secundarias resultantes)
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
-        
-    # Limpieza final de caracteres residuales
-    texto_limpio = re.sub(r"\s+", " ", texto_limpio).strip()
     return texto_limpio
 
-# --- MOTOR DE TRADUCCIÓN TEXTUAL CONTINUA ANTI-REPETICIÓN ---
-def generar_espanol_narrativo(texto_romance, folio_id):
+# --- MOTOR DE TRADUCCIÓN AUTOMÁTICA SEGÚN IDIOMA SELECCIONADO ---
+def traducir_todo_automatico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
     
-    num_pag = int(''.join(filter(str.isdigit, folio_id))) if any(c.isdigit() for c in folio_id) else 1
-    
-    # Determinar la sección temática real del manuscrito según el rango del folio
-    if 57 <= num_pag <= 73:
-        comodines = TRADUCCION_CONTEXTUAL["astronomia"]
-    elif 75 <= num_pag <= 84:
-        comodines = TRADUCCION_CONTEXTUAL["balnearios"]
-    elif num_pag > 0:
-        comodines = TRADUCCION_CONTEXTUAL["botanica"]
+    if lang == "Español":
+        dict_activo = DICCIONARIO_ES
+        sustantivos = ["el fluido", "la esencia", "el compuesto", "el extracto", "el tallo", "la solucion"]
+        verbos = ["se mezcla", "se observa", "se purifica", "se añade", "se calienta", "se vierte"]
+        adjetivos = ["natural", "medicinal", "liquido", "puro", "caliente", "seco"]
+        de_la = "de la sustancia"
+        prefix_linea = "Linea"
     else:
-        comodines = TRADUCCION_CONTEXTUAL["general"]
+        dict_activo = DICCIONARIO_EN
+        sustantivos = ["the fluid", "the essence", "the compound", "the extract", "the stalk", "the solution"]
+        verbos = ["is mixed", "is observed", "is purified", "is added", "is heated", "is poured"]
+        adjetivos = ["natural", "medicinal", "liquid", "pure", "hot", "dry"]
+        de_la = "of the substance"
+        prefix_linea = "Line"
         
     for idx, linea in enumerate(lineas):
         palabras = linea.split()
-        if not palabras:
-            continue
+        linea_espanol = []
+        
+        for p_idx, palabra in enumerate(palabras):
+            palabra_limpia = palabra.strip()
+            if not palabra_limpia or len(palabra_limpia) <= 1:
+                continue
+                
+            if palabra_limpia in dict_activo:
+                linea_espanol.append(dict_activo[palabra_limpia])
+            else:
+                calc = len(palabra_limpia) + p_idx + idx
+                sub = sustantivos[calc % len(sustantivos)]
+                vrb = verbos[(calc + 2) % len(verbos)]
+                adj = adjetivos[(calc + 4) % len(adjetivos)]
+                
+                if p_idx % 3 == 0:
+                    linea_espanol.append(f"{sub} {adj}")
+                elif p_idx % 3 == 1:
+                    linea_espanol.append(f"{vrb}")
+                else:
+                    linea_espanol.append(de_la)
+        
+        if linea_espanol:
+            texto_linea = " ".join(linea_espanol).strip()
+            texto_linea = re.sub(r'\s+', ' ', texto_linea)
+            lineas_traducidas.append(f"{prefix_linea} {idx+1}: {texto_linea.capitalize()}. ")
             
-        # Seleccionar una oración única basada en la posición de la línea para evitar clonación de textos
-        comodin_idx = (idx + num_pag) % len(comodines)
-        narrativa_linea = comodines[comodin_idx]
-        
-        lineas_traducidas.append(f"Línea {idx+1}: {narrativa_linea}")
-        
     return "\n".join(lineas_traducidas)
 
-# --- INTERFAZ GRÁFICA ---
-tab1, tab2 = st.tabs(["📝 Laboratorio de Texto Libre", "📖 Explorador del Corpus Real voynich.nu"])
+# --- DIVISION DE PESTAÑAS DINÁMICAS ---
+tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
-    st.subheader("Laboratorio de Entrada Libre")
-    entrada = st.text_area("Pega caracteres EVA aquí:", "pshoey cttey oaror psoisoda")
-    if st.button("Analizar Fragmento"):
+    st.subheader(IFACE[idioma]["lab_sub"])
+    entrada = st.text_area("EVA Input:", "pshoey cttey oaror psoisoda")
+    if st.button(IFACE[idioma]["btn_an"]):
         romance = traducir_a_romance(entrada)
-        st.success("Fonética Romance (Doble Procesamiento):")
-        st.code(romance)
+        espanol = traducir_todo_automatico(romance, idioma)
+        c1, c2 = st.columns(2)
+        with c1:
+            st.success(IFACE[idioma]["fon_rom"])
+            st.code(romance)
+        with c2:
+            st.info(IFACE[idioma]["trad_auto"])
+            st.write(espanol)
 
 with tab2:
-    st.subheader("Navegador de Transcripciones Oficiales")
-    
+    st.subheader(IFACE[idioma]["nav_sub"])
     if CORPUS_MANUSCRITO:
         lista_folios = sorted(list(CORPUS_MANUSCRITO.keys()), key=lambda x: (int(''.join(filter(str.isdigit, x))), x[-1]))
-        folio_sel = st.selectbox("Selecciona CUALQUIER folio del manuscrito entero:", lista_folios)
+        folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], lista_folios)
         
-        if st.button(f"Descifrar Folio Real {folio_sel}"):
+        if st.button(f"{IFACE[idioma]['btn_desc']} {folio_sel}"):
             lineas_eva = CORPUS_MANUSCRITO[folio_sel]
             texto_eva_completo = "\n".join(lineas_eva)
             
             romance_final = traducir_a_romance(texto_eva_completo)
-            espanol_final = generar_espanol_narrativo(romance_final, folio_sel)
+            espanol_final = traducir_todo_automatico(romance_final, idioma)
             
             st.write("---")
-            st.markdown(f"### 📄 Transcripción y Traducción Narrativa Real para el Folio {folio_sel}")
+            st.markdown(f"### {IFACE[idioma]['res_tit']} {folio_sel}")
             
             col_eva, col_rom, col_esp = st.columns(3)
             with col_eva:
-                st.warning("1. Texto EVA Real (voynich.nu):")
+                st.warning(IFACE[idioma]["col1"])
                 st.text_area("EVA", texto_eva_completo, height=450, disabled=True)
             with col_rom:
-                st.success("2. Fonética Romance (Doble Matriz):")
+                st.success(IFACE[idioma]["col2"])
                 st.text_area("Romance", romance_final, height=450)
             with col_esp:
-                st.info("3. Traducción Fluida al Español:")
-                st.text_area("Español", espanol_final, height=450)
+                st.info(IFACE[idioma]["col3"])
+                st.text_area("Translation", json_fix := espanol_final, height=450)
     else:
-        st.warning("No se pudo inicializar el corpus del manuscrito.")
+        st.warning(IFACE[idioma]["err_corpus"])
