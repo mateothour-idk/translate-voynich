@@ -8,7 +8,7 @@ idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Espa
 
 IFACE = {
     "Español": {
-        "titulo": "📜 Traductor Universal del Manuscrito Voynich (Corpus voynich.nu)",
+        "titulo": "📜 Traductor Universal del Manuscrito Voynich (Corpus voyn_101.txt)",
         "sub": "Explora y traduce cada línea real del manuscrito aplicando tu matriz de doble procesamiento estricto.",
         "tab1": "📝 Laboratorio de Texto Libre",
         "tab2": "📖 Explorador del Corpus Real voynich.nu",
@@ -20,13 +20,13 @@ IFACE = {
         "nav_sel": "Selecciona CUALQUIER folio del manuscrito entero:",
         "btn_desc": "Descifrar Folio Real",
         "res_tit": "Transcripción y Traducción Real para el Folio",
-        "col1": "1. Texto EVA Real (voynich.nu):",
+        "col1": "1. Texto EVA Real (voyn_101.txt):",
         "col2": "2. Fonética Romance (Doble Matriz):",
         "col3": "3. Traducción Real al Español:",
         "err_corpus": "No se pudo inicializar el corpus del manuscrito."
     },
     "English": {
-        "titulo": "📜 Universal Voynich Manuscript Translator (voynich.nu Corpus)",
+        "titulo": "Universal Voynich Manuscript Translator (voyn_101.txt Corpus)",
         "sub": "Explore and translate every single line of the manuscript using your strict double-processing matrix.",
         "tab1": "Free Text Laboratory",
         "tab2": "Real Corpus Explorer voynich.nu",
@@ -38,7 +38,7 @@ IFACE = {
         "nav_sel": "Select ANY folio from the entire manuscript:",
         "btn_desc": "Decipher Real Folio",
         "res_tit": "Real Transcription and Translation for Folio",
-        "col1": "1. Real EVA Text (voynich.nu):",
+        "col1": "1. Real EVA Text (voyn_101.txt):",
         "col2": "2. Romance Phonetics (Double Matrix):",
         "col3": "3. Real Translation to English:",
         "err_corpus": "Could not initialize the manuscript corpus."
@@ -92,9 +92,10 @@ DICCIONARIO_EN = {
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
 
+# --- EXTRACTOR ADAPTADO PARA VOY_101.TXT ---
 @st.cache_data
 def descargar_manuscrito_real():
-    url = "https://www.voynich.nu/data/ZL3b-n.txt"
+    url = "https://www.voynich.nu/data/voyn_101.txt"
     archivo_completo = {}
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -105,29 +106,36 @@ def descargar_manuscrito_real():
         with urllib.request.urlopen(req, timeout=15) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
         
+        folio_actual = None
         for linea in lineas:
-            match = re.match(r"^<f(\d+[rv])\b.*?>\s*(.*)", linea)
-            if match:
-                folio = match.group(1)
-                contenido = match.group(2).strip()
+            linea_limpia = linea.strip()
+            if not linea_limpia:
+                continue
                 
-                # --- SOLUCIÓN CRÍTICA DE INTERNET: Remover formato de puntos interlineales académicos ---
-                contenido = re.sub(r"\{.*?\}", "", contenido)
-                contenido = re.sub(r";\w+", "", contenido)
-                # Reemplazar los puntos estructurales académicos por texto continuo para unificar la palabra
-                contenido = contenido.replace(".", "")
+            # Capturar los cambios de página marcados en el archivo voyn_101.txt (ej: <f1r> o # f1r)
+            match_folio = re.search(r"<f(\d+[rv])>", linea_limpia) or re.search(r"#\s*f(\d+[rv])", linea_limpia)
+            if match_folio:
+                folio_actual = match_folio.group(1)
+                if folio_actual not in archivo_completo:
+                    archivo_completo[folio_actual] = []
+                continue
+                
+            # Si estamos dentro de una página válida, extraer los caracteres EVA continuos
+            if folio_actual and not linea_limpia.startswith(("#", "%", "<")):
+                # Eliminar comentarios de fin de línea académicos
+                contenido = re.sub(r";\w+", "", linea_limpia)
+                contenido = contenido.replace(".", "")  # Unificar letras separadas por puntos académicos
                 contenido = re.sub(r"[\=\+\-\_\,\;\:\(\)\d+]", "", contenido)
                 
-                if contenido and not contenido.startswith(("#", "%", "<")):
-                    if folio not in archivo_completo:
-                        archivo_completo[folio] = []
-                    archivo_completo[folio].append(contenido)
+                if contenido.strip():
+                    archivo_completo[folio_actual].append(contenido.strip())
         return archivo_completo
     except Exception:
         return {"1r": ["pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes"]}
 
 CORPUS_MANUSCRITO = descargar_manuscrito_real()
 
+# --- MATRIZ DE TRADUCCIÓN FONÉTICA ---
 def traducir_a_romance(texto):
     reglas = {
         'pcee': 'pi', 'pdr': 'pedr', 'pcs': 'pes', 'qok': 'quoqu', 'dceorceau': 'dicorcau',
@@ -142,11 +150,12 @@ def traducir_a_romance(texto):
     }
     texto_limpio = texto.lower()
     for k in sorted(reglas.keys(), key=len, reverse=True):
-        texto_limpio = texto_limpio.replace(k, rules_sorted := reglas[k])
+        texto_limpio = texto_limpio.replace(k, reglas[k])
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
+# --- MOTOR DE TRADUCCIÓN ESTRICTO ---
 def generar_espanol_sintactico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
