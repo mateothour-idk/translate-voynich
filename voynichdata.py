@@ -88,32 +88,43 @@ def resolver_contexto_palabra(palabra: str) -> str:
 
 def desarmar_palabra_compuesta(palabra: str) -> str:
     """
-    Analiza palabras incógnitas largas (Opción 3) buscando raíces de verbos
-    e incorporando reglas de abreviaturas eclesiásticas (Opción 1).
+    Analiza morfológicamente palabras complejas basándose en raíces eclesiásticas,
+    sufijos de cualidad e ingeniería de compuestos botánicos medievales.
     """
     p = palabra.lower()
     
-    # --- REGLA OPCIÓN 3: EXTRACTOR DE COMPUESTOS VERBALES ---
+    # --- REGLA ADICIONAL OPCIÓN 3: COMPUESTOS VERBALES Y DERIVADOS ---
     if "cod" in p:
-        # Ejemplo: quecodsha -> que-cozan / que-cocieran
         prefijo = "que " if p.startswith("que") or p.startswith("qu") else ""
         sufijo = "an" if p.endswith("sha") or p.endswith("sh") else "er"
         return f"{prefijo}cuez{sufijo}"
     if "cut" in p:
-        # Estructuras derivadas de cortar (cut)
         prefijo = "que " if p.startswith("que") or p.startswith("qu") else ""
         sufijo = "ado" if p.endswith("di") or p.endswith("ti") else "ar"
         return f"{prefijo}cort{sufijo}"
 
-    # --- REGLA OPCIÓN 1: ABREVIATURAS MEDIEVALES FINALES DE CUALIDAD/TIEMPO ---
+    # --- NUEVA REGLA ADAPTATIVA: RAÍZ IQUI (LÍQUIDO / SAVIA / LICOR) ---
+    if "iqui" in p:
+        if p.endswith("dam") or p.endswith("am"): return "el jugo"
+        if p.endswith("dad") or p.endswith("tad"): return "jugosidad"
+        return "jugo"
+
+    # --- NUEVA REGLA ADAPTATIVA: RAÍZ SHE/SHEO (BROTAR / GERMINAR) ---
+    if p.startswith("sheo") or p.startswith("she"):
+        if p.endswith("dad") or p.endswith("di"): return "germinación"
+        if p.endswith("din") or p.endswith("in"): return "brotando"
+        return "brote"
+
+    # --- ABREVIATURAS CORTAS PARTICULARES (Raíces fijas del folio fros) ---
+    if p == "fdin": return "fijación"
+    if p == "ofa": return "mezcla"
+
+    # --- REGLA ADICIONAL OPCIÓN 1: ABREVIATURAS MEDIEVALES DE CUALIDAD (-DI / -TI) ---
     if p.endswith("di") or p.endswith("ti"):
-        # Casos especiales de tiempo botánico como ochdi (ocho días)
         if "och" in p or "ot" in p:
             return "días"
-        # Casos de cualidad abstracta (sufijo -dad)
         if len(p) > 3:
             raiz_limpia = p[:-2]
-            # Ejemplo: ifdi -> if-dad -> eficacia / infinidad
             if raiz_limpia == "if": return "eficacia"
             if raiz_limpia == "opal": return "opacidad"
             return f"{raiz_limpia}dad"
@@ -132,8 +143,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         "cioquai": "infusión", "cut": "cortar", "quin": "quien (que)", "qin": "que",
         "tsheos": "esencia", "ceepy": "cepas / raíces", "ceeor": "ceras / resinas",
         "ceodar": "cocción", "olees": "óleos", "qodaiin": "código (receta)", "olse": "oler",
-        "orain": "oración / borde", "iquiol": "líquido extraído", "oteody": "método",
-        "cteeey": "cutícula", "ykeeol": "licor"
+        "orain": "oración / borde", "oteody": "método", "cteeey": "cutícula", "ykeeol": "licor"
     }
     
     if not palabras:
@@ -145,12 +155,10 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         if palabra_optimizada in glosario_maestro:
             palabras_traducidas_oracion.append(glosario_maestro[palabra_optimizada])
         else:
-            # Si no está en el glosario estático, la procesamos dinámicamente con el desarmador local
             palabras_traducidas_oracion.append(desarmar_palabra_compuesta(palabra_optimizada))
 
     oracion_completa = " ".join(palabras_traducidas_oracion)
 
-    # Llenado detallado de la tabla interactiva
     for palabra in palabras[:40]:
         if not palabra.strip():
             continue
