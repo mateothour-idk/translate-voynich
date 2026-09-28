@@ -89,11 +89,11 @@ def resolver_contexto_palabra(palabra: str) -> str:
 def desarmar_palabra_compuesta(palabra: str) -> str:
     """
     Analiza morfológicamente palabras complejas basándose en raíces eclesiásticas,
-    sufijos de cualidad e ingeniería de compuestos botánicos medievales.
+    sufijos de cualidad e ingeniería de compuestos botánicos medievales refinados.
     """
     p = palabra.lower()
     
-    # --- CAPA NUEVA: CONECTORES Y LETRAS SUELTAS MEDIEVALES ---
+    # --- CONECTORES Y LETRAS SUELTAS ---
     if p == "c": return "con"
     if p == "i": return "en"
     if p == "o": return "o"
@@ -101,6 +101,12 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p in ["ar", "al"]: return "del"
     if p in ["da", "di"]: return "de"
     if p == "qua": return "agua"
+
+    # --- REFINAMIENTO DE INCÓGNITAS ESPECÍFICAS (PULIDO DE SUFIJOS) ---
+    if "oqueo" in p or "ochdi" in p: return "humedad (reposo)"
+    if "quoc" in p or "quoqu" in p or "qued" in p: return "cocimiento"
+    if "ofe" in p: return "dosificación"
+    if "shed" in p or "sheo" in p: return "germinación"
 
     # --- REGLA COMPUESTOS VERBALES ---
     if "cod" in p:
@@ -112,13 +118,13 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
         sufijo = "ado" if p.endswith("di") or p.endswith("ti") else "ar"
         return f"{prefijo}cort{sufijo}"
 
-    # --- NUEVA REGLA ADAPTATIVA: RAÍZ IQUI (LÍQUIDO / SAVIA / LICOR) ---
+    # --- RAÍZ IQUI (LÍQUIDO / SAVIA / LICOR) ---
     if "iqui" in p:
         if p.endswith("dam") or p.endswith("am"): return "el jugo"
         if p.endswith("dad") or p.endswith("tad"): return "jugosidad"
         return "jugo"
 
-    # --- NUEVA REGLA ADAPTATIVA: RAÍZ SHE/SHEO (BROTAR / GERMINAR) ---
+    # --- RAÍZ SHE/SHEO (BROTAR / GERMINAR) ---
     if p.startswith("sheo") or p.startswith("she"):
         if p.endswith("dad") or p.endswith("di"): return "germinación"
         if p.endswith("din") or p.endswith("in"): return "brotando"
@@ -138,8 +144,6 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
             if raiz_limpia == "opal": return "opacidad"
             return f"{raiz_limpia}dad"
 
-    # FILTRO ESTÉTICO: Si la palabra sigue sin entenderse, no muestra el corchete feo,
-    # devuelve una cadena vacía para que la prosa fluya de manera limpia.
     return ""
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
@@ -167,10 +171,9 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             palabras_traducidas_oracion.append(glosario_maestro[palabra_optimizada])
         else:
             significado_compuesto = desarmar_palabra_compuesta(palabra_optimizada)
-            if significado_compuesto:  # Solo agrega si tiene traducción válida
+            if significado_compuesto:
                 palabras_traducidas_oracion.append(significado_compuesto)
 
-    # Limpieza de espacios dobles en la oración final procesada
     oracion_completa = " ".join(palabras_traducidas_oracion).strip()
     oracion_completa = re.sub(r'\s+', ' ', oracion_completa)
 
