@@ -3,10 +3,8 @@ import re
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
-# Selector de idioma global en la barra lateral
 idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Español", "English"])
 
-# Estructura de textos para la interfaz de usuario libre de formatos decorativos
 IFACE = {
     "Español": {
         "titulo": "Traductor Universal del Manuscrito Voynich (Sentido Natural)",
@@ -46,7 +44,6 @@ IFACE = {
     }
 }
 
-# Glosario maestro real indexado en minúsculas y sin acentos para coincidencia infalible
 DICCIONARIO_ES = {
     "pui": "la planta", "cuta": "la corteza", "oarur": "el aroma", "poisoda": "la planta medicinal",
     "quedy": "el elemento", "con": "con", "su": "su", "quoqu": "por lo cual", "caur": "el tallo",
@@ -110,7 +107,6 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
-# Generador adaptativo balanceado por folios reales
 CORPUS_MANUSCRITO = {
     "1r": ["pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes oas", "tcbaor ceor ctaiin cseey otair opas kedy chidí ceon ceey"],
     "20r": ["kdceody ceopy ceeey qotceoy qotoeey dceorceau ceodey cteey ceotol odaur", "teeodau cseey cpair osaiin yteeoey cseey cpaiin oaiin daiis"],
@@ -173,7 +169,7 @@ def traducir_a_romance(texto):
             
     return "\n".join([" ".join(palabras_corregidas)])
 
-# --- GENERADOR FILTRADO SIN ENREDOS GRAMATICALES ---
+# --- FILTRADO DE REDUNDANCIAS Y ENLACES COHERENTES ---
 def generar_espanol_sintactico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
@@ -182,48 +178,44 @@ def generar_espanol_sintactico(texto_romance, lang):
         
     for idx, linea in enumerate(lineas):
         palabras = linea.split()
-        linea_espanol = []
+        conceptos_unicos = []
         
-        for p_idx, palabra in enumerate(palabras):
+        # Eliminar duplicados continuos y limpiar palabras vacías
+        for palabra in palabras:
             palabra_norm = palabra.strip(",.!?*;:- ")
-            if not palabra_norm in dict_activo:
-                continue
-            termino_raw = dict_activo[palabra_norm]
-            
-            # Evitar amontonamiento de palabras idénticas seguidas
-            if linea_espanol and termino_raw == linea_espanol[-1]:
-                continue
-                
+            if palabra_norm in dict_activo:
+                significado = dict_activo[palabra_norm]
+                if not conceptos_unicos or conceptos_unicos[-1] != significado:
+                    conceptos_unicos.append(significado)
+                    
+        linea_espanol = []
+        for p_idx, termino in enumerate(conceptos_unicos):
             if lang == "Español":
                 if linea_espanol:
-                    ultimo = linea_espanol[-1]
-                    # Enlaces simplificados para evitar choques como "de la el" o "con junto con"
-                    if ultimo in ["la planta", "la corteza", "la vasija", "la sustancia"]:
-                        linea_espanol.append(f"junto al {termino_raw}" if termino_raw.startswith("el") else f"junto a {termino_raw}")
-                    elif ultimo in ["se extrae", "cortar", "recolectar"]:
-                        linea_espanol.append(f"y se procesa {termino_raw}")
-                    elif p_idx % 3 == 0:
-                        linea_espanol.append(f"para obtener {termino_raw}")
+                    # Estructuración limpia basada en comas y conectores condicionales no repetitivos
+                    if p_idx % 3 == 0:
+                        linea_espanol.append(f", para obtener {termino}")
+                    elif p_idx % 2 == 0:
+                        linea_espanol.append(f", procesando {termino}")
                     else:
-                        linea_espanol.append(f"con {termino_raw}")
+                        linea_espanol.append(f" con {termino}")
                 else:
-                    linea_espanol.append(f"el tratado describe {termino_raw}")
+                    linea_espanol.append(f"El tratado describe {termino}")
             else:
                 if linea_espanol:
-                    ultimo = linea_espanol[-1]
-                    if p_idx % 3 == 0:
-                        linea_espanol.append(f"and {termino_raw}")
+                    if p_idx % 2 == 0:
+                        linea_espanol.append(f", processing {termino}")
                     else:
-                        linea_espanol.append(f"with {termino_raw}")
+                        linea_espanol.append(f" with {termino}")
                 else:
-                    linea_espanol.append(f"the text describes {termino_raw}")
+                    linea_espanol.append(f"The text describes {termino}")
                     
         if linea_espanol:
-            texto_linea = " ".join(linea_espanol).strip()
-            # Limpieza profunda de choques de nexos o artículos duplicados
+            texto_linea = "".join(linea_espanol).strip()
+            # Limpieza sintáctica para normalizar comas y espacios dobles
             texto_linea = re.sub(r'\s+', ' ', texto_linea)
-            texto_linea = texto_linea.replace(" de de ", " de ").replace(" con con ", " con ").replace(" y y ", " y ")
-            texto_linea = texto_linea.replace(" con junto con ", " con ").replace(" de la el ", " de el ")
+            texto_linea = texto_linea.replace(", ,", ",").replace("con con", "con")
+            texto_linea = texto_linea.replace("con ,", ",").replace("describe ,", "describe ")
             lineas_traducidas.append(f"{prefix_linea} {idx+1}: {texto_linea.capitalize()}. ")
             
     return "\n\n".join(lineas_traducidas)
