@@ -20,7 +20,7 @@ def descargar_corpus_voynich_real():
     Descarga en tiempo real la transcripción ZL3b-n.txt simulando 
     un navegador completo para saltar el firewall del servidor y remueve metadatos.
     """
-    url_corpus = "https://voynich.nu"
+    url_corpus = "https://www.voynich.nu/data/ZL3b-n.txt"
     corpus = {}
     
     headers = {
@@ -40,15 +40,14 @@ def descargar_corpus_voynich_real():
             
             # Reconocimiento de líneas válidas en formato IVTFF
             if linea.startswith("<f") and ">" in linea:
-                # 1. EXTRAER LA ETIQUETA DEL FOLIO ANTES DE BORRAR LOS < >
+                # 1. EXTRAER LA ETIQUETA DEL FOLIO DE FORMA SEGURA COMO TEXTO (String)
                 match_etiqueta = re.search(r'^<(f[^>;\s.]+)', linea)
                 if match_etiqueta:
-                    identificador_folio = match_etiqueta.group(1)
+                    identificador_folio = str(match_etiqueta.group(1))
                 else:
                     continue
                 
-                # 2. LIMPIEZA ABSOLUTA DE CUALQUIER COSA ENTRE < > 
-                # Esto borra tanto las etiquetas de inicio como los comentarios del tipo <!10:30> o <$
+                # 2. LIMPIEZA ABSOLUTA DE CUALQUIER COSA ENTRE < >
                 texto_eva = re.sub(r'<[^>]*>', ' ', linea)
                 
                 # 3. Limpiezas secundarias de anotaciones internas del archivo de texto
@@ -56,18 +55,23 @@ def descargar_corpus_voynich_real():
                 texto_eva = re.sub(r'[{}]', '', texto_eva)
                 texto_eva = texto_eva.replace("$", "").strip()
                 
-                if texto_eva:
+                # Filtrar palabras que sean solo espacios o comentarios de cabecera
+                palabras_limpias = [p for p in texto_eva.split() if not p.startswith('%') and not p.startswith('!')]
+                texto_final = " ".join(palabras_limpias).strip()
+                
+                if texto_final:
                     if identificador_folio in corpus:
-                        corpus[identificador_folio] += " " + texto_eva
+                        corpus[identificador_folio] += " " + texto_final
                     else:
-                        corpus[identificador_folio] = texto_eva
+                        corpus[identificador_folio] = texto_final
                         
     except Exception as e:
         st.sidebar.error(f"Error de descarga: {e}. Cargando respaldo local.")
         corpus = {
             "f48r": "pceeoe ceodar olees ceepy cseol cseckeeeo otolcseey ceeor ceeokeey",
             "f48v": "tcseor olcse qodaiin qokeeor sy oraiin ykeeol oiteeody cteeey",
-            "f1r": "pchod fchy tcheor odaiin yoles cseor ceeor cseody"
+            "f1r": "pchod fchy tcheor odaiin yoles cseor ceeor cseody",
+            "fros": "opar chepchey oteedy olaiin osshy okchy qokedy qokedy tol teoor o l chekor okedy qokcho chfady oro okeechy okol shee tolfd saiir shodaiin oky roo ardas l chdy shckhdy tshda opchdy qokal opchsy cheky"
         }
     return corpus
 
@@ -79,7 +83,7 @@ st.sidebar.header("Panel de Navegación")
 opciones_selector = ["Manual (Texto Libre)"]
 
 if mapa_completo_folios:
-    # SOLUCIÓN AL TYPEERROR: Extrae de forma correcta el índice de la lista regex antes de convertir a entero
+    # CORREGIDO: Accede al elemento [0] de la lista regex para evitar fallos de conversión de tipos
     def ordenar_clave(clave):
         numeros = re.findall(r'\d+', clave)
         num = int(numeros[0]) if numeros else 999  # Folios como 'fros' van al final
