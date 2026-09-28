@@ -20,7 +20,7 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         # --- REGLA DE PROTECCIÓN ANTICIPADA (Fix pceeoe -> piue) ---
         texto = texto.replace("pceeoe", "piue")
         
-        # --- REGLA SOLICITADA CORREGIDA: X pasa a ser SH ---
+        # --- REGLA SOLICITADA: X pasa a ser SH ---
         texto = texto.replace("x", "sh")
         
         # --- 1. REGLAS DE 4 CARACTERES (Tetragramas) ---
@@ -79,8 +79,11 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = re.sub(r'eiy\b', 'e', texto)           
         texto = re.sub(r'oitio', 'otio', texto)         
         
-        # Limpieza de haches huérfanas al final para no alterar 'sh' generadas por la regla X
-        # Solo removemos haches que no estén precedidas por 's' o 'c'
+        # --- FIX OBLIGATORIO DE ITERACIÓN ---
+        # Reduce 'quuin' o cualquier deformación de u duplicada generada por k/q a 'quin'
+        texto = texto.replace("quu", "qu")
+        
+        # Limpieza de haches huérfanas al final (no borra 'sh' o 'ch')
         texto = re.sub(r'(?<!s)(?<!c)h', '', texto)
         
         if texto == texto_anterior:
@@ -110,13 +113,13 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         "cipi": "tallos", "seol": "seco", "sequieo": "secado", "otolsai": "extraer",
         "senior": "señor", "olse": "aceitoso", "quodam": "un cierto", "oram": "borde",
         "iquiol": "jugo", "otio": "reposo", "cute": "piel", "cior": "mover", 
-        "cioquai": "infusión", "cut": "cortar"
+        "cioquai": "infusión", "cut": "cortar", "quin": "quien/que"
     } if target_lang == "es" else {
         "piue": "more", "piu": "more", "codar": "cook", "oleis": "oils", 
         "cipi": "stems", "seol": "dry", "sequieo": "dried", "otolsai": "extract",
         "senior": "master", "olse": "oily", "quodam": "a certain", "oram": "edge",
         "iquiol": "juice", "otio": "rest", "cute": "skin", "cior": "move", 
-        "cioquai": "decoction", "cut": "cut"
+        "cioquai": "decoction", "cut": "cut", "quin": "which/who"
     }
     
     if not palabras:
@@ -137,7 +140,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             
         try:
             traduccion = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-            traduccion_limpia = traduccion.split("/").strip()
+            traduccion_limpia = traduccion.split("/")[0].strip()
             palabras_traducidas_oracion.append(traduccion_limpia)
         except Exception:
             palabras_traducidas_oracion.append(palabra)
@@ -160,7 +163,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         if significado_individual == "[Desconocido]":
             try:
                 trad = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-                significado_individual = trad.split("/").strip()
+                significado_individual = trad.split("/")[0].strip()
                 if significado_individual.lower() == palabra_optimizada.lower():
                     significado_individual = "[Desconocido]"
             except Exception:
