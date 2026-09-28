@@ -1,6 +1,6 @@
 # voynichdata.py
 import re
-from deep_translator import GoogleTranslator
+from deep_translator import DeepLScraper
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
@@ -40,7 +40,7 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = texto.replace("tt", "t")       
     texto = texto.replace("ts", "s")       
     
-    # --- CAPA 4: TRATAMIENTO DE VOCALES DUPLICADAS (Ej: kooiin -> kuiin -> kuin) ---
+    # --- CAPA 4: TRATAMIENTO DE VOCALES DUPLICADAS ---
     texto = texto.replace("oo", "u")      
     texto = texto.replace("ii", "i")      
     texto = texto.replace("ee", "i")
@@ -73,16 +73,16 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = re.sub(r'eiy\b', 'e', texto)           
     texto = re.sub(r'oitio', 'otio', texto)         
     
-    # Limpieza final absoluta: quu pasa a qu obligatoriamente (quuin -> quin)
+    # Limpieza final absoluta para corregir quuin -> quin
     texto = texto.replace("quu", "qu")
     
-    # Eliminar haches que no sean parte de sh o ch
+    # Eliminar haches sueltas que no sean de sh o ch
     texto = re.sub(r'(?<!s)(?<!c)h', '', texto)
     
     return texto.strip()
 
 def resolver_contexto_palabra(palabra: str) -> str:
-    """ Simplifica los términos antes de pasarlos a la tabla para evitar que quu se rompa """
+    """ Simplifica los términos antes de pasarlos a la tabla """
     p_baja = palabra.lower()
     if "quu" in p_baja:
         p_baja = p_baja.replace("quu", "qu")
@@ -93,67 +93,64 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     analisis_estructurado = []
     target_lang = "es" if idioma == "es" else "en"
     
-    # Diccionario etimológico robusto local para no depender de Google en la tabla
+    # Glosario Maestro Sincronizado con las salidas de tu pipeline lineal
     glosario_maestro = {
         "piue": "más", "piu": "más", "codar": "cocer", "oleis": "aceites", 
         "cipi": "tallos", "seol": "seco", "sequieo": "secado", "otolsai": "extraer",
-        "senior": "señor (maestro)", "olse": "aceitoso", "quodam": "un cierto", "oram": "borde",
+        "senior": "señor", "olse": "aceitoso", "quodam": "un cierto", "oram": "borde",
         "iquiol": "jugo", "otio": "reposo", "cute": "piel (corteza)", "cior": "mover", 
         "cioquai": "infusión", "cut": "cortar", "quin": "quien (que)", "qin": "que",
-        "tsheos": "esencia / sustancia"
+        "tsheos": "esencia"
     } if target_lang == "es" else {
         "piue": "more", "piu": "more", "codar": "cook", "oleis": "oils", 
         "cipi": "stems", "seol": "dry", "sequieo": "dried", "otolsai": "extract",
         "senior": "master", "olse": "oily", "quodam": "a certain", "oram": "edge",
-        "iquiol": "juice", "otio": "rest", "cute": "skin (bark)", "cior": "move", 
-        "cioquai": "decoction", "cut": "cut", "quin": "which (who)", "qin": "which",
+        "iquiol": "juice", "otio": "rest", "cute": "skin", "cior": "move", 
+        "cioquai": "decoction", "cut": "cut", "quin": "which", "qin": "which",
         "tsheos": "essence"
     }
     
     if not palabras:
         return [], ""
 
-    # 1. TRADUCCIÓN DE LA ORACIÓN EN BLOQUE COMPLETAMENTE FLUIDA
+    # 1. TRADUCCIÓN DE LA ORACIÓN EN BLOQUE CON DEEPL (MÁXIMA CALIDAD CONTEXTUAL)
     palabras_traducidas_oracion = []
     for palabra in palabras:
         palabra_optimizada = resolver_contexto_palabra(palabra)
-        # Si la palabra está en nuestro glosario local, la traduce al instante
         if palabra_optimizada in glosario_maestro:
             palabras_traducidas_oracion.append(glosario_maestro[palabra_optimizada])
         else:
-            # Respaldos de traducción contextual con la API limpia
             try:
-                trad = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
+                # DeepL Scraper busca de forma inteligente el sentido en Latín/Romance
+                trad = DeepLScraper(source='la', target=target_lang).translate(palabra_optimizada)
                 palabras_traducidas_oracion.append(trad)
             except Exception:
                 palabras_traducidas_oracion.append(palabra_optimizada)
 
     oracion_completa = " ".join(palabras_traducidas_oracion)
 
-    # 2. CONSTRUCCIÓN DE LA TABLA ESTABLE SIN REPETICIÓN DE RAÍCES TRABADAS
+    # 2. CONSTRUCCIÓN DE LA TABLA INTERACTIVA DE STREAMLIT
     for palabra in palabras[:30]:
         if not palabra.strip():
             continue
             
         palabra_optimizada = resolver_contexto_palabra(palabra)
         
-        # Buscamos de forma directa la equivalencia al español sin pasar por Google
         if palabra_optimizada in glosario_maestro:
             significado_individual = glosario_maestro[palabra_optimizada]
-            tipo_match = "Glosario Romance (Posta)"
+            tipo_match = "Glosario Romance (Estructural)"
         else:
             try:
-                trad_api = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
+                trad_api = DeepLScraper(source='la', target=target_lang).translate(palabra_optimizada)
                 if trad_api.lower() == palabra_optimizada.lower():
-                    # Si Google no sabe qué significa y devuelve lo mismo, se marca la barra contextual para análisis
                     significado_individual = f"{palabra_optimizada}/{palabra_optimizada[:-1] if len(palabra_optimizada)>2 else palabra_optimizada}"
-                    tipo_match = "Variante Contextual Abierta"
+                    tipo_match = "Ajuste de Contexto Requerido"
                 else:
                     significado_individual = trad_api
-                    tipo_match = "Aproximación AI"
+                    tipo_match = "Motor DeepL Neural NLP"
             except Exception:
                 significado_individual = "[Incógnita]"
-                tipo_match = "Error de Red"
+                tipo_match = "Fallo de Conexión API"
             
         analisis_estructurado.append({
             "Palabra Filtrada": palabra_optimizada.upper(),
