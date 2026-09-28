@@ -6,42 +6,42 @@ st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", 
 # Selector de idioma global en la barra lateral
 idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Español", "English"])
 
-# Estructura de textos para la interfaz de usuario libre de formatos decorativos o emojis
+# Estructura de textos para la interfaz de usuario libre de formatos decorativos
 IFACE = {
     "Español": {
-        "titulo": "Traductor Universal del Manuscrito Voynich (Sintaxis Variada)",
-        "sub": "Explora y traduce cada línea real del manuscrito aplicando tu matriz con aperturas dinámicas y lectura fluida.",
+        "titulo": "Traductor Universal del Manuscrito Voynich (Descifrado Estricto)",
+        "sub": "Explora y traduce cada línea real del manuscrito mediante un mapeo literal palabra por palabra sin añadidos artificiales.",
         "tab1": "Laboratorio de Texto Libre",
         "tab2": "Explorador del Corpus Real del Manuscrito (1r a 116v)",
         "lab_sub": "Laboratorio de Entrada Libre",
         "btn_an": "Analizar Fragmento",
         "fon_rom": "Fonética Romance Optimizada (Raíces Reales o Semejantes):",
-        "trad_auto": "Traducción Narrativa Coherente:",
+        "trad_auto": "Traducción Literal Palabra por Palabra:",
         "nav_sub": "Traductor de Folios Continuo",
         "nav_sel": "Selecciona un folio del manuscrito entero:",
         "btn_desc": "Descifrar Folio",
-        "res_tit": "Traducción Narrativa Coherente para el Folio",
+        "res_tit": "Traducción Literal Estricta para el Folio",
         "col1": "1. Texto EVA Real del Manuscrito:",
         "col2": "2. Fonética Romance Sincronizada:",
-        "col3": "3. Traducción al Español (Lectura Fluida Variada):",
+        "col3": "3. Traducción Real (Orden Medieval Estricto):",
         "err_corpus": "No se pudo inicializar el corpus del manuscrito."
     },
     "English": {
-        "titulo": "Universal Automatic Voynich Manuscript Translator (Varied Syntax)",
-        "sub": "Explore and translate every single line using your double-processing matrix and a fluent dynamic weaver.",
+        "titulo": "Universal Automatic Voynich Manuscript Translator (Strict Decipherment)",
+        "sub": "Explore and translate every single line using a literal word-by-word mapping with no artificial additions.",
         "tab1": "Free Text Laboratory",
         "tab2": "Real Manuscript Corpus Explorer (1r to 116v)",
         "lab_sub": "Free Entry Laboratory",
         "btn_an": "Analyze Fragment",
         "fon_rom": "Optimized Romance Phonetics (Real or Similar Roots):",
-        "trad_auto": "Automated Narrative Translation:",
+        "trad_auto": "Literal Word-by-Word Translation:",
         "nav_sub": "Automatic Folios Navigator (All Pages)",
         "nav_sel": "Select a folio from the entire manuscript:",
         "btn_desc": "Decipher Real Folio",
-        "res_tit": "Natural Word-by-Word Translation for Folio",
+        "res_tit": "Strict Literal Translation for Folio",
         "col1": "1. Real EVA Text from Manuscript:",
         "col2": "2. Aligned Romance Phonetics:",
-        "col3": "3. Real Translation to English (Varied Natural Flow):",
+        "col3": "3. Real Translation (Strict Medieval Word Order):",
         "err_corpus": "The file was not found in your repository."
     }
 }
@@ -109,6 +109,7 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
+# Generador de folios con texto EVA unificado
 CORPUS_MANUSCRITO = {
     "1r": ["pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes oas", "tcbaor ceor ctaiin cseey otair opas kedy chidí ceon ceey"],
     "20r": ["kdceody ceopy ceeey qotceoy qotoeey dceorceau ceodey cteey ceotol odaur", "teeodau cseey cpair osaiin yteeoey cseey cpaiin oaiin daiis"],
@@ -172,77 +173,26 @@ def traducir_a_romance(texto):
             
     return "\n".join([" ".join(palabras_corregidas)])
 
-def generar_espanol_sintactico(texto_romance, folio_nombre, lang):
+# --- TRADUCTOR LITERAL PALABRA POR PALABRA (MÁXIMA ACCESIBILIDAD Y RIGOR) ---
+def generar_espanol_sintactico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
     dict_activo = DICCIONARIO_ES if lang == "Español" else DICCIONARIO_EN
     prefix_linea = "Linea" if lang == "Español" else "Line"
-    
-    num_folio = int(''.join(filter(str.isdigit, folio_nombre))) if any(c.isdigit() for c in folio_nombre) else 1
-    
-    aperturas_es = [
-        "El tratado describe un compuesto preparado a base de",
-        "Este registro herbolario detalla una fórmula que contiene",
-        "Se prescribe la elaboración de un remedio utilizando",
-        "El texto médico detalla una composición a base de",
-        "Se documenta la preparación de una sustancia combinando"
-    ]
-    aperturas_en = [
-        "The treatise describes a compound prepared with",
-        "This herbal record details a formula containing",
-        "The text outlines a remedy prepared using",
-        "The medical manuscript details a composition based on",
-        "The document notes a substance prepared by combining"
-    ]
-    
-    aperturas_activas = aperturas_es if lang == "Español" else aperturas_en
         
     for idx, linea in enumerate(lineas):
         palabras = linea.split()
-        significados_unicos = []
+        linea_espanol = []
         
         for palabra in palabras:
             palabra_norm = palabra.strip(",.!?*;:- ")
             if palabra_norm in dict_activo:
-                significado = dict_activo[palabra_norm]
-                if significado not in significados_unicos:
-                    significados_unicos.append(significado)
-                    
-        if not significados_unicos:
-            continue
-            
-        terminos_excluidos = [
-            "extrae", "cortar", "recolectar", "canalizar", "girar", "verter", "corta", "destilar", "limpia", "aplica",
-            "con", "su", "allí", "cuanto", "por lo cual", "estos", "el cual", "la cual", "dice", "los pasos", "surgir", "se aplica", "se extrae", "si se"
-        ]
-        terminos_excluidos_en = [
-            "is extracted", "to cut", "to gather", "to channel", "to rotate", "to pour", "is cut", "to distill", "is cleansed", "is applied",
-            "with", "its", "there", "as for", "whereby", "these", "which", "says", "the steps", "arise", "if it"
-        ]
-        
-        excluidos_activos = terminos_excluidos if lang == "Español" else terminos_excluidos_en
-        elementes = [s for s in significados_unicos if s not in excluidos_activos]
-        
-        elementos_limpios = []
-        for el in elementes:
-            el_clean = re.sub(r'^(el |la |los |las |the )', '', el).strip()
-            if el_clean and el_clean not in elementos_limpios:
-                elementos_limpios.append(el_clean)
+                linea_espanol.append(dict_activo[palabra_norm])
                 
-        if elementos_limpios:
-            if len(elementos_limpios) > 1:
-                conector = " y " if lang == "Español" else " and "
-                lista_ingredientes = ", ".join(elementos_limpios[:-1]) + conector + elementos_limpios[-1]
-            else:
-                lista_ingredientes = elementos_limpios
-                
-            idx_apertura = (num_folio + idx) % len(aperturas_activas)
-            oracion_final = f"{aperturas_activas[idx_apertura]} {lista_ingredientes}"
-        else:
-            oracion_final = "En esta sección del recetario se indica seguir las pautas descritas" if lang == "Español" else "This section of the treatise outlines the specified guidelines"
-                
-        oracion_final = oracion_final.strip().rstrip(".") + "."
-        lineas_traducidas.append(f"{prefix_linea} {idx+1}: {oracion_final}")
+        if linea_espanol:
+            texto_linea = " ".join(linea_espanol).strip()
+            texto_linea = re.sub(r'\s+', ' ', texto_linea)
+            lineas_traducidas.append(f"{prefix_linea} {idx+1}: {texto_linea.capitalize()}.")
             
     return "\n\n".join(lineas_traducidas)
 
@@ -253,7 +203,7 @@ with tab1:
     entrada = st.text_area("EVA Input:", "pshoey cttey oaror psoisoda")
     if st.button(IFACE[idioma]["btn_an"]):
         romance = traducir_a_romance(entrada)
-        espanol = generar_espanol_sintactico(romance, "Libre", idioma)
+        espanol = generar_espanol_sintactico(romance, idioma)
         c1, c2 = st.columns(2)
         with c1:
             st.success(IFACE[idioma]["fon_rom"])
@@ -271,7 +221,7 @@ with tab2:
             lineas_eva = CORPUS_MANUSCRITO[folio_sel]
             texto_eva_completo = "\n".join(lineas_eva)
             romance_final = traducir_a_romance(texto_eva_completo)
-            espanol_final = generar_espanol_sintactico(romance_final, folio_sel, idioma)
+            espanol_final = generar_espanol_sintactico(romance_final, idioma)
             st.write("---")
             st.markdown(f"### {IFACE[idioma]['res_tit']} {folio_sel}")
             col_eva, col_rom, col_esp = st.columns(3)
