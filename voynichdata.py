@@ -1,14 +1,19 @@
+# voynichdata.py
 import re
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
     Aplica las reglas de sustitución paleográfica al texto EVA de forma segura.
-    Las sustituciones se ejecutan estrictamente de mayor a menor longitud.
+    Incluye un pre-limpiador crítico para eliminar caracteres basura del corpus
+    y asegurar que el 100% de los tokens sean transliterados a letras limpias.
     """
     if not texto_eva:
         return ""
         
+    # --- FILTRO CRÍTICO: LIMPIEZA DE RUIDO ACADÉMICO ---
     texto = texto_eva.lower()
+    texto = re.sub(r'[0-9\*\-\/\=\+\%\&\$\#\_\@]', ' ', texto)
+    texto = re.sub(r'\s+', ' ', texto).strip()
     
     # --- 1. REGLAS DE 4 CARACTERES (Tetragramas) ---
     texto = texto.replace("pcee", "pi")
@@ -59,6 +64,10 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = texto.replace("q", "qu")
     texto = texto.replace("m", "m")       
     texto = texto.replace("l", "l")       
+    texto = texto.replace("r", "r")       
+    texto = texto.replace("n", "n")       
+    texto = texto.replace("o", "o")       
+    texto = texto.replace("a", "a")       
     
     # --- 6. LIMPIEZA TOTAL DE HACHES (H) HUÉRFANAS ---
     texto = texto.replace("h", "")
@@ -69,61 +78,76 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     """
-    Procesa el texto limpio y devuelve una tupla:
-    1. Una lista de diccionarios para la tabla analítica.
-    2. La oración armada continuamente, resolviendo anagramas si no hay match directo.
+    Procesa el texto limpio y devuelve una tupla con la lista del desglose
+    estructurado para la tabla y la oración continua armada.
     """
     palabras = texto_limpio.split()
     analisis_estructurado = []
     palabras_oracion = []
     
-    # Glosario ampliado con raíces botánicas y farmacéuticas medievales
     diccionario_maestro = {
         "cut": {"es": "cortar", "en": "cut"},
-        "ci": {"es": "aquí", "en": "here"},
-        "ch": {"es": "clave", "en": "key"},
-        "ie": {"es": "ir", "en": "go"},
-        "dic": {"es": "decir", "en": "say"},
-        "quoqu": {"es": "cocinar", "en": "cook"},
-        "f": {"es": "hacer", "en": "make"},
-        "x": {"es": "seco", "en": "dry"},
-        "pes": {"es": "pie", "en": "foot"},
-        "col": {"es": "recolectar", "en": "collect"},
+        "ci": {"es": "aquí / este", "en": "here / this"},
+        "ch": {"es": "clave / secreto", "en": "key / secret"},
+        "ie": {"es": "ir / avanzar", "en": "go / advance"},
+        "dic": {"es": "decir / dictar", "en": "say / dictate"},
+        "quoqu": {"es": "cocinar / hervir", "en": "cook / boil"},
+        "f": {"es": "hacer / crear", "en": "make / create"},
+        "x": {"es": "seco / planta", "en": "dry / plant"},
+        "pes": {"es": "pie / base", "en": "foot / base"},
+        "col": {"es": "recolectar / colar", "en": "collect / strain"},
         "quok": {"es": "cocimiento", "en": "decoction"},
-        "old": {"es": "antiguo", "en": "ancient"},
-        "sho": {"es": "mostrar", "en": "show"},
-        "dai": {"es": "dar", "en": "give"},
-        "tth": {"es": "tierra", "en": "earth"},
+        "old": {"es": "antiguo / viejo", "en": "ancient / old"},
+        "sho": {"es": "mostrar / ver", "en": "show / see"},
+        "dai": {"es": "dar / aplicar", "en": "give / apply"},
+        "tth": {"es": "tierra / suelo", "en": "earth / soil"},
         "cue": {"es": "cuerpo", "en": "body"},
-        "xol": {"es": "sol", "en": "sun"},
-        "tit": {"es": "título", "en": "title"},
-        "pci": {"es": "pequeño", "en": "small"},
-        "ole": {"es": "aceite", "en": "oil"},
-        "sol": {"es": "disolver", "en": "dissolve"},
-        "an": {"es": "año", "en": "year"},
-        "ue": {"es": "fuente", "en": "source"},
-        "ic": {"es": "imagen", "en": "image"},
-        
-        # Nuevas raíces críticas del Latín Vulgar/Médico añadidas
+        "xol": {"es": "sol / calor", "en": "sun / heat"},
+        "tit": {"es": "título / marca", "en": "title / mark"},
+        "pci": {"es": "pequeño / pizca", "en": "small / pinch"},
+        "ole": {"es": "aceite / óleo", "en": "oil"},
+        "sol": {"es": "disolver / mezcla", "en": "dissolve / mixture"},
+        "an": {"es": "año / ciclo", "en": "year / cycle"},
+        "ue": {"es": "fuente / agua", "en": "source / water"},
+        "ic": {"es": "imagen / signo", "en": "image / sign"},
         "aqu": {"es": "agua", "en": "water"},
-        "erb": {"es": "hierba / planta", "en": "herb / plant"},
-        "rad": {"es": "raíz / base", "en": "root"},
+        "erb": {"es": "hierba", "en": "herb"},
+        "rad": {"es": "raíz", "en": "root"},
         "suc": {"es": "jugo / savia", "en": "juice / sap"},
-        "med": {"es": "médico / cura", "en": "heal / medical"},
-        "san": {"es": "santo / sano", "en": "holy / healthy"},
-        "coo": {"es": "cocer / calentar", "en": "boil / heat"}
+        "med": {"es": "médico", "en": "medical"},
+        "san": {"es": "sano / curado", "en": "healthy / cured"},
+        "coo": {"es": "cocer", "en": "boil"},
+        "fol": {"es": "hoja", "en": "leaf"},
+        "flo": {"es": "flor / brote", "en": "flower / bud"},
+        "vax": {"es": "vaso / frasco", "en": "vessel / jar"},
+        "mix": {"es": "mezclar", "en": "mix"},
+        "pur": {"es": "puro / limpio", "en": "pure / clean"},
+        "ext": {"es": "extracto", "en": "extract"},
+        "nat": {"es": "natural", "en": "natural"},
+        "cur": {"es": "cuidado / cura", "en": "care / cure"},
+        "el": {"es": "el / este", "en": "the / this"},
+        "lo": {"es": "lo / aquello", "en": "it / that"},
+        "un": {"es": "un / uno", "en": "a / one"},
+        "de": {"es": "de / desde", "en": "of / from"},
+        "en": {"es": "en / dentro", "en": "in / inside"},
+        "al": {"es": "al / hacia", "en": "to the / towards"},
+        "con": {"es": "con / junto a", "en": "with"},
+        "per": {"es": "por / mediante", "en": "by / through"},
+        "is": {"es": "ese / esto", "en": "this / it"},
+        "et": {"es": "y", "en": "and"},
+        "ut": {"es": "para que / como", "en": "so that / as"},
+        "non": {"es": "no", "en": "not"},
+        "sic": {"es": "así", "en": "so"}
     }
     
-    # Precalculamos las letras ordenadas de las raíces para la detección de anagramas
     anagramas_raices = {}
     for raiz, traducciones in diccionario_maestro.items():
-        if len(raiz) >= 3: # Solo buscamos anagramas en raíces significativas de 3 o más letras
+        if len(raiz) >= 3:
             llave_ordenada = "".join(sorted(raiz))
             if llave_ordenada not in anagramas_raices:
                 anagramas_raices[llave_ordenada] = raiz
 
     for palabra in palabras:
-        # --- 1. DETECTOR Y SEPARADOR DE COMPUESTAS ---
         palabra_compuesta_detectada = False
         for i in range(2, len(palabra) - 1):
             sub1 = palabra[:i]
@@ -145,32 +169,22 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         if palabra_compuesta_detectada:
             continue
             
-        # --- 2. PROCESAMIENTO ESTÁNDAR Y FILTRO DE ANAGRAMAS ---
         traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
         palabra_para_oracion = f'"{palabra.upper()}"'  
         tipo = "Desconocido" if idioma == "es" else "Unknown"
         
-        # Match Exacto
         if palabra in diccionario_maestro:
             traducida = diccionario_maestro[palabra][idioma]
             palabra_para_oracion = traducida
             tipo = "Match Exacto" if idioma == "es" else "Exact Match"
-            
-        # Match Raíz Estándar (3L)
         elif len(palabra) > 2 and palabra[:3] in diccionario_maestro:
             traducida = diccionario_maestro[palabra[:3]][idioma]
             palabra_para_oracion = traducida + f"({palabra[3:].upper()})"
             tipo = "Match Raíz (3L)" if idioma == "es" else "Root Match (3L)"
-            
-        # Match Raíz Estándar (2L)
         elif len(palabra) > 1 and palabra[:2] in diccionario_maestro:
             traducida = diccionario_maestro[palabra[:2]][idioma]
             palabra_para_oracion = traducida + f"({palabra[2:].upper()})"
             tipo = "Match Raíz (2L)" if idioma == "es" else "Root Match (2L)"
-            
-        # --- DETECTOR DE ANAGRAMAS ACTIVO ---
-        # Si la palabra sigue siendo incógnita, reordenamos sus primeras 3 o 4 letras 
-        # para ver si el escriba mezcló los caracteres de una raíz conocida
         else:
             longitud_analisis = min(len(palabra), 4)
             for l in range(longitud_analisis, 2, -1):
@@ -178,11 +192,9 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
                 if segmento_ordenado in anagramas_raices:
                     raiz_encontrada = anagramas_raices[segmento_ordenado]
                     traducida = diccionario_maestro[raiz_encontrada][idioma]
-                    
                     excedente = palabra[l:].upper()
                     sufijo_exc = f"({excedente})" if excedente else ""
                     palabra_para_oracion = traducida + sufijo_exc + "*"
-                    
                     tipo = f"Anagrama Raíz ({raiz_encontrada.upper()})" if idioma == "es" else f"Anagram Match ({raiz_encontrada.upper()})"
                     break
             
