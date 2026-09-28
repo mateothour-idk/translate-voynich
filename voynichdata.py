@@ -51,9 +51,12 @@ def resolver_contexto_palabra(palabra: str) -> list:
 def calcular_distancia_levenshtein(str1, str2):
     """ Mide la similitud ortográfica mediante matriz numérica 100% independiente en la memoria """
     m, n = len(str1), len(str2)
+    # CORREGIDO DEFINITIVO: Matriz bidimensional clásica por comprensión sin desestructuraciones rotas [INDEX]
     dp = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
-    for i in range(m + 1): dp[i] = i
-    for j in range(n + 1): dp[j] = j
+    
+    for i in range(m + 1): dp[i][0] = i
+    for j in range(n + 1): dp[0][j] = j
+        
     for i in range(1, m + 1):
         for j in range(1, n + 1):
             if str1[i - 1] == str2[j - 1]:
@@ -95,14 +98,14 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p in ["uefocl", "uefol"]: return "agua al fuego (baño maría)"
 
     # --- DESACOPLAMIENTO DE ARTÍCULOS AGLUTINADOS (L- / CH-) ---
-    if p.startswith("l") and len(p) > 2 and p[1] not in ["a", "e", "i", "o", "u"]:
+    if p.startswith("l") and len(p) > 2 and p not in ["a", "e", "i", "o", "u"]:
         significado_raiz = desarmar_palabra_compuesta(p[1:])
         if significado_raiz and not significado_raiz.startswith("["): return f"la {significado_raiz}"
-    if p.startswith("ch") and len(p) > 3 and p[2] not in ["a", "e", "i", "o", "u"]:
+    if p.startswith("ch") and len(p) > 3 and p not in ["a", "e", "i", "o", "u"]:
         significado_raiz = desarmar_palabra_compuesta(p[2:])
         if significado_raiz and not significado_raiz.startswith("["): return f"este {significado_raiz}"
 
-    # --- EXTRACTOR VERBAL Y DE TIEMPO (Sincronizado con tus 42 reglas) ---
+    # --- EXTRACTOR VERBAL Y DE TIEMPO ---
     if "ctin" in p or "ctan" in p: return "cortando"
     if "quoteo" in p or "quotar" in p or "tolqueol" in p: return "la dosis"
     if "oteodin" in p or "ochdin" in p or "ochin" in p or "ochdad" in p: return "del método (tiempo)"
@@ -111,7 +114,6 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     # --- ADAPTACIÓN DE SUFIJOS ABSTRACTOS MODIFICADOS ---
     if p.endswith("dad") or p.endswith("din") or p.endswith("di") or p.endswith("ti"):
         raiz = p[:-3] if p.endswith("dad") or p.endswith("din") else p[:-2]
-        # Aquí captamos las mutaciones que causaron tus 42 reglas (quoc -> ququ)
         if raiz in ["quoc", "quoqu", "qued", "ququ", "qqu"]: return "cocimiento"
         if raiz in ["shed", "sheo", "she"]: return "germinación"
         if raiz == "ofe": return "dosificación"
