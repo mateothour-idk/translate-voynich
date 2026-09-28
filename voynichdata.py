@@ -2,16 +2,16 @@
 import re
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
-    """ Aplica las 42 reglas de transliteración estructuradas en capas estrictas de longitud """
+    """ Aplica las 42 reglas de transliteración estructuradas en capas de longitud para evitar colisiones """
     if not texto_eva: return ""
     texto = texto_eva.lower()
     
-    # Limpieza profunda de ruidos del transcriptor
+    # Limpieza profunda de ruidos del transcriptor (comas, corchetes con dudas, etc.)
     texto = re.sub(r'\[\s*\w+\s*:\s*\w+\s*\]', ' ', texto)
     texto = re.sub(r'[*\-/\=+%\&$\#_@.!?,;:]', ' ', texto)
     texto = re.sub(r'\s+', ' ', texto).strip()
     
-    # Diccionarios de reemplazo por capas para evitar colisiones entre reglas
+    # Diccionarios ordenados por capas estrictas de reemplazo (Tetragramas -> Trigramas -> Bigramas)
     capa_0 = {"pceeoe": "piue", "pcee": "pi", "qok": "quoqu"}
     capa_1 = {"iii": "i", "eee": "ei", "dce": "dic", "cee": "ci", "eey": "ai", "pcs": "pes", "pdr": "pedr", "eat": "it"}
     capa_2 = {"pc": "p", "ps": "p", "cp": "p", "dc": "ch", "tc": "ch", "cs": "s", "ck": "qu", "ct": "cut", "ph": "f", "th": "t", "tt": "t", "ts", "s", "ll": "y"}
@@ -25,7 +25,7 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = re.sub(r'\by', 'i', texto)
     texto = re.sub(r'y\b', 'i', texto)
     texto = re.sub(r'\by\b', 'i', texto)
-    texto = re.sub(r'm\b', 'n', texto)
+    texto = re.sub(r'm\b', 'n', texto)  # Regla M = M / N al final de palabra
     
     # Sustitución base de K / Q / QUO y blindaje ortográfico
     texto = texto.replace("quo", "qu").replace("k", "qu").replace("q", "qu").replace("quu", "qu")
@@ -53,7 +53,7 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     p = palabra.lower()
     if not p: return ""
     
-    # Conectores romances base
+    # --- CONECTORES ROMANCES BASE ---
     if p in ["c", "qui", "oquin", "quoin"]: return "que"
     if p in ["i", "din"]: return "en"
     if p == "o": return "o"
@@ -65,7 +65,7 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p in ["itiol", "itidad", "ititad"]: return "un poco"
     if p == "ct": return "cortar"
     
-    # Conectores avanzados de laboratorio multisección
+    # --- CONECTORES AVANZADOS DE LABORATORIO MULTISECCIÓN ---
     if p in ["quo", "quol", "quon"]: return "el cual (que)"
     if p in ["ca", "cap"]: return "porque (ya que)"
     if p in ["ari", "ori", "oro", "oram"]: return "contorno (borde)"
@@ -78,7 +78,7 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p == "chychi": return "pizca"
     if p == "cri": return "filtrar"
     if p in ["ocor", "ocor", "oqueo", "ipdi"]: return "fomento / yema"
-    if p in ["uefocl", "uefol"]: return "agua al fuego (baño maría)"
+    if p == "uefocl" or p == "uefol": return "agua al fuego (baño maría)"
 
     # Desacoplamiento de artículo 'L' aglutinado
     if p.startswith("l") and len(p) > 2 and p not in ["a", "e", "i", "o", "u"]:
