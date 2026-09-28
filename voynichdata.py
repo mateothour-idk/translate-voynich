@@ -48,7 +48,7 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p == "l": return "el"
     if p in ["ar", "al", "dal", "del", "dil", "dol", "odal", "ldi"]: return "del"
     if p in ["da", "di", "odi", "dom"]: return "de"
-    if p == "qua": return "agua"
+    if p in ["qua", "oqua"]: return "agua"
     if p in ["olin", "olin"]: return "aceitoso"
     if p in ["itiol", "itidad", "ititad"]: return "un poco"
     if p == "ct": return "cortar"
@@ -66,6 +66,12 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p == "chychi": return "pizca (pequeño)"
     if p == "cri": return "crecer / filtrar"
     if p in ["ocor", "ocor"]: return "humedad / yema"
+    
+    # --- NUEVOS TÉRMINOS AVANZADOS DE LABORATORIO MEDIEVAL ---
+    if p == "ipdi": return "fomento (aplicación)"
+    if p == "uefocl": return "agua al fuego (baño maría)"
+    if p == "ifca": return "efectuar (activar)"
+    if p == "tosi": return "dosificar / tostar"
 
     # --- TRATAMIENTO DE TIEMPO, DOSIS Y VERBOS ---
     if "ctin" in p or "ctan" in p: return "cortando"
@@ -115,7 +121,6 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
             if raiz_limpia == "opal": return "opacidad"
             return f"{raiz_limpia}dad"
 
-    # Si es una letra suelta residual que no está mapeada, la limpia para no trabar la prosa
     if len(p) == 1: return ""
 
     return ""
