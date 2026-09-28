@@ -42,10 +42,10 @@ def calcular_distancia_levenshtein(str1, str2):
     """ Mide la similitud ortográfica entre dos términos mediante matriz numérica segura e independiente """
     m, n = len(str1), len(str2)
     
-    # Inicialización limpia de sublistas
+    # Inicialización limpia de sublistas independientes con ceros
     dp = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
     
-    # CORREGIDO: Indexación exacta de celda [i][0] y [0][j] sin destruir las filas de la matriz
+    # CORREGIDO DEFINITIVO: Indexación exacta de celdas iniciales en los bordes de la matriz [INDEX]
     for i in range(m + 1): 
         dp[i][0] = i
     for j in range(n + 1): 
