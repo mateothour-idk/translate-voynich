@@ -2,6 +2,10 @@
 import re
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
+    """
+    Primera y Segunda Capa de TransliteraciÃ³n.
+    Transforma caracteres EVA a fonÃ©tica estructurada de LatÃ­n Romance Medieval.
+    """
     if not texto_eva:
         return ""
     texto = texto_eva.lower()
@@ -11,22 +15,23 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     while True:
         texto_anterior = texto
         
-        # --- REGLA DE PROTECCIÓN ANTICIPADA (Fix pceeoe -> pioe) ---
-        texto = texto.replace("pceeoe", "pioe")
+        # --- REGLA DE PROTECCIÃ“N ANTICIPADA (Fix pceeoe -> piue) ---
+        texto = texto.replace("pceeoe", "piue")
         
         # --- 1. REGLAS DE 4 CARACTERES (Tetragramas) ---
         texto = texto.replace("pcee", "pi")
         texto = texto.replace("qok", "quoqu")
         
         # --- 2. REGLAS DE 3 CARACTERES ---
-        texto = texto.replace("iii", "ee")     
-        texto = texto.replace("eee", "ie")     
+        texto = texto.replace("iii", "i")     
+        texto = texto.replace("eee", "ei")     
         texto = texto.replace("dce", "dic")
         texto = texto.replace("cee", "ci")
         texto = texto.replace("eey", "ai")     
         texto = texto.replace("pcs", "pes")
+        texto = texto.replace("pdr", "pedr")
         
-        # --- 3. REGLAS DE 2 CARACTERES (Bigramas y Dígrafos) ---
+        # --- 3. REGLAS DE 2 CARACTERES (Bigramas y DÃ­grafos) ---
         texto = texto.replace("pc", "p")
         texto = texto.replace("ps", "p")
         texto = texto.replace("cp", "p")
@@ -41,7 +46,7 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = texto.replace("tt", "t")       
         texto = texto.replace("ts", "s")       
         
-        # Reglas Vocálicas y Consonánticas secundarias de 2 letras
+        # Reglas VocÃ¡licas y ConsonÃ¡nticas secundarias de 2 letras
         texto = texto.replace("ee", "i")
         texto = texto.replace("oe", "ue")     
         texto = texto.replace("iu", "u")
@@ -55,7 +60,7 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = texto.replace("ce", "c")
         texto = texto.replace("ai", "i")      
         
-        # --- 4. REGLAS DE 1 CARÁCTER CON CONTEXTO (Y inicial/final) ---
+        # --- 4. REGLAS DE 1 CARÃCTER CON CONTEXTO (Y inicial/final) ---
         re_y_aislada = re.compile(r'\by\b')
         re_y_inicial = re.compile(r'\by')
         re_y_final = re.compile(r'y\b')
@@ -63,32 +68,55 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = re_y_inicial.sub('i', texto)
         texto = re_y_final.sub('i', texto)
         
-        # --- 5. SUSTITUCIÓN FINAL DE CONSONANTES Q / K ---
+        # --- 5. SUSTITUCIÃ“N FINAL DE CONSONANTES Q / K ---
         texto = texto.replace("k", "qu")
         texto = texto.replace("q", "qu")
-        texto = texto.replace("m", "m")       
-        texto = texto.replace("l", "l")       
-        texto = texto.replace("r", "r")       
-        texto = texto.replace("n", "n")       
-        texto = texto.replace("o", "o")       
-        texto = texto.replace("a", "a")       
         
-        # --- 6. LIMPIEZA TOTAL DE HACHES (H) HUÉRFANAS ---
+        # --- 6. SEGUNDA CAPA SELECCIONAL: CORRECCIÃ“N MEDIEVAL FONÃ‰TICA ---
+        texto = re.sub(r'\bchseor\b', 'senior', texto)  
+        texto = re.sub(r'\bseor\b', 'senior', texto)
+        texto = re.sub(r'iin\b', 'am', texto)          
+        texto = re.sub(r'eiy\b', 'e', texto)           
+        texto = re.sub(r'oitio', 'otio', texto)         
+        
+        # Limpiezas finales
         texto = texto.replace("h", "")
         texto = texto.replace("quu", "qu")
         
         if texto == texto_anterior:
             break
+            
     return texto.strip()
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
+    """
+    Analiza el texto ya procesado por la doble transliteraciÃ³n y asocia
+    las raÃ­ces reconstrucidas con su significado botÃ¡nico eclesiÃ¡stico/romance.
+    """
     palabras = texto_limpio.split()
     analisis_estructurado = []
     palabras_oracion = []
     
-    # Glosario maestro compacto (Evita que el código se corte por longitud)
+    # Glosario maestro adaptado para la fonÃ©tica romance obtenida
     diccionario_maestro = {
-        "pioe": {"es": "pueblo", "en": "people"},
+        "piue": {"es": "mÃ¡s (ademÃ¡s)", "en": "more (furthermore)"},
+        "piu": {"es": "mÃ¡s", "en": "more"},
+        "codar": {"es": "cocer (hervir)", "en": "to cook (boil)"},
+        "oleis": {"es": "con aceites", "en": "with oils"},
+        "cipi": {"es": "tallos (bulbos)", "en": "stems (bulbs)"},
+        "seol": {"es": "seco", "en": "dry"},
+        "sequieo": {"es": "secar (dejar secar)", "en": "to dry out"},
+        "otolsai": {"es": "extraer", "en": "extract"},
+        "senior": {"es": "el maestro (autor)", "en": "the master (author)"},
+        "olse": {"es": "aceitoso (oler)", "en": "oily (to smell)"},
+        "quodam": {"es": "un cierto (el cual)", "en": "a certain (which)"},
+        "quoquior": {"es": "tambiÃ©n (asimismo)", "en": "also (likewise)"},
+        "oram": {"es": "el borde (perÃ­metro)", "en": "the edge (margin)"},
+        "iquiol": {"es": "jugo extraÃ­do", "en": "extracted juice"},
+        "otio": {"es": "en reposo", "en": "at rest"},
+        "cute": {"es": "en la piel (corteza)", "en": "on the skin (bark)"},
+        "cior": {"es": "mover", "en": "to move"},
+        "cioquai": {"es": "hervido", "en": "decocted"},
         "cut": {"es": "cortar", "en": "cut"},
         "ci": {"es": "este", "en": "this"},
         "ch": {"es": "secreto", "en": "secret"},
@@ -107,18 +135,12 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         "cue": {"es": "cuerpo", "en": "body"},
         "xol": {"es": "calor", "en": "heat"},
         "tit": {"es": "marca", "en": "mark"},
-        "pci": {"es": "pequeño", "en": "small"},
+        "pci": {"es": "pequeÃ±o", "en": "small"},
         "ole": {"es": "aceite", "en": "oil"},
         "sol": {"es": "disolver", "en": "dissolve"},
         "an": {"es": "ciclo", "en": "cycle"},
         "ue": {"es": "agua", "en": "water"},
         "ic": {"es": "signo", "en": "sign"},
-        "aqu": {"es": "agua", "en": "water"},
-        "erb": {"es": "hierba", "en": "herb"},
-        "el": {"es": "el", "en": "the"},
-        "de": {"es": "de", "en": "of"},
-        "en": {"es": "en", "en": "in"},
-        "con": {"es": "con", "en": "with"},
         "et": {"es": "y", "en": "and"}
     }
     
@@ -127,7 +149,6 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     def limpiar_prosa(texto):
         if not texto: 
             return ""
-        # CORREGIDO: Extrae el índice de la lista en crudo sin encadenar strip() a un objeto tipo List
         lista_palabras = texto.split("/")
         termino_limpio = lista_palabras[0]
         return termino_limpio.strip().replace("?", "").replace("*", "")
@@ -143,15 +164,15 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
                 palabras_oracion.append(f"{limpiar_prosa(trad1)} {limpiar_prosa(trad2)}")
                 palabra_compuesta_detectada = True
                 analisis_estructurado.append({
-                    "Morfología Filtrada": palabra.upper(),
-                    "Interpretación / Semántica": f"{trad1} / {trad2}",
-                    "Diagnóstico": "Compuesta Separada" if idioma == "es" else "Split Compound"
+                    "Palabra Filtrada": palabra.upper(),
+                    "Equivalencia SemÃ¡ntica": f"{trad1} / {trad2}",
+                    "Tipo de Match": "Compuesta Separada" if idioma == "es" else "Split Compound"
                 })
                 break
         if palabra_compuesta_detectada:
             continue
             
-        traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
+        traducida = "[IncÃ³gnita]" if idioma == "es" else "[Unknown]"
         palabra_para_oracion = f'"{palabra.upper()}"'  
         tipo = "Desconocido" if idioma == "es" else "Unknown"
         
@@ -162,11 +183,11 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         elif len(palabra) > 2 and palabra[:3] in diccionario_maestro:
             traducida = diccionario_maestro[palabra[:3]][idioma]
             palabra_para_oracion = limpiar_prosa(traducida)
-            tipo = "Match Raíz (3L)" if idioma == "es" else "Root Match (3L)"
+            tipo = "Match RaÃ­z (3L)" if idioma == "es" else "Root Match (3L)"
         elif len(palabra) > 1 and palabra[:2] in diccionario_maestro:
             traducida = diccionario_maestro[palabra[:2]][idioma]
             palabra_para_oracion = limpiar_prosa(traducida)
-            tipo = "Match Raíz (2L)" if idioma == "es" else "Root Match (2L)"
+            tipo = "Match RaÃ­z (2L)" if idioma == "es" else "Root Match (2L)"
         else:
             anagrama_encontrado = False
             longitud_analisis = min(len(palabra), 4)
@@ -176,25 +197,25 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
                     raiz_encontrada = anagramas_raices[segmento_ordenado]
                     traducida = diccionario_maestro[raiz_encontrada][idioma]
                     palabra_para_oracion = limpiar_prosa(traducida)
-                    tipo = f"Anagrama Raíz ({raiz_encontrada.upper()})" if idioma == "es" else f"Anagram Match ({raiz_encontrada.upper()})"
+                    tipo = f"Anagrama RaÃ­z ({raiz_encontrada.upper()})" if idioma == "es" else f"Anagram Match ({raiz_encontrada.upper()})"
                     anagrama_encontrado = True
                     break
             
             if not anagrama_encontrado:
-                consonantes_palabra = "".join([c for c in palabra if c not in 'aeiouíue'])
+                consonantes_palabra = "".join([c for c in palabra if c not in 'aeiouÃ­ue'])
                 if consonantes_palabra:
                     for raiz in diccionario_maestro.keys():
-                        consonantes_raiz = "".join([c for c in raiz if c not in 'aeiouíue'])
+                        consonantes_raiz = "".join([c for c in raiz if c not in 'aeiouÃ­ue'])
                         if consonantes_raiz and consonantes_palabra.startswith(consonantes_raiz[:2]):
                             traducida = diccionario_maestro[raiz][idioma]
                             palabra_para_oracion = limpiar_prosa(traducida)
-                            tipo = f"Aproximación Fonética ({raiz.upper()})" if idioma == "es" else f"Phonetic Match ({raiz.upper()})"
+                            tipo = f"AproximaciÃ³n FonÃ©tica ({raiz.upper()})" if idioma == "es" else f"Phonetic Match ({raiz.upper()})"
                             break
             
         analisis_estructurado.append({
-            "Morfología Filtrada": palabra.upper(),
-            "Interpretación / Semántica": traducida,
-            "Diagnóstico": tipo
+            "Palabra Filtrada": palabra.upper(),
+            "Equivalencia SemÃ¡ntica": traducida,
+            "Tipo de Match": tipo
         })
         palabras_oracion.append(palabra_para_oracion)
             
