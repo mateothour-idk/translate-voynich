@@ -5,7 +5,7 @@ from deep_translator import GoogleTranslator
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
     Pipeline lineal estricto de transliteración sin bucles infinitos.
-    Garantiza que kooiin pase correctamente a quin.
+    Garantiza que kooiin pase correctamente a quin y x pase a sh.
     """
     if not texto_eva:
         return ""
@@ -17,7 +17,7 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     
     # --- CAPA 1: PROTECCIONES Y REGLAS ESPECÍFICAS ---
     texto = texto.replace("pceeoe", "piue")
-    texto = texto.replace("x", "sh")
+    texto = texto.replace("x", "sh")  # Regla: X pasa a ser SH
     texto = texto.replace("pcee", "pi")
     texto = texto.replace("qok", "quoqu")
     
@@ -40,7 +40,7 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = texto.replace("tt", "t")       
     texto = texto.replace("ts", "s")       
     
-    # --- CAPA 4: TRATAMIENTO DE VOCALES DUPLICADAS ---
+    # --- CAPA 4: TRATAMIENTO DE VOCALES DUPLICADAS (Ej: kooiin -> kuiin -> kuin) ---
     texto = texto.replace("oo", "u")      
     texto = texto.replace("ii", "i")      
     texto = texto.replace("ee", "i")
@@ -82,13 +82,10 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     return texto.strip()
 
 def resolver_contexto_palabra(palabra: str) -> str:
-    """ Evalúa las variantes contextuales de tus reglas para Q=Qu/Q o O=O/U. """
+    """ Simplifica los términos antes de pasarlos a la tabla para evitar que quu se rompa """
     p_baja = palabra.lower()
     if "quu" in p_baja:
         p_baja = p_baja.replace("quu", "qu")
-    if p_baja.startswith("qu") and len(p_baja) > 2:
-        opcion_q = p_baja.replace("qu", "q", 1)
-        return f"{p_baja}/{opcion_q}"
     return p_baja
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
@@ -96,72 +93,72 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     analisis_estructurado = []
     target_lang = "es" if idioma == "es" else "en"
     
-    glosario_auxilio = {
+    # Diccionario etimológico robusto local para no depender de Google en la tabla
+    glosario_maestro = {
         "piue": "más", "piu": "más", "codar": "cocer", "oleis": "aceites", 
         "cipi": "tallos", "seol": "seco", "sequieo": "secado", "otolsai": "extraer",
-        "senior": "señor", "olse": "aceitoso", "quodam": "un cierto", "oram": "borde",
-        "iquiol": "jugo", "otio": "reposo", "cute": "piel", "cior": "mover", 
-        "cioquai": "infusión", "cut": "cortar", "quin": "quien/que"
+        "senior": "señor (maestro)", "olse": "aceitoso", "quodam": "un cierto", "oram": "borde",
+        "iquiol": "jugo", "otio": "reposo", "cute": "piel (corteza)", "cior": "mover", 
+        "cioquai": "infusión", "cut": "cortar", "quin": "quien (que)", "qin": "que",
+        "tsheos": "esencia / sustancia"
     } if target_lang == "es" else {
         "piue": "more", "piu": "more", "codar": "cook", "oleis": "oils", 
         "cipi": "stems", "seol": "dry", "sequieo": "dried", "otolsai": "extract",
         "senior": "master", "olse": "oily", "quodam": "a certain", "oram": "edge",
-        "iquiol": "juice", "otio": "rest", "cute": "skin", "cior": "move", 
-        "cioquai": "decoction", "cut": "cut", "quin": "which/who"
+        "iquiol": "juice", "otio": "rest", "cute": "skin (bark)", "cior": "move", 
+        "cioquai": "decoction", "cut": "cut", "quin": "which (who)", "qin": "which",
+        "tsheos": "essence"
     }
     
     if not palabras:
         return [], ""
 
+    # 1. TRADUCCIÓN DE LA ORACIÓN EN BLOQUE COMPLETAMENTE FLUIDA
     palabras_traducidas_oracion = []
     for palabra in palabras:
         palabra_optimizada = resolver_contexto_palabra(palabra)
-        encontrada = False
-        
-        # Separación segura sin reventar la app
-        opciones = palabra_optimizada.split("/")
-        for opcion in opciones:
-            if opcion in glosario_auxilio:
-                palabras_traducidas_oracion.append(glosario_auxilio[opcion])
-                encontrada = True
-                break
-        if encontrada:
-            continue
-            
-        try:
-            traduccion = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-            palabras_traducidas_oracion.append(traduccion)
-        except Exception:
-            palabras_traducidas_oracion.append(palabra)
+        # Si la palabra está en nuestro glosario local, la traduce al instante
+        if palabra_optimizada in glosario_maestro:
+            palabras_traducidas_oracion.append(glosario_maestro[palabra_optimizada])
+        else:
+            # Respaldos de traducción contextual con la API limpia
+            try:
+                trad = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
+                palabras_traducidas_oracion.append(trad)
+            except Exception:
+                palabras_traducidas_oracion.append(palabra_optimizada)
 
     oracion_completa = " ".join(palabras_traducidas_oracion)
 
+    # 2. CONSTRUCCIÓN DE LA TABLA ESTABLE SIN REPETICIÓN DE RAÍCES TRABADAS
     for palabra in palabras[:30]:
         if not palabra.strip():
             continue
             
         palabra_optimizada = resolver_contexto_palabra(palabra)
-        opciones = palabra_optimizada.split("/")
         
-        significado_individual = "[Desconocido]"
-        for op in opciones:
-            if op in glosario_auxilio:
-                significado_individual = glosario_auxilio[op]
-                break
-        
-        if significado_individual == "[Desconocido]":
+        # Buscamos de forma directa la equivalencia al español sin pasar por Google
+        if palabra_optimizada in glosario_maestro:
+            significado_individual = glosario_maestro[palabra_optimizada]
+            tipo_match = "Glosario Romance (Posta)"
+        else:
             try:
-                trad = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-                significado_individual = trad
-                if significado_individual.lower() == palabra_optimizada.lower():
-                    significado_individual = "[Desconocido]"
+                trad_api = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
+                if trad_api.lower() == palabra_optimizada.lower():
+                    # Si Google no sabe qué significa y devuelve lo mismo, se marca la barra contextual para análisis
+                    significado_individual = f"{palabra_optimizada}/{palabra_optimizada[:-1] if len(palabra_optimizada)>2 else palabra_optimizada}"
+                    tipo_match = "Variante Contextual Abierta"
+                else:
+                    significado_individual = trad_api
+                    tipo_match = "Aproximación AI"
             except Exception:
                 significado_individual = "[Incógnita]"
+                tipo_match = "Error de Red"
             
         analisis_estructurado.append({
             "Palabra Filtrada": palabra_optimizada.upper(),
             "Equivalencia Semántica": significado_individual,
-            "Tipo de Match": "Evaluación de Contexto"
+            "Tipo de Match": tipo_match
         })
         
     return analisis_estructurado, oracion_completa
