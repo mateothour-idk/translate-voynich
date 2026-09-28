@@ -2,8 +2,8 @@ import re
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
-    Mantiene la compatibilidad con el pipeline paleográfico original.
-    Transforma los glifos de la transcripción para el desglose visual de la tabla.
+    Aplica las reglas de sustitución paleográfica al texto EVA de forma segura.
+    Ordenadas estrictamente de mayor a menor longitud.
     """
     if not texto_eva:
         return ""
@@ -30,11 +30,8 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
 
 def motor_prosa_fluida(texto_original_eva: str, idioma: str = "es") -> tuple:
     """
-    Procesa el texto original en formato EVA y genera:
-    1. La tabla analítica usando la transliteración paleográfica como base.
-    2. Una traducción directa y fluida mapeada desde los tokens EVA originales.
+    Procesa el texto original en formato EVA y genera la traducción directa.
     """
-    # Diccionario maestro basado en los tokens EVA originales presentes en tu corpus
     diccionario_eva = {
         "qokched": {"es": "extracto concentrado", "en": "concentrated extract"},
         "dcectth": {"es": "hervir en agua de lluvia", "en": "boil in rainwater"},
@@ -76,17 +73,13 @@ def motor_prosa_fluida(texto_original_eva: str, idioma: str = "es") -> tuple:
 
     for palabra_eva in palabras_originales:
         palabra_eva_clean = palabra_eva.lower()
-        
-        # 1. Obtener la transliteración para la tabla estadística de la UI
         palabra_filtrada = aplicar_matriz_sustitucion(palabra_eva_clean).upper()
         
-        # 2. Traducción directa usando el token EVA original
         if palabra_eva_clean in diccionario_eva:
             traducida = diccionario_eva[palabra_eva_clean][idioma]
             palabra_para_oracion = traducida
             tipo = "Match Exacto (EVA)" if idioma == "es" else "Exact Match (EVA)"
         else:
-            # Fallback dinámico si meten una palabra manual que no está en el glosario EVA
             traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
             palabra_para_oracion = f'"{palabra_filtrada}"'
             tipo = "Desconocido" if idioma == "es" else "Unknown"
@@ -99,7 +92,5 @@ def motor_prosa_fluida(texto_original_eva: str, idioma: str = "es") -> tuple:
         palabras_oracion.append(palabra_para_oracion)
 
     oracion_completa = " ".join(palabras_oracion) + "."
-    # Limpieza de espacios redundantes
     oracion_completa = re.sub(r'\s+', ' ', oracion_completa).replace(" .", ".")
-    
     return analisis_estructurado, oracion_completa
