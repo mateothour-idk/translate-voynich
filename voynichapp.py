@@ -20,7 +20,7 @@ def descargar_corpus_voynich_real():
     Descarga en tiempo real la transcripción ZL3b-n.txt simulando 
     un navegador completo para saltar el firewall del servidor y remueve metadatos.
     """
-    url_corpus = "https://www.voynich.nu/data/ZL3b-n.txt"
+    url_corpus = "https://voynich.nu"
     corpus = {}
     
     headers = {
@@ -41,7 +41,7 @@ def descargar_corpus_voynich_real():
             # Reconocimiento de líneas válidas en formato IVTFF
             if linea.startswith("<f") and ">" in linea:
                 # 1. EXTRAER LA ETIQUETA DEL FOLIO ANTES DE BORRAR LOS < >
-                match_etiqueta = re.search(r'^<(f[^>;]+)', linea)
+                match_etiqueta = re.search(r'^<(f[^>;\s.]+)', linea)
                 if match_etiqueta:
                     identificador_folio = match_etiqueta.group(1)
                 else:
@@ -79,9 +79,10 @@ st.sidebar.header("Panel de Navegación")
 opciones_selector = ["Manual (Texto Libre)"]
 
 if mapa_completo_folios:
+    # SOLUCIÓN AL TYPEERROR: Extrae de forma correcta el índice de la lista regex antes de convertir a entero
     def ordenar_clave(clave):
         numeros = re.findall(r'\d+', clave)
-        num = int(numeros) if numeros else 999  # Folios como 'fros' van al final
+        num = int(numeros[0]) if numeros else 999  # Folios como 'fros' van al final
         letra = clave[-1] if clave else ''
         return (num, letra)
         
@@ -111,7 +112,7 @@ if st.button("Ejecutar Análisis Paleográfico y Traducción AI", type="primary"
             texto_filtrado = aplicar_matriz_sustitucion(texto_usuario)
             datos_tabla, oracion_completa = motor_prosa_fluida(texto_filtrado, idioma=cod_idioma)
             
-        st.success("¡Pipeline completado en milisegundos!")
+        st.success("¡Pipeline completado con éxito!")
         
         st.markdown("### 🏛️ Traducción de Prosa Continua Contextual")
         st.write("La IA intenta conectar tus raíces convertidas en Latín para armar una frase con sentido:")
