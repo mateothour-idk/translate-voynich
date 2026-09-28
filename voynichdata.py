@@ -45,10 +45,10 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
 
 def motor_prosa_fluida(texto_original_eva: str, idioma: str = "es") -> tuple:
     """
-    Motor híbrido avanzado: busca la palabra exacta del corpus real (voynich.nu),
-    y si se usa texto libre manual, aplica reducción filológica decreciente de raíces.
+    Motor híbrido avanzado: busca la palabra exacta mapeada desde voynich.nu,
+    con soporte filológico de raíces decrecientes.
     """
-    # 1. Glosario directo de tokens EVA extraídos de las transcripciones reales
+    # Glosario directo de tokens EVA extraídos de las transcripciones reales de voynich.nu
     diccionario_eva = {
         "fachas": {"es": "proclamación/receta", "en": "proclamation/recipe"},
         "ykal": {"es": "reunir/juntar", "en": "assemble"},
@@ -96,7 +96,7 @@ def motor_prosa_fluida(texto_original_eva: str, idioma: str = "es") -> tuple:
         "koldoe": {"es": "ungüento para dolores", "en": "pain relief ointment"}
     }
 
-    # 2. Glosario fonético secundario (fallback para raíces o entradas libres)
+    # Glosario fonético secundario (para entradas libres)
     diccionario_fonetico = {
         "cut": {"es": "cortar", "en": "cut"},
         "ci": {"es": "aquí/aplicar", "en": "here/apply"},
@@ -128,19 +128,14 @@ def motor_prosa_fluida(texto_original_eva: str, idioma: str = "es") -> tuple:
         palabra_filtrada = aplicar_matriz_sustitucion(palabra_eva_clean).upper()
         palabra_filtrada_lc = palabra_filtrada.lower()
         
-        # Estrategia 1: Match directo por token real
         if palabra_eva_clean in diccionario_eva:
             traducida = diccionario_eva[palabra_eva_clean][idioma]
             palabra_para_oracion = traducida
             tipo = "Match Exacto (voynich.nu)" if idioma == "es" else "Exact Match (voynich.nu)"
-            
-        # Estrategia 2: Match por transliteración fonética íntegra
         elif palabra_filtrada_lc in diccionario_fonetico:
             traducida = diccionario_fonetico[palabra_filtrada_lc][idioma]
             palabra_para_oracion = traducida
             tipo = "Match Fonético" if idioma == "es" else "Phonetic Match"
-            
-        # Estrategia 3: Segmentación decreciente de prefijos léxicos
         else:
             match_raiz_encontrado = False
             traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
