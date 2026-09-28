@@ -46,16 +46,16 @@ IFACE = {
 }
 
 DICCIONARIO_ES = {
-    "puí": "la planta", "cuta": "la corteza", "oarur": "el aroma", "poisoda": "la planta medicinal",
+    "pui": "la planta", "cuta": "la corteza", "oarur": "el aroma", "poisoda": "la planta medicinal",
     "quedy": "el elemento", "con": "con", "su": "su", "quoqu": "por lo cual", "caur": "el tallo",
     "chedy": "se extrae", "toes": "estos", "odor": "oloroso", "cutair": "cortar", "oas": "la vasija",
     "tcbaor": "recolectar", "hacia": "hacia", "ctaiin": "el cáliz", "si": "si se", "otair": "surgir",
-    "opas": "los pasos", "chidí": "canalizar", "podon": "la raíz", "vety": "maduro",
+    "opas": "los pasos", "chidi": "canalizar", "podon": "la raíz", "vety": "maduro",
     "dic": "dice", "olteey": "al final", "quotcey": "se limpia", "raur": "la base",
-    "qudicodí": "el tratado", "copí": "abundante", "cia": "allí", "quotcoí": "cuanto",
-    "quotoaí": "diariamente", "dicorcau": "la sustancia", "cutí": "la piel", "cotol": "el cáliz",
-    "odaur": "el olor", "cocodau": "el fruto", "seo": "su", "quocí": "allí",
-    "ciodal": "el eje", "daral": "girar", "ocol": "los brotes", "oltí": "al término",
+    "qudicodi": "el tratado", "copi": "abundante", "cia": "allí", "quotcoi": "cuanto",
+    "quotoai": "diariamente", "dicorcau": "la sustancia", "cuti": "la piel", "cotol": "el cáliz",
+    "odaur": "el olor", "cocodau": "el fruto", "seo": "su", "quoci": "allí",
+    "ciodal": "el eje", "daral": "girar", "ocol": "los brotes", "olti": "al término",
     "otolci": "la olla", "tiodau": "el tiempo", "pair": "por", "osain": "el aceite",
     "pain": "la pulpa", "oain": "el jugo", "dais": "se aplica", "okeody": "la regla",
     "quoequiej": "también", "sar": "sanará", "oeteody": "el reposo", "otiy": "la maceración",
@@ -63,21 +63,21 @@ DICCIONARIO_ES = {
     "cios": "los recipientes", "ain": "el líquido", "oteroe": "el proceso", "aram": "el hornillo",
     "sier": "las hojas", "dalaiu": "destilar", "dam": "dar", "ciodain": "los conductos",
     "aekiy": "la mezcla", "air": "el aire", "soar": "el vapor", "ciey": "la savia",
-    "dais": "la rueda", "odotoí": "el ciclo", "doror": "el nacimiento", "quaur": "el calor",
+    "dais": "la rueda", "odotoi": "el ciclo", "doror": "el nacimiento", "quaur": "el calor",
     "caud": "el tallo alargado", "cedy": "se corta", "cidí": "verter"
 }
 
 DICCIONARIO_EN = {
-    "puí": "the plant", "cuta": "the bark", "oarur": "the aroma", "poisoda": "the medicinal plant",
+    "pui": "the plant", "cuta": "the bark", "oarur": "the aroma", "poisoda": "the medicinal plant",
     "quedy": "the element", "con": "with", "su": "its", "quoqu": "whereby", "caur": "the stem",
     "chedy": "is extracted", "toes": "these", "odor": "scented", "cutair": "to cut", "oas": "the vessel",
     "tcbaor": "to gather", "hacia": "towards", "ctaiin": "the calyx", "si": "if it", "otair": "arise",
-    "opas": "the steps", "chidí": "to channel", "podon": "the root", "vety": "mature",
+    "opas": "the steps", "chidi": "to channel", "podon": "the root", "vety": "mature",
     "dic": "says", "olteey": "at the end", "quotcey": "is cleansed", "raur": "the base",
-    "qudicodí": "the treatise", "copí": "abundant", "cia": "there", "quotcoí": "as for",
-    "quotoaí": "daily", "dicorcau": "the substance", "cutí": "the skin", "cotol": "the calyx",
-    "odaur": "the scent", "cocodau": "the fruit", "seo": "its", "quocí": "there",
-    "ciodal": "the axis", "daral": "to rotate", "ocol": "the buds", "oltí": "at the completion",
+    "qudicodi": "the treatise", "copi": "abundant", "cia": "there", "quotcoi": "as for",
+    "quotoai": "daily", "dicorcau": "the substance", "cuti": "the skin", "cotol": "the calyx",
+    "odaur": "the scent", "cocodau": "the fruit", "seo": "its", "quoci": "there",
+    "ciodal": "the axis", "daral": "to rotate", "ocol": "the buds", "olti": "at the completion",
     "otolci": "the pot", "tiodau": "the time", "pair": "by", "osain": "the oil",
     "pain": "the pulp", "oain": "the juice", "dais": "is applied", "okeody": "the rule",
     "quoequiej": "also", "sar": "will heal", "oeteody": "the rest", "otiy": "the maceration",
@@ -85,7 +85,7 @@ DICCIONARIO_EN = {
     "cios": "the containers", "ain": "the liquid", "oteroe": "the process", "aram": "the burner",
     "sier": "the leaves", "dalaiu": "to distill", "dam": "to give", "ciodain": "the ducts",
     "aekiy": "the mixture", "air": "the air", "soar": "the steam", "ciey": "the sap",
-    "dais": "the wheel", "odotoí": "the cycle", "doror": "the birth", "quaur": "the heat",
+    "dais": "the wheel", "odotoi": "the cycle", "doror": "the birth", "quaur": "the heat",
     "caud": "the elongated stem", "cedy": "is cut", "cidí": "to pour"
 }
 
@@ -94,7 +94,7 @@ st.write(IFACE[idioma]["sub"])
 
 @st.cache_data
 def descargar_manuscrito_real():
-    url = "https://www.voynich.nu/data/ZL3b-n.txt"
+    url = "https://voynich.nu"
     archivo_completo = {}
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -131,10 +131,10 @@ def traducir_a_romance(texto):
         'pc': 'p', 'ps': 'p', 'cp': 'p', 'ce': 'c', 'ey': 'a', 'eey': 'iy',
         'cs': 's', 'ck': 'qu', 'k': 'qu', 'ee': 'i', 'oe': 'u', 'iu': 'u',
         'dc': 'ch', 'tc': 'ch', 'ct': 'cut', 'oi': 'oi', 'ii': 'i', 'ae': 'a',
-        'oo': 'u', 'ph': 'f', 'th': 't', 'ch': 'c', 'iii': 'í', 'm': 'm',
+        'oo': 'u', 'ph': 'f', 'th': 't', 'ch': 'c', 'iii': 'i', 'm': 'm',
         'll': 'y', 'eee': 'ei', 'q': 'qu', 'ai': 'i', 'tt': 't', 'ts': 's',
-        'iy': 'í', 'x': 'sh', 'el': 'l', 'quo': 'quo', 'eat': 'it', 'cee': 'ci',
-        'o': 'o', 'a': 'a', 'l': 'l'
+        'iy': 'i', 'x': 'sh', 'el': 'l', 'quo': 'quo', 'eat': 'it', 'cee': 'ci',
+        'o': 'o', 'a': 'a', 'l': 'l', 'y': 'i', 'í': 'i', 'ó': 'o'
     }
     texto_limpio = texto.lower()
     for k in sorted(reglas.keys(), key=len, reverse=True):
@@ -143,7 +143,7 @@ def traducir_a_romance(texto):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
-def traducir_todo_automatico(texto_romance, lang):
+def generar_espanol_sintactico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
     
@@ -155,12 +155,14 @@ def traducir_todo_automatico(texto_romance, lang):
         linea_espanol = []
         
         for palabra in palabras:
-            palabra_limpia = palabra.strip()
-            if not palabra_limpia or len(palabra_limpia) <= 1:
+            palabra_limpia = palabra.strip(",.!?*;:- ")
+            # Ecualizar tildes y caracteres finales de control de coincidencia
+            palabra_normalizada = palabra_limpia.replace("í", "i").replace("ó", "o").replace("y", "i")
+            if not palabra_normalizada:
                 continue
                 
-            if palabra_limpia in dict_activo:
-                linea_espanol.append(dict_activo[palabra_limpia])
+            if palabra_normalizada in dict_activo:
+                linea_espanol.append(dict_activo[palabra_normalizada])
             else:
                 linea_espanol.append(f"[{palabra_limpia}]")
         
@@ -178,7 +180,7 @@ with tab1:
     entrada = st.text_area("EVA Input:", "pshoey cttey oaror psoisoda")
     if st.button(IFACE[idioma]["btn_an"]):
         romance = traducir_a_romance(entrada)
-        espanol = traducir_todo_automatico(romance, idioma)
+        espanol = generar_espanol_sintactico(romance, idioma)
         c1, c2 = st.columns(2)
         with c1:
             st.success(IFACE[idioma]["fon_rom"])
@@ -198,7 +200,7 @@ with tab2:
             texto_eva_completo = "\n".join(lineas_eva)
             
             romance_final = traducir_a_romance(texto_eva_completo)
-            espanol_final = traducir_todo_automatico(romance_final, idioma)
+            espanol_final = generar_espanol_sintactico(romance_final, idioma)
             
             st.write("---")
             st.markdown(f"### {IFACE[idioma]['res_tit']} {folio_sel}")
