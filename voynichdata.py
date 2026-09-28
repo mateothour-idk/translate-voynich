@@ -3,6 +3,10 @@ import re
 from deep_translator import GoogleTranslator
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
+    """
+    Primera y Segunda Capa de Transliteración.
+    Transforma caracteres EVA a fonética estructurada de Latín Romance Medieval.
+    """
     if not texto_eva:
         return ""
     texto = texto_eva.lower()
@@ -12,9 +16,18 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     
     while True:
         texto_anterior = texto
+        
+        # --- REGLA DE PROTECCIÓN ANTICIPADA (Fix pceeoe -> piue) ---
         texto = texto.replace("pceeoe", "piue")
+        
+        # --- NUEVA REGLA SOLICITADA ---
+        texto = texto.replace("x", "sh")
+        
+        # --- 1. REGLAS DE 4 CARACTERES (Tetragramas) ---
         texto = texto.replace("pcee", "pi")
         texto = texto.replace("qok", "quoqu")
+        
+        # --- 2. REGLAS DE 3 CARACTERES ---
         texto = texto.replace("iii", "i")     
         texto = texto.replace("eee", "ei")     
         texto = texto.replace("dce", "dic")
@@ -22,27 +35,70 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = texto.replace("eey", "ai")     
         texto = texto.replace("pcs", "pes")
         texto = texto.replace("pdr", "pedr")
-        texto = texto.replace("pc", "p").replace("ps", "p").replace("cp", "p")
-        texto = texto.replace("dc", "ch").replace("tc", "ch").replace("ct", "cut")
-        texto = texto.replace("ph", "f").replace("sh", "x").replace("th", "t")
-        texto = texto.replace("ch", "c").replace("ck", "qu").replace("tt", "t").replace("ts", "s")       
-        texto = texto.replace("ee", "i").replace("oe", "ue").replace("iu", "u")
-        texto = texto.replace("ii", "i").replace("ae", "e").replace("oo", "u")      
-        texto = texto.replace("cs", "s").replace("ll", "y").replace("ey", "a")      
-        texto = texto.replace("ce", "c").replace("ai", "i")      
         
+        # --- 3. REGLAS DE 2 CARACTERES (Bigramas y Dígrafos) ---
+        texto = texto.replace("pc", "p")
+        texto = texto.replace("ps", "p")
+        texto = texto.replace("cp", "p")
+        texto = texto.replace("dc", "ch")     
+        texto = texto.replace("tc", "ch")     
+        texto = texto.replace("ct", "cut")
+        texto = texto.replace("ph", "f")
+        texto = texto.replace("sh", "x")       
+        texto = texto.replace("th", "t")
+        texto = texto.replace("ch", "c")      
+        texto = texto.replace("ck", "qu")
+        texto = texto.replace("tt", "t")       
+        texto = texto.replace("ts", "s")       
+        
+        # Reglas Vocálicas y Consonánticas secundarias de 2 letras
+        texto = texto.replace("ee", "i")
+        texto = texto.replace("oe", "ue")     
+        texto = texto.replace("iu", "u")
+        texto = texto.replace("oi", "oi")
+        texto = texto.replace("ii", "i")
+        texto = texto.replace("ae", "e")      
+        texto = texto.replace("oo", "u")      
+        texto = texto.replace("cs", "s")
+        texto = texto.replace("ll", "y")
+        texto = texto.replace("ey", "a")      
+        texto = texto.replace("ce", "c")
+        texto = texto.replace("ai", "i")      
+        
+        # --- 4. REGLAS DE 1 CARÁCTER CON CONTEXTO (Y inicial/final) ---
+        re_y_aislada = re.compile(r'\by\b')
+        re_y_inicial = re.compile(r'\by')
+        re_y_final = re.compile(r'y\b')
+        texto = re_y_aislada.sub('i', texto)
+        texto = re_y_inicial.sub('i', texto)
+        texto = re_y_final.sub('i', texto)
+        
+        # --- 5. SUSTITUCIÓN FINAL DE CONSONANTES Q / K ---
+        texto = texto.replace("k", "qu")
+        texto = texto.replace("q", "qu")
+        
+        # --- 6. SEGUNDA CAPA SELECCIONAL: CORRECCIÓN MEDIEVAL FONÉTICA ---
         texto = re.sub(r'\bchseor\b', 'senior', texto)  
         texto = re.sub(r'\bseor\b', 'senior', texto)
         texto = re.sub(r'iin\b', 'am', texto)          
         texto = re.sub(r'eiy\b', 'e', texto)           
         texto = re.sub(r'oitio', 'otio', texto)         
-        texto = texto.replace("h", "").replace("quu", "qu")
+        
+        # Limpiezas finales y normalización de la regla nueva
+        texto = texto.replace("h", "")
+        texto = texto.replace("quu", "qu")
         
         if texto == texto_anterior:
             break
+            
     return texto.strip()
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
+    """
+    Traduce basándose en raíces del Latín Vulgar/Protorromance.
+    Se cambió el motor origen a detección automática inteligente ('auto') 
+    para forzar la traducción semántica en lugar de repetir la palabra.
+    """
     palabras = texto_limpio.split()
     analisis_estructurado = []
     target_lang = "es" if idioma == "es" else "en"
@@ -50,38 +106,39 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     if not palabras:
         return [], ""
 
-    # 1. TRADUCCIÓN CONTEXTUAL EN BLOQUES PEQUEÑOS
+    # 1. TRADUCCIÓN CONTEXTUAL EN BLOQUES PEQUEÑOS (Usando 'auto' para procesar romance medieval)
     palabras_traducidas_oracion = []
     chunk_size = 5
+    
     for i in range(0, len(palabras), chunk_size):
         sub_bloque = " ".join(palabras[i:i + chunk_size])
         if not sub_bloque.strip():
             continue
         try:
-            traduccion_fragmento = GoogleTranslator(source='la', target=target_lang).translate(sub_bloque)
+            # Al usar 'auto', Google se ve obligado a buscar la raíz en italiano arcaico, latín o provenzal
+            traduccion_fragmento = GoogleTranslator(source='auto', target=target_lang).translate(sub_bloque)
             palabras_traducidas_oracion.append(traduccion_fragmento)
         except Exception:
             palabras_traducidas_oracion.append(sub_bloque)
 
     oracion_completa = " ".join(palabras_traducidas_oracion)
 
-    # 2. TRADUCCIÓN PARA LA TABLA CON FILTRO DE RAÍCES REALES
+    # 2. TRADUCCIÓN PARA LA TABLA INDIVIDUAL
     for palabra in palabras[:30]:
         if not palabra.strip() or len(palabra) < 2:
             continue
         try:
-            significado_individual = GoogleTranslator(source='la', target=target_lang).translate(palabra)
-            # Si el traductor nos devuelve exactamente la misma palabra (porque no la entendió),
-            # intentamos decodificarla asumiendo una aproximación del latín vulgar / italiano antiguo
+            significado_individual = GoogleTranslator(source='auto', target=target_lang).translate(palabra)
+            # Si el motor sigue devolviendo la misma palabra, buscamos su equivalente directo en latín botánico
             if significado_individual.lower() == palabra.lower():
-                significado_individual = GoogleTranslator(source='it', target=target_lang).translate(palabra)
+                significado_individual = GoogleTranslator(source='la', target=target_lang).translate(palabra)
         except Exception:
             significado_individual = "[Incógnita]"
             
         analisis_estructurado.append({
             "Palabra Filtrada": palabra.upper(),
             "Equivalencia Semántica": significado_individual,
-            "Tipo de Match": "Traducción Dinámica NLP"
+            "Tipo de Match": "Traducción Dinámica NLP (Romance)"
         })
         
     if len(palabras) > 30:
