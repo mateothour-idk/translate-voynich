@@ -143,9 +143,8 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     def limpiar_prosa(texto):
         if not texto: 
             return ""
-        # Corregido: Limpieza segura sin encadenar métodos incompatibles
-        primer_termino = texto.split("/")[0]
-        return primer_termino.strip().replace("?", "").replace("*", "")
+        # CORREGIDO: Se extrae el primer elemento del split antes de aplicar el strip de cadenas
+        return texto.split("/")[0].strip().replace("?", "").replace("*", "")
 
     for palabra in palabras:
         palabra_compuesta_detectada = False
