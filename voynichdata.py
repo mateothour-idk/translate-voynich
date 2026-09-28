@@ -11,9 +11,9 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         return ""
     texto = texto_eva.lower()
     
-    # Eliminación de anotaciones paleográficas, números y caracteres especiales del corpus
+    # Eliminación de anotaciones paleográficas, números y caracteres especiales del corpus ZL
     texto = re.sub(r'[*\-/\=+%\&$\#_@.!?,;:]', ' ', texto)
-    texto = re.sub(r'\[.*?\]', ' ', texto) # Quita notas entre corchetes
+    texto = re.sub(r'\[.*?\]', ' ', texto)  # Quita notas entre corchetes
     texto = re.sub(r'\s+', ' ', texto).strip()
     
     while True:
@@ -94,8 +94,8 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     """
-    Traduce de manera AUTOMÁTICA basándose en la suposición de que el 
-    texto resultante está en Latín Romance / Latín Medieval.
+    Traduce automáticamente basándose en la suposición de que el 
+    texto resultante estructurado es Latín Romance / Latín Medieval.
     """
     palabras = texto_limpio.split()
     analisis_estructurado = []
@@ -104,15 +104,14 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     if not palabras:
         return [], ""
 
-    # 1. TRADUCCIÓN CONTEXTUAL EN BLOQUE (Une las palabras para darles sentido de oración)
+    # 1. TRADUCCIÓN CONTEXTUAL EN BLOQUE
     try:
         oracion_completa = GoogleTranslator(source='la', target=target_lang).translate(texto_limpio)
     except Exception:
         oracion_completa = "[Error de conexión con la API de traducción]"
 
-    # 2. TRADUCCIÓN PALABRA POR PALABRA PARA LA TABLA
+    # 2. TRADUCCIÓN INDIVIDUAL PARA LA TABLA
     for palabra in palabras:
-        # Filtrar cadenas vacías o raras
         if not palabra.strip():
             continue
         try:
