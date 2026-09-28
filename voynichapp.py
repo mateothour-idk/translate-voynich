@@ -1,7 +1,7 @@
 import streamlit as st
 import re
 import pandas as pd
-from voynichdata import motor_prosa_fluida
+from voynichdata import aplicar_matriz_sustitucion, motor_prosa_fluida
 
 st.set_page_config(
     page_title="Intérprete Voynich Total Matrix",
@@ -10,62 +10,76 @@ st.set_page_config(
 )
 
 st.title("📜 Intérprete Analítico de Todo el Manuscrito Voynich")
-st.write("Suite de procesamiento autónomo conectada con fragmentos oficiales del repositorio interlineal de Voynich.nu.")
+st.write("Suite de procesamiento autónomo. Cada folio cuenta con variaciones textuales únicas generadas dinámicamente.")
 
-# --- GENERADOR DEL CORPUS TRANSCRITO DE VOYNICH.NU ---
+# --- GENERADOR AUTÓNOMO INTEGRAL SIN TEXTOS REPETIDOS ---
 @st.cache_data
 def generar_base_datos_voynich_completa():
+    """
+    Construye la base de datos completa alterando de manera paramétrica los 
+    tokens EVA según el índice y orientación (r/v) para evitar la duplicación de textos.
+    """
     corpus = {}
     
-    # Transcripciones EVA exactas recuperadas del índice académico de voynich.nu
-    # Formatos de cabecera alineados con las líneas del manuscrito (Locus Indicators)
-    lineas_herbario_r = "fachas ykal ar ataiin xekam teol moxar dain pcs kchos dceae thsh cpoche pceeoe"
-    lineas_herbario_v = "ceeoo kchos dceae thsh cpoche fachas ceeii dcectth shol dain pcs kold iiiet eyee"
+    # Secuencias base de tokens auténticos del corpus
+    bloque_a = ["qokched", "dcectth", "shol", "dain", "pcs", "eeet", "kold", "ceeoo"]
+    bloque_b = ["kchos", "dceae", "thsh", "cpoche", "ctthsh", "pceeoe", "ceeii", "iiiet"]
+    
+    # 1. Bloque de Herboristería / Botánica (Folios 1 al 57)
     for i in range(1, 58):
-        corpus[f"f{i}r (Herbario) - [voynich.nu/transcr.html]"] = lineas_herbario_r
-        corpus[f"f{i}v (Herbario) - [voynich.nu/transcr.html]"] = lineas_herbario_v
+        # Permutamos los elementos usando el índice para romper la simetría r/v
+        rotacion_r = bloque_a[i % 8:] + bloque_a[:i % 8] + [bloque_b[i % 8]]
+        rotacion_v = bloque_b[(i+1) % 8:] + bloque_b[:(i+1) % 8] + [bloque_a[(i+1) % 8]]
         
-    lineas_astro_r = "iiict kold dce qok lllae phoo ctthsh dcecee pcee chod tceol sho dain epar"
-    lineas_astro_v = "shol dain pcs dcectth kold ceeoo eeet kchos dceae thsh cpoche qokched chold"
+        corpus[f"f{i}r (Herbario)"] = " ".join(rotacion_r) + f" diccutt oleol"
+        corpus[f"f{i}v (Herbario)"] = " ".join(rotacion_v) + f" quokcut pciee"
+        
+    # 2. Bloque Astrológico / Astronómico (Folios 67 al 73)
     for i in range(67, 74):
-        corpus[f"f{i}r (Astronomía) - [voynich.nu/transcr.html]"] = lineas_astro_r
-        corpus[f"f{i}v (Astronomía) - [voynich.nu/transcr.html]"] = lineas_astro_v
+        rotacion_r = ["iiict", "kold", "dce", "qok", "lllae"] + bloque_b[i % 4:i % 4 + 3]
+        rotacion_v = ["shol", "dain", "pcs", "dcectth"] + bloque_a[i % 4:i % 4 + 3]
         
-    lineas_bio_r = "pals chong shoor dain ceeii ceeoo kchos thsh cpoche dcetcc ctthsh pcs kold"
-    lineas_bio_v = "dcectth ceeoo kchos eeet dceae sethol pcs qokched iiiet kold dcecee eeyod"
+        corpus[f"f{i}r (Astronomía)"] = " ".join(rotacion_r) + f" xolci tit"
+        corpus[f"f{i}v (Astronomía)"] = " ".join(rotacion_v) + f" dcecee chold"
+        
+    # 3. Bloque Biológico / Balneario (Folios 75 al 84)
     for i in range(75, 85):
-        corpus[f"f{i}r (Biología) - [voynich.nu/transcr.html]"] = lineas_bio_r
-        corpus[f"f{i}v (Biología) - [voynich.nu/transcr.html]"] = lineas_bio_v
+        rotacion_r = [bloque_a[i % 5], "ceeii", "ceeoo", "kchos", "thsh"] + bloque_b[:2]
+        rotacion_v = ["dcectth", "ceeoo", "kchos", "eeet", "dceae"] + bloque_a[-2:]
         
-    lineas_farma_r = "qokched thsh dcectth ceeoo kchos eeet dceae sethol pcs kold dcecee pcee chod"
-    lineas_farma_v = "iiict kold ceeoo cpoche ctthsh dcetcc pcs eeet lllae thsh kchos dceae ceeii"
-    for i in range(85, 103):
-        corpus[f"f{i}r (Farmacia) - [voynich.nu/transcr.html]"] = lineas_farma_r
-        corpus[f"f{i}v (Farmacia) - [voynich.nu/transcr.html]"] = lineas_farma_v
-        
-    lineas_receta_r = "dcectth shol dain kold kchos eeet ceeoo qokched dceae thsh cpoche pceeoe iiiet"
-    lineas_receta_v = "ceeoo thsh cpoche qokched ceeii dcetcc ctthsh pcs kold dceae shol dain koldoe"
-    for i in range(103, 117):
-        corpus[f"f{i}r (Recetario) - [voynich.nu/transcr.html]"] = lineas_receta_r
-        corpus[f"f{i}v (Recetario) - [voynich.nu/transcr.html]"] = lineas_receta_v
+        corpus[f"f{i}r (Biología)"] = " ".join(rotacion_r) + f" cuesol"
+        corpus[f"f{i}v (Biología)"] = " ".join(rotacion_v) + f" anue ic"
 
-    corpus["f116v (Página Final) - [voynich.nu/transcr.html]"] = "fachas ykal ar ataiin dcectth shol dain pcs kold ceeoo kchos dceae sethol"
+    # 4. Bloque Farmacéutico (Folios 85 al 102)
+    for i in range(85, 103):
+        rotacion_r = ["qokched", "thsh", "dcectth"] + bloque_a[i % 6:i % 6 + 2]
+        rotacion_v = ["iiict", "kold", "ceeoo", "cpoche"] + bloque_b[i % 6:i % 6 + 2]
+        
+        corpus[f"f{i}r (Farmacia)"] = " ".join(rotacion_r) + f" colcut"
+        corpus[f"f{i}v (Farmacia)"] = " ".join(rotacion_v) + f" pesol"
+
+    # 5. Bloque de Recetario Final (Folios 103 al 116)
+    for i in range(103, 117):
+        rotacion_r = ["dcectth", "shol", "dain", "kold"] + bloque_b[:i % 3 + 1]
+        rotacion_v = ["ceeoo", "thsh", "cpoche", "qokched"] + bloque_a[:i % 3 + 1]
+        
+        corpus[f"f{i}r (Recetario)"] = " ".join(rotacion_r) + f" titf"
+        corpus[f"f{i}v (Recetario)"] = " ".join(rotacion_v) + f" xolcue"
+
+    corpus["f116v (Página Final del Manuscrito)"] = "qokched dcectth shol dain pcs kold ceeoo kchos dceae thsh cpoche ctthsh pceeoe dcectth sethol"
     return corpus
 
 mapa_completo_folios = generar_base_datos_voynich_completa()
 
-# --- PANEL DE NAVEGACIÓN ---
+# --- CONFIGURACIÓN DE LA BARRA LATERAL ---
 st.sidebar.header("Panel de Navegación")
 
 opciones_selector = ["Manual (Texto Libre)"]
 if mapa_completo_folios:
-    def clave_ordenamiento(nombre_folio):
-        match = re.search(r'f(\d+)(r|v)', nombre_folio)
-        if match:
-            return int(match.group(1)), match.group(2)
-        return float('inf'), nombre_folio
-
-    paginas_ordenadas = sorted(mapa_completo_folios.keys(), key=clave_ordenamiento)
+    paginas_ordenadas = sorted(
+        mapa_completo_folios.keys(), 
+        key=lambda x: (int(re.sub(r'\D', '', x)), x[-1])
+    )
     opciones_selector.extend(paginas_ordenadas)
 
 folio_seleccionado = st.sidebar.selectbox(
@@ -80,17 +94,17 @@ idioma_destino = st.sidebar.radio(
 cod_idioma = "es" if "Español" in idioma_destino else "en"
 
 st.sidebar.markdown("---")
-st.sidebar.info(f"Páginas indexadas desde Voynich.nu: {len(mapa_completo_folios)}")
+st.sidebar.info(f"Páginas mapeadas en memoria: {len(mapa_completo_folios)}")
 
 # --- FLUJO DE TRABAJO ---
 if folio_seleccionado == "Manual (Texto Libre)":
     texto_usuario = st.text_area(
         "Introduce cadena de transcripción EVA libre:",
-        placeholder="Ejemplo: fachas ykal ar ataiin shol..."
+        placeholder="Ejemplo: qokched dcectth shol pcs..."
     )
 else:
     texto_usuario = mapa_completo_folios.get(folio_seleccionado, "")
-    st.markdown(f"### 📖 Transcripción Indexada Oficial para el Folio **{folio_seleccionado}**")
+    st.markdown(f"### 📖 Transcripción Indexada para el Folio **{folio_seleccionado}**")
     st.code(texto_usuario, wrap_lines=True)
 
 # --- BOTÓN DE PROCESAMIENTO ---
@@ -99,15 +113,18 @@ if st.button("Ejecutar Análisis Paleográfico", type="primary"):
         st.warning("El búfer de entrada de texto está vacío.")
     else:
         with st.spinner("Procesando matriz de sustituciones y enlazando prosa continua..."):
-            datos_tabla, oracion_completa = motor_prosa_fluida(texto_usuario, idioma=cod_idioma)
+            texto_filtrado = aplicar_matriz_sustitucion(texto_usuario)
+            datos_tabla, oracion_completa = motor_prosa_fluida(texto_filtrado, idioma=cod_idioma)
             
         st.success("¡Pipeline completado!")
         
+        # --- TRADUCCIÓN DE PROSA CONTINUA ---
         st.markdown("### 🏛️ Traducción de Prosa Continua")
         st.info(f"**Texto Interpretado:** {oracion_completa}")
         
         st.markdown("---")
         
+        # --- TABLA DETALLADA ---
         st.markdown("### 📊 Desglose de Análisis Léxico Detallado")
         if datos_tabla:
             df_resultado = pd.DataFrame(datos_tabla)
@@ -123,6 +140,7 @@ if st.button("Ejecutar Análisis Paleográfico", type="primary"):
                 hide_index=True
             )
             
+            # Despliegue de métricas estadísticas
             st.markdown("#### 📈 Métricas de Rendimiento")
             c1, c2, c3 = st.columns(3)
             with c1:
@@ -135,4 +153,4 @@ if st.button("Ejecutar Análisis Paleográfico", type="primary"):
             with c3:
                 desconocidas = len(df_resultado[df_resultado[col_diag].str.contains("Desconocido|Unknown", regex=True)])
                 pct = (desconocidas / len(df_resultado)) * 100 if len(df_resultado) > 0 else 0
-                st.metric("Tasa de Incógnitas", f"{pct:.1f}%") 
+                st.metric("Tasa de Incógnitas", f"{pct:.1f}%")
