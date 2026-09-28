@@ -65,70 +65,78 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     analisis_estructurado = []
     palabras_oracion = []
     
+    # Glosario maestro optimizado para no romper la gramática de la oración
     diccionario_maestro = {
         "cut": {"es": "cortar", "en": "cut"},
-        "ci": {"es": "aquí / este", "en": "here / this"},
-        "ch": {"es": "clave / secreto", "en": "key / secret"},
-        "ie": {"es": "ir / avanzar", "en": "go / advance"},
-        "dic": {"es": "decir / dictar", "en": "say / dictate"},
-        "quoqu": {"es": "cocinar / hervir", "en": "cook / boil"},
-        "f": {"es": "hacer / crear", "en": "make / create"},
-        "x": {"es": "seco / planta", "en": "dry / plant"},
-        "pes": {"es": "pie / base", "en": "foot / base"},
-        "col": {"es": "recolectar / colar", "en": "collect / strain"},
+        "ci": {"es": "este", "en": "this"},
+        "ch": {"es": "secreto", "en": "secret"},
+        "ie": {"es": "ir", "en": "go"},
+        "dic": {"es": "decir", "en": "say"},
+        "quoqu": {"es": "cocinar", "en": "cook"},
+        "f": {"es": "hacer", "en": "make"},
+        "x": {"es": "planta", "en": "plant"},
+        "pes": {"es": "base", "en": "base"},
+        "col": {"es": "recolectar", "en": "collect"},
         "quok": {"es": "cocimiento", "en": "decoction"},
-        "old": {"es": "antiguo / viejo", "en": "ancient / old"},
-        "sho": {"es": "mostrar / ver", "en": "show / see"},
-        "dai": {"es": "dar / aplicar", "en": "give / apply"},
-        "tth": {"es": "tierra / suelo", "en": "earth / soil"},
+        "old": {"es": "antiguo", "en": "ancient"},
+        "sho": {"es": "mostrar", "en": "show"},
+        "dai": {"es": "aplicar", "en": "apply"},
+        "tth": {"es": "tierra", "en": "earth"},
         "cue": {"es": "cuerpo", "en": "body"},
-        "xol": {"es": "sol / calor", "en": "sun / heat"},
-        "tit": {"es": "título / marca", "en": "title / mark"},
-        "pci": {"es": "pequeño / pizca", "en": "small / pinch"},
-        "ole": {"es": "aceite / óleo", "en": "oil"},
-        "sol": {"es": "disolver / mezcla", "en": "dissolve / mixture"},
-        "an": {"es": "año / ciclo", "en": "year / cycle"},
-        "ue": {"es": "fuente / agua", "en": "source / water"},
-        "ic": {"es": "imagen / signo", "en": "image / sign"},
+        "xol": {"es": "calor", "en": "heat"},
+        "tit": {"es": "marca", "en": "mark"},
+        "pci": {"es": "pequeño", "en": "small"},
+        "ole": {"es": "aceite", "en": "oil"},
+        "sol": {"es": "disolver", "en": "dissolve"},
+        "an": {"es": "ciclo", "en": "cycle"},
+        "ue": {"es": "agua", "en": "water"},
+        "ic": {"es": "signo", "en": "sign"},
         "aqu": {"es": "agua", "en": "water"},
         "erb": {"es": "hierba", "en": "herb"},
         "rad": {"es": "raíz", "en": "root"},
-        "suc": {"es": "jugo / savia", "en": "juice / sap"},
+        "suc": {"es": "savia", "en": "sap"},
         "med": {"es": "médico", "en": "medical"},
-        "san": {"es": "sano / curado", "en": "healthy / cured"},
+        "san": {"es": "sano", "en": "healthy"},
         "coo": {"es": "cocer", "en": "boil"},
         "fol": {"es": "hoja", "en": "leaf"},
-        "flo": {"es": "flor / brote", "en": "flower / bud"},
-        "vax": {"es": "vaso / frasco", "en": "vessel / jar"},
+        "flo": {"es": "flor", "en": "flower"},
+        "vax": {"es": "frasco", "en": "vessel"},
         "mix": {"es": "mezclar", "en": "mix"},
-        "pur": {"es": "puro / limpio", "en": "pure / clean"},
+        "pur": {"es": "limpio", "en": "pure"},
         "ext": {"es": "extracto", "en": "extract"},
         "nat": {"es": "natural", "en": "natural"},
-        "cur": {"es": "cuidado / cura", "en": "care / cure"},
-        "el": {"es": "el / este", "en": "the / this"},
-        "lo": {"es": "lo / aquello", "en": "it / that"},
-        "un": {"es": "un / uno", "en": "a / one"},
-        "de": {"es": "de / desde", "en": "of / from"},
-        "en": {"es": "en / dentro", "en": "in / inside"},
-        "al": {"es": "al / hacia", "en": "to the / towards"},
-        "con": {"es": "con / junto a", "en": "with"},
-        "per": {"es": "por / mediante", "en": "by / through"},
-        "is": {"es": "ese / esto", "en": "this / it"},
+        "cur": {"es": "cura", "en": "cure"},
+        "el": {"es": "el", "en": "the"},
+        "lo": {"es": "lo", "en": "it"},
+        "un": {"es": "un", "en": "a"},
+        "de": {"es": "de", "en": "of"},
+        "en": {"es": "en", "en": "in"},
+        "al": {"es": "al", "en": "to the"},
+        "con": {"es": "con", "en": "with"},
+        "per": {"es": "por", "en": "by"},
+        "is": {"es": "este", "en": "this"},
         "et": {"es": "y", "en": "and"},
-        "ut": {"es": "para que / como", "en": "so that / as"},
+        "ut": {"es": "para", "en": "to"},
         "non": {"es": "no", "en": "not"},
         "sic": {"es": "así", "en": "so"}
     }
     
     anagramas_raices = { "".join(sorted(k)): k for k in diccionario_maestro.keys() if len(k) >= 3 }
 
+    def limpiar_prosa(texto):
+        """Remueve barras opcionales y símbolos de control para la oración final."""
+        if not texto: return ""
+        return texto.split("/")[0].strip().replace("?", "").replace("*", "")
+
     for palabra in palabras:
         palabra_compuesta_detectada = False
         for i in range(2, len(palabra) - 1):
             sub1, sub2 = palabra[:i], palabra[i:]
             if sub1 in diccionario_maestro and sub2 in diccionario_maestro:
-                trad1, trad2 = diccionario_maestro[sub1][idioma], diccionario_maestro[sub2][idioma]
-                palabras_oracion.append(f"{trad1}+{trad2}")
+                trad1 = diccionario_maestro[sub1][idioma]
+                trad2 = diccionario_maestro[sub2][idioma]
+                
+                palabras_oracion.append(f"{limpiar_prosa(trad1)} {limpiar_prosa(trad2)}")
                 palabra_compuesta_detectada = True
                 analisis_estructurado.append({
                     "Morfología Filtrada": palabra.upper(),
@@ -145,18 +153,17 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         
         if palabra in diccionario_maestro:
             traducida = diccionario_maestro[palabra][idioma]
-            palabra_para_oracion = traducida
+            palabra_para_oracion = limpiar_prosa(traducida)
             tipo = "Match Exacto" if idioma == "es" else "Exact Match"
         elif len(palabra) > 2 and palabra[:3] in diccionario_maestro:
             traducida = diccionario_maestro[palabra[:3]][idioma]
-            palabra_para_oracion = traducida + f"({palabra[3:].upper()})"
+            palabra_para_oracion = limpiar_prosa(traducida)
             tipo = "Match Raíz (3L)" if idioma == "es" else "Root Match (3L)"
         elif len(palabra) > 1 and palabra[:2] in diccionario_maestro:
             traducida = diccionario_maestro[palabra[:2]][idioma]
-            palabra_para_oracion = traducida + f"({palabra[2:].upper()})"
+            palabra_para_oracion = limpiar_prosa(traducida)
             tipo = "Match Raíz (2L)" if idioma == "es" else "Root Match (2L)"
         else:
-            # 1. Intentar Anagramas primero
             anagrama_encontrado = False
             longitud_analisis = min(len(palabra), 4)
             for l in range(longitud_analisis, 2, -1):
@@ -164,13 +171,11 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
                 if segmento_ordenado in anagramas_raices:
                     raiz_encontrada = anagramas_raices[segmento_ordenado]
                     traducida = diccionario_maestro[raiz_encontrada][idioma]
-                    excedente = palabra[l:].upper()
-                    palabra_para_oracion = traducida + (f"({excedente})" if excedente else "") + "*"
+                    palabra_para_oracion = limpiar_prosa(traducida)
                     tipo = f"Anagrama Raíz ({raiz_encontrada.upper()})" if idioma == "es" else f"Anagram Match ({raiz_encontrada.upper()})"
                     anagrama_encontrado = True
                     break
             
-            # 2. SISTEMA DE RESCATE: Si sigue siendo incógnita, busca proximidad fonética consonántica
             if not anagrama_encontrado:
                 consonantes_palabra = "".join([c for c in palabra if c not in 'aeiouíue'])
                 if consonantes_palabra:
@@ -178,7 +183,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
                         consonantes_raiz = "".join([c for c in raiz if c not in 'aeiouíue'])
                         if consonantes_raiz and consonantes_palabra.startswith(consonantes_raiz[:2]):
                             traducida = diccionario_maestro[raiz][idioma]
-                            palabra_para_oracion = traducida + "?"
+                            palabra_para_oracion = limpiar_prosa(traducida)
                             tipo = f"Aproximación Fonética ({raiz.upper()})" if idioma == "es" else f"Phonetic Match ({raiz.upper()})"
                             break
             
@@ -189,5 +194,6 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         })
         palabras_oracion.append(palabra_para_oracion)
             
-    oracion_completa = " ".join(palabras_oracion) + "."
+    oracion_completa = " ".join(palabras_oracion).strip()
+    oracion_completa = re.sub(r'\s+', ' ', oracion_completa) + "."
     return analisis_estructurado, oracion_completa
