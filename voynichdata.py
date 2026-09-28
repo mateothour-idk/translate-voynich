@@ -93,7 +93,16 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     """
     p = palabra.lower()
     
-    # --- REGLA ADICIONAL OPCIÓN 3: COMPUESTOS VERBALES Y DERIVADOS ---
+    # --- CAPA NUEVA: CONECTORES Y LETRAS SUELTAS MEDIEVALES ---
+    if p == "c": return "con"
+    if p == "i": return "en"
+    if p == "o": return "o"
+    if p == "l": return "el"
+    if p in ["ar", "al"]: return "del"
+    if p in ["da", "di"]: return "de"
+    if p == "qua": return "agua"
+
+    # --- REGLA COMPUESTOS VERBALES ---
     if "cod" in p:
         prefijo = "que " if p.startswith("que") or p.startswith("qu") else ""
         sufijo = "an" if p.endswith("sha") or p.endswith("sh") else "er"
@@ -115,11 +124,11 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
         if p.endswith("din") or p.endswith("in"): return "brotando"
         return "brote"
 
-    # --- ABREVIATURAS CORTAS PARTICULARES (Raíces fijas del folio fros) ---
+    # --- ABREVIATURAS CORTAS PARTICULARES ---
     if p == "fdin": return "fijación"
     if p == "ofa": return "mezcla"
 
-    # --- REGLA ADICIONAL OPCIÓN 1: ABREVIATURAS MEDIEVALES DE CUALIDAD (-DI / -TI) ---
+    # --- REGLA ABREVIATURAS MEDIEVALES DE CUALIDAD (-DI / -TI) ---
     if p.endswith("di") or p.endswith("ti"):
         if "och" in p or "ot" in p:
             return "días"
@@ -129,7 +138,9 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
             if raiz_limpia == "opal": return "opacidad"
             return f"{raiz_limpia}dad"
 
-    return f"[{palabra.upper()}]"
+    # FILTRO ESTÉTICO: Si la palabra sigue sin entenderse, no muestra el corchete feo,
+    # devuelve una cadena vacía para que la prosa fluya de manera limpia.
+    return ""
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     palabras = texto_limpio.split()
@@ -155,9 +166,13 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         if palabra_optimizada in glosario_maestro:
             palabras_traducidas_oracion.append(glosario_maestro[palabra_optimizada])
         else:
-            palabras_traducidas_oracion.append(desarmar_palabra_compuesta(palabra_optimizada))
+            significado_compuesto = desarmar_palabra_compuesta(palabra_optimizada)
+            if significado_compuesto:  # Solo agrega si tiene traducción válida
+                palabras_traducidas_oracion.append(significado_compuesto)
 
-    oracion_completa = " ".join(palabras_traducidas_oracion)
+    # Limpieza de espacios dobles en la oración final procesada
+    oracion_completa = " ".join(palabras_traducidas_oracion).strip()
+    oracion_completa = re.sub(r'\s+', ' ', oracion_completa)
 
     for palabra in palabras[:40]:
         if not palabra.strip():
@@ -170,7 +185,11 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             tipo_match = "Glosario Romance (Posta)"
         else:
             significado_individual = desarmar_palabra_compuesta(palabra_optimizada)
-            tipo_match = "Desarmador Morfológico Medieval" if not significado_individual.startswith("[") else "Incógnita Protegida"
+            if not significado_individual:
+                significado_individual = f"[{palabra_optimizada.upper()}]"
+                tipo_match = "Incógnita Guardada"
+            else:
+                tipo_match = "Desarmador Morfológico Medieval"
             
         analisis_estructurado.append({
             "Palabra Filtrada": palabra_optimizada.upper(),
