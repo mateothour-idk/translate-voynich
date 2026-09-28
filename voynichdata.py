@@ -13,7 +13,7 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     
     # Diccionarios ordenados por capas estrictas de reemplazo (Tetragramas -> Trigramas -> Bigramas)
     capa_0 = {"pceeoe": "piue", "pcee": "pi", "qok": "quoqu"}
-    capa_1 = {"iii": "i", "eee": "ei", "dce": "dic", "cee": "ci", "eey": "ai", "pcs": "pes", "pdr", "pedr", "eat": "it"}
+    capa_1 = {"iii": "i", "eee": "ei", "dce": "dic", "cee": "ci", "eey": "ai", "pcs": "pes", "pdr": "pedr", "eat": "it"}
     capa_2 = {"pc": "p", "ps": "p", "cp": "p", "dc": "ch", "tc": "ch", "cs": "s", "ck": "qu", "ct": "cut", "ph": "f", "th": "t", "tt": "t", "ts", "s", "ll": "y"}
     capa_3 = {"ee": "i", "oe": "ue", "iu": "u", "oi": "oi", "ii": "i", "ae": "e", "oo": "u", "ey": "a", "iy": "i", "ai": "i", "x": "sh"}
     
@@ -51,11 +51,12 @@ def resolver_contexto_palabra(palabra: str) -> list:
 def calcular_distancia_levenshtein(str1, str2):
     """ Mide la similitud ortográfica mediante matriz numérica 100% independiente en la memoria """
     m, n = len(str1), len(str2)
-    # CORREGIDO DEFINITIVO: Matriz bidimensional clásica por comprensión sin desestructuraciones rotas [INDEX]
     dp = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
     
-    for i in range(m + 1): dp[i][0] = i
-    for j in range(n + 1): dp[0][j] = j
+    for i in range(m + 1): 
+        dp[i][0] = i
+    for j in range(n + 1): 
+        dp[0][j] = j
         
     for i in range(1, m + 1):
         for j in range(1, n + 1):
@@ -95,9 +96,9 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p == "chychi": return "pizca"
     if p == "cri": return "filtrar"
     if p in ["ocor", "ocor", "oqueo", "ipdi"]: return "fomento / yema"
-    if p in ["uefocl", "uefol"]: return "agua al fuego (baño maría)"
+    if p == "uefocl" or p == "uefol": return "agua al fuego (baño maría)"
 
-    # --- DESACOPLAMIENTO DE ARTÍCULOS AGLUTINADOS (L- / CH-) ---
+    # Desacoplamiento de artículos aglutinados (L- / CH-)
     if p.startswith("l") and len(p) > 2 and p not in ["a", "e", "i", "o", "u"]:
         significado_raiz = desarmar_palabra_compuesta(p[1:])
         if significado_raiz and not significado_raiz.startswith("["): return f"la {significado_raiz}"
