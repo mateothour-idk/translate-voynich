@@ -1,7 +1,7 @@
 import streamlit as st
 import re
 import pandas as pd
-from voynichdata import aplicar_matriz_sustitucion, motor_prosa_fluida
+from voynichdata import motor_prosa_fluida
 
 st.set_page_config(
     page_title="Intérprete Voynich Total Matrix",
@@ -47,10 +47,13 @@ st.sidebar.header("Panel de Navegación")
 
 opciones_selector = ["Manual (Texto Libre)"]
 if mapa_completo_folios:
-    paginas_ordenadas = sorted(
-        mapa_completo_folios.keys(), 
-        key=lambda x: (int(re.sub(r'\D', '', x)), x[-1])
-    )
+    def clave_ordenamiento(nombre_folio):
+        match = re.search(r'f(\d+)(r|v)', nombre_folio)
+        if match:
+            return int(match.group(1)), match.group(2)
+        return float('inf'), nombre_folio
+
+    paginas_ordenadas = sorted(mapa_completo_folios.keys(), key=clave_ordenamiento)
     opciones_selector.extend(paginas_ordenadas)
 
 folio_seleccionado = st.sidebar.selectbox(
@@ -84,14 +87,12 @@ if st.button("Ejecutar Análisis Paleográfico", type="primary"):
         st.warning("El búfer de entrada de texto está vacío.")
     else:
         with st.spinner("Procesando matriz de sustituciones y enlazando prosa continua..."):
-            texto_filtrado = aplicar_matriz_sustitucion(texto_usuario)
-            
-            # NUEVO: Recibe tanto los datos de la tabla como la oración completa armada
-            datos_tabla, oracion_completa = motor_prosa_fluida(texto_filtrado, idioma=cod_idioma)
+            # SINCRONIZADO: Enviamos el texto_usuario directo al motor para traducir desde la raíz EVA
+            datos_tabla, oracion_completa = motor_prosa_fluida(texto_usuario, idioma=cod_idioma)
             
         st.success("¡Pipeline completado!")
         
-        # --- NUEVA SECCIÓN: RENDERIZADO DE LA ORACIÓN COMPLETA ---
+        # --- RENDERIZADO DE LA ORACIÓN COMPLETA ---
         st.markdown("### 🏛️ Traducción de Prosa Continua")
         st.info(f"**Texto Interpretado:** {oracion_completa}")
         
@@ -126,4 +127,4 @@ if st.button("Ejecutar Análisis Paleográfico", type="primary"):
             with c3:
                 desconocidas = len(df_resultado[df_resultado[col_diag].str.contains("Desconocido|Unknown", regex=True)])
                 pct = (desconocidas / len(df_resultado)) * 100 if len(df_resultado) > 0 else 0
-                st.metric("Tasa de Incógnitas", f"{pct:.1f}%")
+                st.metric("Tasa de Incógnitas", f"{pct:.1f}%") 
