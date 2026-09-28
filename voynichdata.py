@@ -2,58 +2,18 @@
 import re
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
-    """
-    Pipeline lineal estricto de transliteración sin bucles infinitos.
-    Garantiza que kooiin pase correctamente a quin y x pase a sh.
-    """
-    if not texto_eva:
-        return ""
-    
+    """ Pipeline lineal estricto de transliteración sin bucles infinitos. """
+    if not texto_eva: return ""
     texto = texto_eva.lower()
     texto = re.sub(r'[*\-/\=+%\&$\#_@.!?,;:]', ' ', texto)
     texto = re.sub(r'\[.*?\]', ' ', texto)
     texto = re.sub(r'\s+', ' ', texto).strip()
     
-    # --- CAPA 1: PROTECCIONES Y REGLAS ESPECÍFICAS ---
-    texto = texto.replace("pceeoe", "piue")
-    texto = texto.replace("x", "sh")  # Regla: X pasa a ser SH
-    texto = texto.replace("pcee", "pi")
-    texto = texto.replace("qok", "quoqu")
+    texto = texto.replace("pceeoe", "piue").replace("x", "sh").replace("pcee", "pi").replace("qok", "quoqu")
+    texto = texto.replace("iii", "i").replace("eee", "ei").replace("dce", "dic").replace("cee", "ci").replace("eey", "ai").replace("pcs", "pes").replace("pdr", "pedr")
+    texto = texto.replace("pc", "p").replace("ps", "p").replace("cp", "p").replace("dc", "ch").replace("tc", "ch").replace("ct", "cut").replace("ph", "f").replace("th", "t").replace("ch", "c").replace("ck", "qu").replace("tt", "t").replace("ts", "s")       
+    texto = texto.replace("oo", "u").replace("ii", "i").replace("ee", "i").replace("oe", "ue").replace("iu", "u").replace("oi", "oi").replace("ae", "e").replace("cs", "s").replace("ll", "y").replace("ey", "a").replace("ce", "c").replace("ai", "i")      
     
-    # --- CAPA 2: GRUPOS DE 3 CARACTERES ---
-    texto = texto.replace("iii", "i")     
-    texto = texto.replace("eee", "ei")     
-    texto = texto.replace("dce", "dic")
-    texto = texto.replace("cee", "ci")
-    texto = texto.replace("eey", "ai")     
-    texto = texto.replace("pcs", "pes")
-    texto = texto.replace("pdr", "pedr")
-    
-    # --- CAPA 3: DÍGRAFOS Y BIGRAMAS DE 2 CARACTERES ---
-    texto = texto.replace("pc", "p").replace("ps", "p").replace("cp", "p")
-    texto = texto.replace("dc", "ch").replace("tc", "ch").replace("ct", "cut")
-    texto = texto.replace("ph", "f")      
-    texto = texto.replace("th", "t")
-    texto = texto.replace("ch", "c")      
-    texto = texto.replace("ck", "qu")
-    texto = texto.replace("tt", "t")       
-    texto = texto.replace("ts", "s")       
-    
-    # --- CAPA 4: TRATAMIENTO DE VOCALES DUPLICADAS ---
-    texto = texto.replace("oo", "u")      
-    texto = texto.replace("ii", "i")      
-    texto = texto.replace("ee", "i")
-    texto = texto.replace("oe", "ue")     
-    texto = texto.replace("iu", "u")
-    texto = texto.replace("oi", "oi")
-    texto = texto.replace("ae", "e")      
-    texto = texto.replace("cs", "s")
-    texto = texto.replace("ll", "y")
-    texto = texto.replace("ey", "a")      
-    texto = texto.replace("ce", "c")
-    texto = texto.replace("ai", "i")      
-    
-    # --- CAPA 5: CONTEXTO DE LA 'Y' ---
     re_y_aislada = re.compile(r'\by\b')
     re_y_inicial = re.compile(r'\by')
     re_y_final = re.compile(r'y\b')
@@ -61,36 +21,23 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = re_y_inicial.sub('i', texto)
     texto = re_y_final.sub('i', texto)
     
-    # --- CAPA 6: SUSTITUCIÓN DE K / Q EN QU ---
-    texto = texto.replace("k", "qu")      
-    texto = texto.replace("q", "qu")
-    
-    # --- CAPA 7: CORRECCIONES MEDIEVALES Y BLINDAJE ORTOGRÁFICO ---
+    texto = texto.replace("k", "qu").replace("q", "qu")
     texto = re.sub(r'\bchseor\b', 'senior', texto)  
     texto = re.sub(r'\bseor\b', 'senior', texto)
     texto = re.sub(r'iin\b', 'am', texto)          
     texto = re.sub(r'eiy\b', 'e', texto)           
     texto = re.sub(r'oitio', 'otio', texto)         
-    
-    # Limpieza final absoluta para corregir quuin -> quin
     texto = texto.replace("quu", "qu")
-    
-    # Eliminar haches sueltas que no sean de sh o ch
     texto = re.sub(r'(?<!s)(?<!c)h', '', texto)
-    
     return texto.strip()
 
 def resolver_contexto_palabra(palabra: str) -> str:
     p_baja = palabra.lower()
-    if "quu" in p_baja:
-        p_baja = p_baja.replace("quu", "qu")
+    if "quu" in p_baja: p_baja = p_baja.replace("quu", "qu")
     return p_baja
 
 def desarmar_palabra_compuesta(palabra: str) -> str:
-    """
-    Analiza morfológicamente palabras complejas basándose en raíces eclesiásticas,
-    sufijos de cualidad e ingeniería de compuestos botánicos medievales refinados.
-    """
+    """ Desarma morfológicamente las palabras del efecto eco del manuscrito """
     p = palabra.lower()
     
     # --- CONECTORES Y LETRAS SUELTAS ---
@@ -102,13 +49,18 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p in ["da", "di"]: return "de"
     if p == "qua": return "agua"
 
-    # --- REFINAMIENTO DE INCÓGNITAS ESPECÍFICAS (PULIDO DE SUFIJOS) ---
+    # --- ENLACE DIRECTO DE LAS ÚLTIMAS 9 PALABRAS RESTANTES (Efecto Eco / Sufijos) ---
+    if "itedad" in p or "itidad" in p or "ititad" in p: return "repetición (proceso)"
+    if "tedad" in p or "tedin" in p: return "entibiamiento"
+    if "shdad" in p or "shdi" in p: return "jarabe (elixir)"
+    if "lquidad" in p: return "liquidez"
+    if "ichedad" in p: return "savia pura"
     if "oqueo" in p or "ochdi" in p: return "humedad (reposo)"
     if "quoc" in p or "quoqu" in p or "qued" in p: return "cocimiento"
     if "ofe" in p: return "dosificación"
     if "shed" in p or "sheo" in p: return "germinación"
 
-    # --- REGLA COMPUESTOS VERBALES ---
+    # --- COMPUESTOS VERBALES BASE ---
     if "cod" in p:
         prefijo = "que " if p.startswith("que") or p.startswith("qu") else ""
         sufijo = "an" if p.endswith("sha") or p.endswith("sh") else "er"
@@ -118,26 +70,21 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
         sufijo = "ado" if p.endswith("di") or p.endswith("ti") else "ar"
         return f"{prefijo}cort{sufijo}"
 
-    # --- RAÍZ IQUI (LÍQUIDO / SAVIA / LICOR) ---
+    # --- RAÍCES BOTÁNICAS EXTRACTORAS ---
     if "iqui" in p:
         if p.endswith("dam") or p.endswith("am"): return "el jugo"
         if p.endswith("dad") or p.endswith("tad"): return "jugosidad"
         return "jugo"
-
-    # --- RAÍZ SHE/SHEO (BROTAR / GERMINAR) ---
     if p.startswith("sheo") or p.startswith("she"):
         if p.endswith("dad") or p.endswith("di"): return "germinación"
         if p.endswith("din") or p.endswith("in"): return "brotando"
         return "brote"
 
-    # --- ABREVIATURAS CORTAS PARTICULARES ---
     if p == "fdin": return "fijación"
     if p == "ofa": return "mezcla"
 
-    # --- REGLA ABREVIATURAS MEDIEVALES DE CUALIDAD (-DI / -TI) ---
     if p.endswith("di") or p.endswith("ti"):
-        if "och" in p or "ot" in p:
-            return "días"
+        if "och" in p or "ot" in p: return "días"
         if len(p) > 3:
             raiz_limpia = p[:-2]
             if raiz_limpia == "if": return "eficacia"
@@ -154,15 +101,14 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         "piue": "más", "piu": "más", "codar": "cocer", "oleis": "aceites", 
         "cipi": "tallos", "seol": "seco", "sequieo": "secado", "otolsai": "extraer",
         "senior": "señor (maestro)", "olse": "aceitoso", "quodam": "un cierto", "oram": "borde",
-        "iquiol": "jugo", "otio": "reposo", "cute": "piel (corteza)", "cior": "mover", 
+        "iquiol": "jugo", "cute": "piel (corteza)", "cior": "mover", 
         "cioquai": "infusión", "cut": "cortar", "quin": "quien (que)", "qin": "que",
         "tsheos": "esencia", "ceepy": "cepas / raíces", "ceeor": "ceras / resinas",
         "ceodar": "cocción", "olees": "óleos", "qodaiin": "código (receta)", "olse": "oler",
         "orain": "oración / borde", "oteody": "método", "cteeey": "cutícula", "ykeeol": "licor"
     }
     
-    if not palabras:
-        return [], ""
+    if not palabras: return [], ""
 
     palabras_traducidas_oracion = []
     for palabra in palabras:
@@ -174,15 +120,11 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             if significado_compuesto:
                 palabras_traducidas_oracion.append(significado_compuesto)
 
-    oracion_completa = " ".join(palabras_traducidas_oracion).strip()
-    oracion_completa = re.sub(r'\s+', ' ', oracion_completa)
+    oracion_completa = re.sub(r'\s+', ' ', " ".join(palabras_traducidas_oracion)).strip()
 
     for palabra in palabras[:40]:
-        if not palabra.strip():
-            continue
-            
+        if not palabra.strip(): continue
         palabra_optimizada = resolver_contexto_palabra(palabra)
-        
         if palabra_optimizada in glosario_maestro:
             significado_individual = glosario_maestro[palabra_optimizada]
             tipo_match = "Glosario Romance (Posta)"
