@@ -94,7 +94,7 @@ st.write(IFACE[idioma]["sub"])
 
 @st.cache_data
 def descargar_manuscrito_real():
-    url = "https://voynich.nu"
+    url = "https://www.voynich.nu/data/ZL3b-n.txt"
     archivo_completo = {}
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
