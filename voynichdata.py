@@ -159,11 +159,10 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
                     
         if not significado_individual: significado_individual = desarmar_palabra_compuesta(palabra)
             
-        analisis_structured = {
+        analisis_estructurado.append({
             "Palabra Filtrada": "/".join(opciones_palabra).upper(),
             "Equivalencia Semántica": significado_individual,
             "Tipo de Match": tipo_match
-        }
-        analisis_estructurado.append(analisis_structured)
+        })
         
     return analisis_estructurado, oracion_completa
