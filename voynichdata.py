@@ -53,6 +53,7 @@ def calcular_distancia_levenshtein(str1, str2):
     m, n = len(str1), len(str2)
     dp = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
     
+    # CORREGIDO: Asignación indexando la celda exacta de los bordes [INDEX]
     for i in range(m + 1): 
         dp[i][0] = i
     for j in range(n + 1): 
@@ -96,7 +97,7 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p == "chychi": return "pizca"
     if p == "cri": return "filtrar"
     if p in ["ocor", "ocor", "oqueo", "ipdi"]: return "fomento / yema"
-    if p == "uefocl" or p == "uefol": return "agua al fuego (baño maría)"
+    if p in ["uefocl", "uefol"]: return "agua al fuego (baño maría)"
 
     # Desacoplamiento de artículos aglutinados (L- / CH-)
     if p.startswith("l") and len(p) > 2 and p not in ["a", "e", "i", "o", "u"]:
@@ -183,7 +184,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         analisis_estructurado.append({
             "Palabra Filtrada": "/".join(opciones_palabra).upper(),
             "Equivalencia Semántica": significado_individual,
-            "Tipo de Match": tipo_match
+            "Tipo de Match": type_match
         })
         
     return analisis_estructurado, oracion_completa
