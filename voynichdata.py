@@ -56,9 +56,12 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = texto.replace("ai", "i")      
         
         # --- 4. REGLAS DE 1 CARÁCTER CON CONTEXTO (Y inicial/final) ---
-        texto = re.sub(r'\by\b', 'i', texto) 
-        texto = re.sub(r'\by', 'i', texto)  
-        texto = re.sub(r'y\b', 'i', texto)  
+        re_y_aislada = re.compile(r'\by\b')
+        re_y_inicial = re.compile(r'\by')
+        re_y_final = re.compile(r'y\b')
+        texto = re_y_aislada.sub('i', texto)
+        texto = re_y_inicial.sub('i', texto)
+        texto = re_y_final.sub('i', texto)
         
         # --- 5. SUSTITUCIÓN FINAL DE CONSONANTES Q / K ---
         texto = texto.replace("k", "qu")
@@ -143,8 +146,9 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     def limpiar_prosa(texto):
         if not texto: 
             return ""
-        # CORREGIDO: Se extrae el primer elemento del split antes de aplicar el strip de cadenas
-        return texto.split("/")[0].strip().replace("?", "").replace("*", "")
+        # CORRECCIÓN DE SINTAXIS: Extraemos primero el índice 0 de la lista y luego aplicamos strip()
+        primer_termino = texto.split("/")[0]
+        return primer_termino.strip().replace("?", "").replace("*", "")
 
     for palabra in palabras:
         palabra_compuesta_detectada = False
