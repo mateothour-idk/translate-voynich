@@ -4,10 +4,8 @@ import re
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
-# --- SELECTOR DE IDIOMA EN LA BARRA LATERAL ---
 idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Español", "English"])
 
-# --- DICCIONARIOS DE TEXTO DE INTERFAZ ---
 IFACE = {
     "Español": {
         "titulo": "📜 Traductor Universal del Manuscrito Voynich (Corpus voynich.nu)",
@@ -47,7 +45,6 @@ IFACE = {
     }
 }
 
-# --- DICCIONARIO MAESTRO EN ESPAÑOL (RAÍCES COMPROBADAS) ---
 DICCIONARIO_ES = {
     "puí": "la planta", "cuta": "la corteza", "oarur": "el aroma", "poisoda": "la planta medicinal",
     "quedy": "el elemento", "con": "con", "su": "su", "quoqu": "por lo cual", "caur": "el tallo",
@@ -67,10 +64,9 @@ DICCIONARIO_ES = {
     "sier": "las hojas", "dalaiu": "destilar", "dam": "dar", "ciodain": "los conductos",
     "aekiy": "la mezcla", "air": "el aire", "soar": "el vapor", "ciey": "la savia",
     "dais": "la rueda", "odotoí": "el ciclo", "doror": "el nacimiento", "quaur": "el calor",
-    "caud": "the elongated stem", "cedy": "se corta", "cidí": "verter"
+    "caud": "el tallo alargado", "cedy": "se corta", "cidí": "verter"
 }
 
-# --- DICCIONARIO MAESTRO EN INGLÉS (RAÍCES COMPROBADAS) ---
 DICCIONARIO_EN = {
     "puí": "the plant", "cuta": "the bark", "oarur": "the aroma", "poisoda": "the medicinal plant",
     "quedy": "the element", "con": "with", "su": "its", "quoqu": "whereby", "caur": "the stem",
@@ -96,10 +92,9 @@ DICCIONARIO_EN = {
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
 
-# --- EXTRACTOR REAL DESDE VOYNYCH.NU ---
 @st.cache_data
 def descargar_manuscrito_real():
-    url = "https://www.voynich.nu/data/ZL3b-n.txt"
+    url = "https://voynich.nu"
     archivo_completo = {}
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -115,8 +110,6 @@ def descargar_manuscrito_real():
             if match:
                 folio = match.group(1)
                 contenido = match.group(2).strip()
-                
-                # Filtrado paleográfico estricto del corpus crudo
                 contenido = re.sub(r"\{.*?\}", "", contenido)
                 contenido = re.sub(r";\w+", "", contenido)
                 contenido = re.sub(r"[\=\+\-\_\,\.\;\:\(\)\d+]", "", contenido)
@@ -131,7 +124,6 @@ def descargar_manuscrito_real():
 
 CORPUS_MANUSCRITO = descargar_manuscrito_real()
 
-# --- MATRIZ DE TRADUCCIÓN FONÉTICA (37 REGLAS APLICADAS DOS VECES) ---
 def traducir_a_romance(texto):
     reglas = {
         'pcee': 'pi', 'pdr': 'pedr', 'pcs': 'pes', 'qok': 'quoqu', 'dceorceau': 'dicorcau',
@@ -145,15 +137,12 @@ def traducir_a_romance(texto):
         'o': 'o', 'a': 'a', 'l': 'l'
     }
     texto_limpio = texto.lower()
-    # Primera pasada estricta
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
-    # Segunda pasada estricta para resolver ligaduras fonéticas secundarias
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
-# --- MOTOR DE TRADUCCIÓN ESTRICTO PALEOGRÁFICO SIN RELLENO ---
 def traducir_todo_automatico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
@@ -170,7 +159,6 @@ def traducir_todo_automatico(texto_romance, lang):
             if not palabra_limpia or len(palabra_limpia) <= 1:
                 continue
                 
-            # Mapeo directo y real: palabra que no está en el glosario se queda como incógnita controlada
             if palabra_limpia in dict_activo:
                 linea_espanol.append(dict_activo[palabra_limpia])
             else:
@@ -179,12 +167,10 @@ def traducir_todo_automatico(texto_romance, lang):
         if linea_espanol:
             texto_linea = " ".join(linea_espanol).strip()
             texto_linea = re.sub(r'\s+', ' ', texto_linea)
-            # Inyección de punto final y espacio para mantener la separación correcta entre oraciones
             lineas_traducidas.append(f"{prefix_linea} {idx+1}: {texto_linea.capitalize()}. ")
             
     return "\n\n".join(lineas_traducidas)
 
-# --- DIVISION DE PESTAÑAS DINÁMICAS ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
