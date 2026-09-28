@@ -43,18 +43,20 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     # --- CONECTORES, DETERMINANTES Y CONTRACCIONES ROMANCES ---
     if p in ["c", "qui", "oquin"]: return "que"
     if p in ["i", "din"]: return "en"
-    if p in ["o", "qui"]: return "o"
+    if p == "o": return "o"
     if p == "l": return "el"
     if p in ["ar", "al", "dal", "del", "dil", "dol", "odal", "ldi"]: return "del"
     if p in ["da", "di", "odi"]: return "de"
     if p == "qua": return "agua"
     if p in ["olin", "olin"]: return "aceitoso"
-    if p in ["itiol", "itidad", "itidad"]: return "un poco"
+    if p in ["itiol", "itidad", "ititad"]: return "un poco"
+    if p == "ct": return "cortar"
     
-    # --- NUEVAS REGLAS: TRATAMIENTO DE TIEMPO, DOSIS Y VERBOS ---
+    # --- TRATAMIENTO DE TIEMPO, DOSIS Y VERBOS ---
     if "ctin" in p or "ctan" in p: return "cortando"
     if "quoteo" in p or "quotar" in p or "tolqueol" in p: return "la dosis"
     if "oteodin" in p or "ochdin" in p: return "del método (tiempo)"
+    if p == "otin": return "del reposo"
 
     # --- ENLACE DIRECTO DE SUFIJOS (Efecto Eco / Sufijos) ---
     if "itedad" in p or "itidad" in p or "ititad" in p: return "repetición (proceso)"
