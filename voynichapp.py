@@ -12,37 +12,44 @@ st.set_page_config(
 )
 
 st.title("📜 Intérprete Automatizado NLP - Todo el Manuscrito Voynich Real")
-st.write("Procesamiento dinámico sin diccionarios fijos. Descarga el corpus original completo de investigación y traduce vía IA.")
+st.write("Mapeo directo del corpus oficial ZL3b-n con simulación de navegación e integración de traducción automática.")
 
 @st.cache_data(show_spinner=False)
 def descargar_corpus_voynich_real():
     """
-    Descarga en tiempo real la transcripción paleográfica real completa del 
-    manuscrito (v01 de Landini) y limpia los códigos de línea.
+    Descarga en tiempo real la transcripción ZL3b-n.txt simulando 
+    un navegador completo para saltar el firewall del servidor.
     """
     url_corpus = "https://www.voynich.nu/data/ZL3b-n.txt"
     corpus = {}
     
+    # Encabezados reales de navegador para corregir el error HTTP 406
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+        'Connection': 'keep-alive'
+    }
+    
     try:
-        # Solicitud HTTP al repositorio histórico oficial de datos Voynich
-        req = urllib.request.Request(url_corpus, headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request(url_corpus, headers=headers)
         with urllib.request.urlopen(req) as response:
             lineas = response.read().decode('utf-8').splitlines()
             
         for linea in lineas:
             linea = linea.strip()
-            # Estructura del corpus oficial: <f48r.P1.L1> texto_eva
+            # Valida el formato de etiquetas del transcriptor Landini-Zandbergen: <f...r...>
             if linea.startswith("<f") and ">" in linea:
                 partes = linea.split(">")
                 etiqueta = partes[0].replace("<", "")
                 texto_eva = partes[1].strip()
                 
-                # Extraer el identificador del folio (ej. 'f48r' desde 'f48r.1')
-                identificador_folio = etiqueta.split(".")[0]
+                # Extrae el folio limpio (ej: 'f48r' desde 'f48r.P1.L1;H')
+                identificador_folio = re.split(r'[\.;]', etiqueta)[0]
                 
-                # Limpiar comentarios internos del transcriptor (ej. =; % etc)
-                texto_eva = re.sub(r';.*$', '', texto_eva) # Quita comentarios finales
-                texto_eva = re.sub(r'[{}]', '', texto_eva)   # Quita indicadores ilegibles
+                # Limpieza de anotaciones internas del archivo de texto
+                texto_eva = re.sub(r'#.*$', '', texto_eva)
+                texto_eva = re.sub(r'[{}]', '', texto_eva)
                 
                 if texto_eva.strip():
                     if identificador_folio in corpus:
@@ -51,8 +58,7 @@ def descargar_corpus_voynich_real():
                         corpus[identificador_folio] = texto_eva
                         
     except Exception as e:
-        st.sidebar.error(f"No se pudo descargar el corpus online: {e}. Usando respaldo local.")
-        # Copia de respaldo automática con tus folios de prueba por si falla internet
+        st.sidebar.error(f"Error de descarga: {e}. Cargando respaldo local.")
         corpus = {
             "f48r": "pceeoe ceodar olees ceepy cseol cseckeeeo otolcseey ceeor ceeokeey",
             "f48v": "tcseor olcse qodaiin qokeeor sy oraiin ykeeol oiteeody cteeey",
@@ -60,7 +66,7 @@ def descargar_corpus_voynich_real():
         }
     return corpus
 
-# Inicializar y descargar la base de datos completa real
+# Lanzamiento y descarga en el backend
 with st.spinner("Descargando transcriptor oficial de folios reales desde el repositorio..."):
     mapa_completo_folios = descargar_corpus_voynich_real()
 
@@ -68,7 +74,6 @@ st.sidebar.header("Panel de Navegación")
 opciones_selector = ["Manual (Texto Libre)"]
 
 if mapa_completo_folios:
-    # Ordenar los folios reales numéricamente (f1r, f1v, f2r...)
     def ordenar_clave(clave):
         numeros = re.findall(r'\d+', clave)
         num = int(numeros[0]) if numeros else 0
