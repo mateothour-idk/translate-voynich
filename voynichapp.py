@@ -169,7 +169,7 @@ def traducir_a_romance(texto):
             
     return "\n".join([" ".join(palabras_corregidas)])
 
-# --- MOTOR DE REDACCIÓN COMPRENSIBLE ASOCIATIVA ---
+# --- MOTOR DE REDACCIÓN COMPRENSIBLE ASOCIATIVA CORREGIDO ---
 def generar_espanol_sintactico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
@@ -180,7 +180,6 @@ def generar_espanol_sintactico(texto_romance, lang):
         palabras = linea.split()
         significados_unicos = []
         
-        # Mapear las palabras de forma limpia evitando duplicaciones
         for palabra in palabras:
             palabra_norm = palabra.strip(",.!?*;:- ")
             if palabra_norm in dict_activo:
@@ -191,11 +190,10 @@ def generar_espanol_sintactico(texto_romance, lang):
         if not significados_unicos:
             continue
             
-        # Separar las acciones de los ingredientes para construir la frase como un humano
-        acciones = [s for s in significados_unicos if any(v in s for s in ["extrae", "cortar", "recolectar", "canalizar", "girar", "verter", "corta", "destilar", "limpia", "aplica"])]
+        # SOLUCIÓN DEL ERROR DE NOMBRE: Se define correctamente 'v' dentro del bucle any()
+        acciones = [s for s in significados_unicos if any(v in s for v in ["extrae", "cortar", "recolectar", "canalizar", "girar", "verter", "corta", "destilar", "limpia", "aplica"])]
         elementos = [s for s in significados_unicos if s not in acciones and s not in ["con", "su", "allí", "cuanto", "por lo cual", "estos", "el cual", "la cual"]]
         
-        # Limpiar artículos iniciales para poder listar los ingredientes limpiamente
         elementos_limpios = []
         for el in elementos:
             el_clean = re.sub(r'^(el |la |los |las |the )', '', el).strip()
