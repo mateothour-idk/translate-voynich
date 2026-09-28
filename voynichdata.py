@@ -1,6 +1,5 @@
 # voynichdata.py
 import re
-from deep_translator import DeeplTranslator, GoogleTranslator
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
@@ -87,56 +86,78 @@ def resolver_contexto_palabra(palabra: str) -> str:
         p_baja = p_baja.replace("quu", "qu")
     return p_baja
 
+def calcular_distancia_levenshtein(str1, str2):
+    """ Algoritmo local para buscar similitudes morfológicas sin internet """
+    m, n = len(str1), len(str2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(m + 1): dp[i][0] = i
+    for j in range(n + 1): dp[0][j] = j
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if str1[i - 1] == str2[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1]
+            else:
+                dp[i][j] = 1 + min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+    return dp[m][n]
+
+def buscar_aproximacion_local(palabra, glosario):
+    """ Encuentra de forma autónoma la raíz más cercana en el diccionario """
+    mejor_raiz = palabra
+    distancia_minima = 99
+    for raiz in glosario.keys():
+        dist = calcular_distancia_levenshtein(palabra, raiz)
+        if dist < distancia_minima:
+            distancia_minima = dist
+            mejor_raiz = raiz
+    # Si la aproximación es muy lejana, la dejamos como término abierto
+    if distancia_minima <= 2:
+        return glosario[mejor_raiz], f"Aproximación Fonética Local (-{distancia_minima}L)"
+    return f"[{palabra.upper()}]", "Transliteración Criptográfica Abierta"
+
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     palabras = texto_limpio.split()
     analisis_estructurado = []
     target_lang = "es" if idioma == "es" else "en"
     
-    # Glosario local robustecido con raíces fonéticas medievales comunes del texto
+    # Base de conocimiento extendida local (Latín Romance / Botánica Medieval)
     glosario_maestro = {
         "piue": "más", "piu": "más", "codar": "cocer", "oleis": "aceites", 
         "cipi": "tallos", "seol": "seco", "sequieo": "secado", "otolsai": "extraer",
-        "senior": "señor", "olse": "aceitoso", "quodam": "un cierto", "oram": "borde",
+        "senior": "señor (maestro)", "olse": "aceitoso", "quodam": "un cierto", "oram": "borde",
         "iquiol": "jugo", "otio": "reposo", "cute": "piel (corteza)", "cior": "mover", 
         "cioquai": "infusión", "cut": "cortar", "quin": "quien (que)", "qin": "que",
-        "tsheos": "esencia", "ceepy": "cepas", "ceeor": "cera / aceites",
-        "ceodar": "cocción", "olees": "oleos (aceites)", "qodaiin": "código"
+        "tsheos": "esencia", "ceepy": "cepas / raíces", "ceeor": "ceras / resinas",
+        "ceodar": "cocción", "olees": "óleos", "qodaiin": "código (receta)", "olse": "oler",
+        "orain": "oración / borde", "iquiol": "líquido extraído", "oteody": "método",
+        "cteeey": "cutícula", "ykeeol": "licor"
     } if target_lang == "es" else {
         "piue": "more", "piu": "more", "codar": "cook", "oleis": "oils", 
         "cipi": "stems", "seol": "dry", "sequieo": "dried", "otolsai": "extract",
         "senior": "master", "olse": "oily", "quodam": "a certain", "oram": "edge",
         "iquiol": "juice", "otio": "rest", "cute": "skin (bark)", "cior": "move", 
         "cioquai": "decoction", "cut": "cut", "quin": "which", "qin": "which",
-        "tsheos": "essence", "ceepy": "roots", "ceeor": "wax", "ceodar": "decoction",
-        "olees": "oils", "qodaiin": "code"
+        "tsheos": "essence", "ceepy": "roots", "ceeor": "waxes", "ceodar": "decoction",
+        "olees": "oils", "qodaiin": "code", "olse": "smell", "orain": "edge",
+        "iquiol": "juice", "oteody": "method", "cteeey": "cuticle", "ykeeol": "liquor"
     }
     
     if not palabras:
         return [], ""
 
-    # 1. TRADUCCIÓN DE LA ORACIÓN EN BLOQUE CON APALANCAMIENTO EN AUTOMÁTICO
+    # 1. TRADUCCIÓN DE LA ORACIÓN EN BLOQUE LOCAL (Cero latencia de red)
     palabras_traducidas_oracion = []
     for palabra in palabras:
         palabra_optimizada = resolver_contexto_palabra(palabra)
         if palabra_optimizada in glosario_maestro:
             palabras_traducidas_oracion.append(glosario_maestro[palabra_optimizada])
         else:
-            try:
-                # Si no está en el glosario, forzamos la detección inteligente con DeepL
-                trad = DeeplTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-                palabras_traducidas_oracion.append(trad)
-            except Exception:
-                try:
-                    # Respaldo contextual ágil con Google Translator en modo automático
-                    trad_alt = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-                    palabras_traducidas_oracion.append(trad_alt)
-                except Exception:
-                    palabras_traducidas_oracion.append(palabra_optimizada)
+            significado, _ = buscar_aproximacion_local(palabra_optimizada, glosario_maestro)
+            palabras_traducidas_oracion.append(significado)
 
     oracion_completa = " ".join(palabras_traducidas_oracion)
 
     # 2. CONSTRUCCIÓN DE LA TABLA INTERACTIVA
-    for palabra in palabras[:30]:
+    for palabra in palabras[:40]:
         if not palabra.strip():
             continue
             
@@ -144,23 +165,9 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         
         if palabra_optimizada in glosario_maestro:
             significado_individual = glosario_maestro[palabra_optimizada]
-            tipo_match = "Glosario Romance (Estructural)"
+            tipo_match = "Glosario Romance (Posta)"
         else:
-            try:
-                # DeepL en auto para captar raíces de italiano antiguo, provenzal y latín vulgar
-                trad_api = DeeplTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-                tipo_match = "DeepL Neural NLP"
-                if trad_api.lower() == palabra_optimizada.lower():
-                    trad_api = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-                    tipo_match = "Google AI Contextual"
-                significado_individual = trad_api
-            except Exception:
-                try:
-                    significado_individual = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-                    tipo_match = "Respaldo Motor AI"
-                except Exception:
-                    significado_individual = "[Incógnita]"
-                    tipo_match = "Fallo de Red"
+            significado_individual, tipo_match = buscar_aproximacion_local(palabra_optimizada, glosario_maestro)
             
         analisis_estructurado.append({
             "Palabra Filtrada": palabra_optimizada.upper(),
