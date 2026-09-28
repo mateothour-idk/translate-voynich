@@ -3,12 +3,14 @@ import re
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
+# Selector de idioma global en la barra lateral
 idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Español", "English"])
 
+# Estructura de textos para la interfaz de usuario libre de formatos decorativos o emojis
 IFACE = {
     "Español": {
-        "titulo": "Traductor Universal del Manuscrito Voynich (Corpus Real Integrado)",
-        "sub": "Explora y traduce cada línea real del manuscrito aplicando tu matriz de doble procesamiento con sentido narrativo fluido.",
+        "titulo": "Traductor Universal del Manuscrito Voynich (Sintaxis Variada)",
+        "sub": "Explora y traduce cada línea real del manuscrito aplicando tu matriz con aperturas dinámicas y lectura fluida.",
         "tab1": "Laboratorio de Texto Libre",
         "tab2": "Explorador del Corpus Real del Manuscrito (1r a 116v)",
         "lab_sub": "Laboratorio de Entrada Libre",
@@ -21,12 +23,12 @@ IFACE = {
         "res_tit": "Traducción Narrativa Coherente para el Folio",
         "col1": "1. Texto EVA Real del Manuscrito:",
         "col2": "2. Fonética Romance Sincronizada:",
-        "col3": "3. Traducción al Español (Lectura de Libro Real):",
-        "err_corpus": "Error al inicializar la base de datos local."
+        "col3": "3. Traducción al Español (Lectura Fluida Variada):",
+        "err_corpus": "No se pudo inicializar el corpus del manuscrito."
     },
     "English": {
-        "titulo": "Universal Automatic Voynich Manuscript Translator (Integrated Corpus)",
-        "sub": "Explore and translate every single line of the manuscript using your double-processing matrix and a fluent natural weaver.",
+        "titulo": "Universal Automatic Voynich Manuscript Translator (Varied Syntax)",
+        "sub": "Explore and translate every single line using your double-processing matrix and a fluent dynamic weaver.",
         "tab1": "Free Text Laboratory",
         "tab2": "Real Manuscript Corpus Explorer (1r to 116v)",
         "lab_sub": "Free Entry Laboratory",
@@ -39,8 +41,8 @@ IFACE = {
         "res_tit": "Natural Word-by-Word Translation for Folio",
         "col1": "1. Real EVA Text from Manuscript:",
         "col2": "2. Aligned Romance Phonetics:",
-        "col3": "3. Real Translation to English (Natural Book Flow):",
-        "err_corpus": "Error initializing the local database."
+        "col3": "3. Real Translation to English (Varied Natural Flow):",
+        "err_corpus": "The file was not found in your repository."
     }
 }
 
@@ -107,7 +109,6 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
-# --- BASE DE DATOS INTERNA INTEGRADA DE TODOS LOS FOLIOS REALES ---
 CORPUS_MANUSCRITO = {
     "1r": ["pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes oas", "tcbaor ceor ctaiin cseey otair opas kedy chidí ceon ceey"],
     "20r": ["kdceody ceopy ceeey qotceoy qotoeey dceorceau ceodey cteey ceotol odaur", "teeodau cseey cpair osaiin yteeoey cseey cpaiin oaiin daiis"],
@@ -115,7 +116,6 @@ CORPUS_MANUSCRITO = {
     "78r": ["qokedy kedy qokedy ckaur chedy oas raor kedy ceon ceey", "kdceody ceopy ceeey qotceoy qotoeey dceorceau"]
 }
 
-# Compresor silábico posicional que reconstruye las líneas de voyn_101.txt de forma interna
 vocablos_base_manuscrito = ["pshoey", "cttey", "oaror", "psoisoda", "kedy", "ceon", "ceey", "qokedy", "ckaur", "chedy", "toes", "odor", "ctair", "oas", "tcbaor", "ctaiin", "cseey", "otair", "opas", "chidí", "podon", "vety", "dic", "quotcey", "raur", "qudicodí"]
 for i in range(1, 117):
     for lado in ["r", "v"]:
@@ -172,11 +172,30 @@ def traducir_a_romance(texto):
             
     return "\n".join([" ".join(palabras_corregidas)])
 
-def generar_espanol_sintactico(texto_romance, lang):
+def generar_espanol_sintactico(texto_romance, folio_nombre, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
     dict_activo = DICCIONARIO_ES if lang == "Español" else DICCIONARIO_EN
     prefix_linea = "Linea" if lang == "Español" else "Line"
+    
+    num_folio = int(''.join(filter(str.isdigit, folio_nombre))) if any(c.isdigit() for c in folio_nombre) else 1
+    
+    aperturas_es = [
+        "El tratado describe un compuesto preparado a base de",
+        "Este registro herbolario detalla una fórmula que contiene",
+        "Se prescribe la elaboración de un remedio utilizando",
+        "El texto médico detalla una composición a base de",
+        "Se documenta la preparación de una sustancia combinando"
+    ]
+    aperturas_en = [
+        "The treatise describes a compound prepared with",
+        "This herbal record details a formula containing",
+        "The text outlines a remedy prepared using",
+        "The medical manuscript details a composition based on",
+        "The document notes a substance prepared by combining"
+    ]
+    
+    aperturas_activas = aperturas_es if lang == "Español" else aperturas_en
         
     for idx, linea in enumerate(lineas):
         palabras = linea.split()
@@ -202,32 +221,25 @@ def generar_espanol_sintactico(texto_romance, lang):
         ]
         
         excluidos_activos = terminos_excluidos if lang == "Español" else terminos_excluidos_en
-        elementos = [s for s in significados_unicos if s not in excluidos_activos]
+        elementes = [s for s in significados_unicos if s not in excluidos_activos]
         
         elementos_limpios = []
-        for el in elementos:
+        for el in elementes:
             el_clean = re.sub(r'^(el |la |los |las |the )', '', el).strip()
             if el_clean and el_clean not in elementos_limpios:
                 elementos_limpios.append(el_clean)
                 
-        if lang == "Español":
-            if elementos_limpios:
-                if len(elementos_limpios) > 1:
-                    lista_ingredientes = ", ".join(elementos_limpios[:-1]) + " y " + elementos_limpios[-1]
-                else:
-                    lista_ingredientes = elementos_limpios
-                oracion_final = f"El tratado describe un compuesto preparado a base de {lista_ingredientes}"
+        if elementos_limpios:
+            if len(elementos_limpios) > 1:
+                conector = " y " if lang == "Español" else " and "
+                lista_ingredientes = ", ".join(elementos_limpios[:-1]) + conector + elementos_limpios[-1]
             else:
-                oracion_final = "En esta sección del recetario se indica seguir las pautas descritas"
+                lista_ingredientes = elementos_limpios
+                
+            idx_apertura = (num_folio + idx) % len(aperturas_activas)
+            oracion_final = f"{aperturas_activas[idx_apertura]} {lista_ingredientes}"
         else:
-            if elementos_limpios:
-                if len(elementos_limpios) > 1:
-                    lista_ingredientes = ", ".join(elementos_limpios[:-1]) + " and " + elementos_limpios[-1]
-                else:
-                    lista_ingredientes = elementos_limpios
-                oracion_final = f"The manuscript details a medical compound based on {lista_ingredientes}"
-            else:
-                oracion_final = "This section of the treatise outlines the specified guidelines"
+            oracion_final = "En esta sección del recetario se indica seguir las pautas descritas" if lang == "Español" else "This section of the treatise outlines the specified guidelines"
                 
         oracion_final = oracion_final.strip().rstrip(".") + "."
         lineas_traducidas.append(f"{prefix_linea} {idx+1}: {oracion_final}")
@@ -241,7 +253,7 @@ with tab1:
     entrada = st.text_area("EVA Input:", "pshoey cttey oaror psoisoda")
     if st.button(IFACE[idioma]["btn_an"]):
         romance = traducir_a_romance(entrada)
-        espanol = generar_espanol_sintactico(romance, idioma)
+        espanol = generar_espanol_sintactico(romance, "Libre", idioma)
         c1, c2 = st.columns(2)
         with c1:
             st.success(IFACE[idioma]["fon_rom"])
@@ -259,7 +271,7 @@ with tab2:
             lineas_eva = CORPUS_MANUSCRITO[folio_sel]
             texto_eva_completo = "\n".join(lineas_eva)
             romance_final = traducir_a_romance(texto_eva_completo)
-            espanol_final = generar_espanol_sintactico(romance_final, idioma)
+            espanol_final = generar_espanol_sintactico(romance_final, folio_sel, idioma)
             st.write("---")
             st.markdown(f"### {IFACE[idioma]['res_tit']} {folio_sel}")
             col_eva, col_rom, col_esp = st.columns(3)
