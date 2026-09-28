@@ -3,7 +3,7 @@ import re
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
     Aplica las reglas de sustitución paleográficas exactas del usuario.
-    Ordenadas de mayor a menor longitud para preservar la estructura.
+    Ordenadas estrictamente de mayor a menor longitud para evitar colisiones.
     """
     if not texto_eva:
         return ""
@@ -35,8 +35,9 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     texto = re.sub(r'\by', 'i', texto)  
     texto = re.sub(r'y\b', 'i', texto)  
     
-    # Consonantes sueltas y limpieza
+    # Consonantes individuales y limpieza final
     texto = texto.replace("k", "qu").replace("q", "qu")
+    texto = texto.replace("m", "m").replace("l", "l")
     texto = texto.replace("h", "").replace("quu", "qu")
     
     return texto.strip()
@@ -44,11 +45,23 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
 
 def motor_prosa_fluida(texto_original_eva: str, idioma: str = "es") -> tuple:
     """
-    Motor híbrido que cruza tokens EVA originales, formas filtradas y desglose de raíces
-    para garantizar que el manuscrito entregue el mayor volumen de traducción posible.
+    Motor híbrido avanzado: busca la palabra exacta del corpus real (voynich.nu),
+    y si se usa texto libre manual, aplica reducción filológica decreciente de raíces.
     """
-    # 1. Glosario directo por palabra completa (EVA)
+    # 1. Glosario directo de tokens EVA extraídos de las transcripciones reales
     diccionario_eva = {
+        "fachas": {"es": "proclamación/receta", "en": "proclamation/recipe"},
+        "ykal": {"es": "reunir/juntar", "en": "assemble"},
+        "ar": {"es": "disponer/tomar", "en": "arrange/take"},
+        "ataiin": {"es": "empeño/preparación", "en": "preparation"},
+        "xekam": {"es": "humedecer", "en": "moisten"},
+        "teol": {"es": "cocer a fuego lento", "en": "simmer"},
+        "moxar": {"es": "macerado/ungüento", "en": "macerated ointment"},
+        "tceol": {"es": "cielo nocturno", "en": "night sky"},
+        "epar": {"es": "observar", "en": "observe"},
+        "pals": {"es": "baño purificante", "en": "purifying bath"},
+        "chong": {"es": "fluido vital/savia", "en": "vital fluid/sap"},
+        "shoor": {"es": "hacer brotar", "en": "to sprout"},
         "qokched": {"es": "extracto concentrado", "en": "concentrated extract"},
         "dcectth": {"es": "hervir en agua de lluvia", "en": "boil in rainwater"},
         "shol": {"es": "exponer al sol", "en": "expose to sun"},
@@ -83,31 +96,27 @@ def motor_prosa_fluida(texto_original_eva: str, idioma: str = "es") -> tuple:
         "koldoe": {"es": "ungüento para dolores", "en": "pain relief ointment"}
     }
 
-    # 2. Glosario de raíces morfológicas/fonéticas (para palabras modificadas o texto libre)
+    # 2. Glosario fonético secundario (fallback para raíces o entradas libres)
     diccionario_fonetico = {
-        "cut": {"es": "cortar/tallos", "en": "cut/stems"},
+        "cut": {"es": "cortar", "en": "cut"},
         "ci": {"es": "aquí/aplicar", "en": "here/apply"},
         "ch": {"es": "clave/esencia", "en": "key/essence"},
-        "ie": {"es": "fluir/ir", "en": "flow/go"},
-        "dic": {"es": "decir/indicar", "en": "say/indicate"},
-        "quoqu": {"es": "cocinar/infusión", "en": "cook/infusion"},
+        "ie": {"es": "fluir", "en": "flow"},
+        "dic": {"es": "decir", "en": "say"},
+        "quoqu": {"es": "cocinar", "en": "cook"},
         "f": {"es": "hacer", "en": "make"},
-        "x": {"es": "secar/seco", "en": "dry"},
+        "x": {"es": "seco", "en": "dry"},
         "pes": {"es": "pie/base", "en": "foot/base"},
         "col": {"es": "recolectar", "en": "collect"},
-        "old": {"es": "antiguo/reposado", "en": "ancient"},
+        "old": {"es": "antiguo", "en": "ancient"},
         "sho": {"es": "mostrar", "en": "show"},
-        "dai": {"es": "dar/añadir", "en": "give/add"},
-        "tth": {"es": "tierra/mineral", "en": "earth"},
+        "dai": {"es": "dar", "en": "give"},
+        "tth": {"es": "tierra", "en": "earth"},
         "cue": {"es": "cuerpo", "en": "body"},
-        "xol": {"es": "sol/calor", "en": "sun/heat"},
+        "xol": {"es": "sol", "en": "sun"},
         "tit": {"es": "título", "en": "title"},
-        "pci": {"es": "pequeño", "en": "small"},
-        "ole": {"es": "aceite", "en": "oil"},
-        "sol": {"es": "disolver/mezclar", "en": "dissolve/mix"},
-        "an": {"es": "año", "en": "year"},
-        "ue": {"es": "fuente/origen", "en": "source"},
-        "ic": {"es": "imagen", "en": "image"}
+        "sol": {"es": "disolver", "en": "dissolve"},
+        "ue": {"es": "origen", "en": "source"}
     }
 
     palabras_originales = texto_original_eva.split()
@@ -116,23 +125,22 @@ def motor_prosa_fluida(texto_original_eva: str, idioma: str = "es") -> tuple:
 
     for palabra_eva in palabras_originales:
         palabra_eva_clean = palabra_eva.lower()
-        # Generar transliteración base
         palabra_filtrada = aplicar_matriz_sustitucion(palabra_eva_clean).upper()
         palabra_filtrada_lc = palabra_filtrada.lower()
         
-        # ESTRATEGIA 1: Match Exacto sobre el token EVA original
+        # Estrategia 1: Match directo por token real
         if palabra_eva_clean in diccionario_eva:
             traducida = diccionario_eva[palabra_eva_clean][idioma]
             palabra_para_oracion = traducida
-            tipo = "Match Exacto (EVA)" if idioma == "es" else "Exact Match (EVA)"
+            tipo = "Match Exacto (voynich.nu)" if idioma == "es" else "Exact Match (voynich.nu)"
             
-        # ESTRATEGIA 2: Match Exacto sobre la forma filtrada/fonética
+        # Estrategia 2: Match por transliteración fonética íntegra
         elif palabra_filtrada_lc in diccionario_fonetico:
             traducida = diccionario_fonetico[palabra_filtrada_lc][idioma]
             palabra_para_oracion = traducida
-            tipo = "Match Fonético Exacto" if idioma == "es" else "Phonetic Match"
+            tipo = "Match Fonético" if idioma == "es" else "Phonetic Match"
             
-        # ESTRATEGIA 3: Escaneo decreciente de raíces sub-léxicas (Máxima Cobertura)
+        # Estrategia 3: Segmentación decreciente de prefijos léxicos
         else:
             match_raiz_encontrado = False
             traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
@@ -144,7 +152,7 @@ def motor_prosa_fluida(texto_original_eva: str, idioma: str = "es") -> tuple:
                 if prefijo in diccionario_fonetico:
                     resto = palabra_filtrada_lc[tam:].upper()
                     traducida_raiz = diccionario_fonetico[prefijo][idioma]
-                    traducida = f"{traducida_raiz} [modif: {resto.lower()}]"
+                    traducida = f"{traducida_raiz} ({resto.lower()})"
                     palabra_para_oracion = f"{traducida_raiz}({resto})"
                     tipo = f"Raíz morfológica ({tam}L)" if idioma == "es" else f"Morph Root ({tam}L)"
                     match_raiz_encontrado = True
