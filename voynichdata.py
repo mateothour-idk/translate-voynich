@@ -1,36 +1,32 @@
 # voynichdata.py
 import re
+import os
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
-    """
-    Aplica las 42 reglas de transliteración estructuradas en capas de longitud para evitar colisiones.
-    """
+    """ Lee las 42 reglas desde el archivo externo reglas.txt de forma segura """
     if not texto_eva: return ""
     texto = texto_eva.lower()
     
-    # Limpieza profunda de ruidos del transcriptor (comas, corchetes con dudas, etc.)
+    # Limpieza profunda de ruidos del transcriptor
     texto = re.sub(r'\[\s*\w+\s*:\s*\w+\s*\]', ' ', texto)
     texto = re.sub(r'[*\-/\=+%\&$\#_@.!?,;:]', ' ', texto)
     texto = re.sub(r'\s+', ' ', texto).strip()
     
-    # Diccionarios ordenados por capas estrictas de reemplazo (Tetragramas -> Trigramas -> Bigramas)
-    capa_0 = {"pceeoe": "piue", "pcee": "pi", "qok": "quoqu"}
-    capa_1 = {"iii": "i", "eee": "ei", "dce": "dic", "cee": "ci", "eey": "ai", "pcs": "pes", "pdr": "pedr", "eat": "it"}
-    capa_2 = {"pc": "p", "ps": "p", "cp": "p", "dc": "ch", "tc": "ch", "cs": "s", "ck": "qu", "ct": "cut", "ph": "f", "th": "t", "tt": "t", "ts", "s", "ll": "y"}
-    capa_3 = {"ee": "i", "oe": "ue", "iu": "u", "oi": "oi", "ii": "i", "ae": "e", "oo": "u", "ey": "a", "iy": "i", "ai": "i", "x": "sh"}
-    
-    for capa in [capa_0, capa_1, capa_2, capa_3]:
-        for k, v in capa.items():
-            texto = texto.replace(k, v)
-            
-    # Capa 4: Reglas contextuales de borde y finales de palabra
+    # Cargar y aplicar las reglas desde el archivo externo de forma lineal
+    ruta_reglas = os.path.join(os.path.dirname(__file__), "reglas.txt")
+    if os.path.exists(ruta_reglas):
+        with open(ruta_reglas, "r", encoding="utf-8") as f:
+            for linea in f:
+                if "=" in linea:
+                    k, v = linea.strip().split("=")
+                    texto = texto.replace(k, v)
+                    
+    # Reglas contextuales finales de borde de palabra
     texto = re.sub(r'\by', 'i', texto)
     texto = re.sub(r'y\b', 'i', texto)
     texto = re.sub(r'\by\b', 'i', texto)
-    texto = re.sub(r'm\b', 'n', texto)  # Regla M = M / N al final de palabra
+    texto = re.sub(r'm\b', 'n', texto)  # Regla M = M / N al final
     
-    # Sustitución base de K / Q / QUO y blindaje ortográfico
-    texto = texto.replace("quo", "qu").replace("k", "qu").replace("q", "qu").replace("quu", "qu")
     texto = re.sub(r'\bchseor\b', 'senior', texto)
     texto = re.sub(r'\bseor\b', 'senior', texto)
     texto = re.sub(r'iin\b', 'am', texto)
@@ -55,7 +51,7 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     p = palabra.lower()
     if not p: return ""
     
-    # --- CONECTORES ROMANCES BASE ---
+    # Conectores romances base
     if p in ["c", "qui", "oquin", "quoin"]: return "que"
     if p in ["i", "din"]: return "en"
     if p == "o": return "o"
@@ -67,7 +63,7 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p in ["itiol", "itidad", "ititad"]: return "un poco"
     if p == "ct": return "cortar"
     
-    # --- CONECTORES AVANZADOS DE LABORATORIO MULTISECCIÓN ---
+    # Conectores avanzados de laboratorio multiseCCIÓN
     if p in ["quo", "quol", "quon"]: return "el cual (que)"
     if p in ["ca", "cap"]: return "porque (ya que)"
     if p in ["ari", "ori", "oro", "oram"]: return "contorno (borde)"
@@ -80,23 +76,22 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p == "chychi": return "pizca"
     if p == "cri": return "filtrar"
     if p in ["ocor", "ocor", "oqueo", "ipdi"]: return "fomento / yema"
-    if p == "uefocl" or p == "uefol": return "agua al fuego (baño maría)"
+    if p == "uefocl" or p == "uefol"]: return "agua al fuego (baño maría)"
 
-    # Desacoplamiento de artículos aglutinados (L- / CH-)
+    # Desacoplamiento de artículos aglutinados
     if p.startswith("l") and len(p) > 2 and p not in ["a", "e", "i", "o", "u"]:
-        significado_raiz = desarmar_palabra_compuesta(p[1:])
-        if significado_raiz and not significado_raiz.startswith("["): return f"la {significado_raiz}"
+        sig_l = desarmar_palabra_compuesta(p[1:])
+        if sig_l and not sig_l.startswith("["): return f"la {sig_l}"
     if p.startswith("ch") and len(p) > 3 and p not in ["a", "e", "i", "o", "u"]:
-        significado_raiz = desarmar_palabra_compuesta(p[2:])
-        if significado_raiz and not significado_raiz.startswith("["): return f"este {significado_raiz}"
+        sig_ch = desarmar_palabra_compuesta(p[2:])
+        if sig_ch and not sig_ch.startswith("["): return f"este {sig_ch}"
 
-    # --- EXTRACTOR VERBAL Y DE TIEMPO ---
+    # Extractores de tiempo, procesos verbales y sufijos abstractos
     if "ctin" in p or "ctan" in p: return "cortando"
     if "quoteo" in p or "quotar" in p or "tolqueol" in p: return "la dosis"
     if "oteodin" in p or "ochdin" in p or "ochin" in p or "ochdad" in p: return "del método (tiempo)"
     if p in ["otin", "otar", "itar"]: return "del reposo"
 
-    # --- ADAPTACIÓN DE SUFIJOS ABSTRACTOS MODIFICADOS ---
     if p.endswith("dad") or p.endswith("din") or p.endswith("di") or p.endswith("ti"):
         raiz = p[:-3] if p.endswith("dad") or p.endswith("din") else p[:-2]
         if raiz in ["quoc", "quoqu", "qued", "ququ", "qqu"]: return "cocimiento"
