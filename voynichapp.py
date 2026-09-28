@@ -6,13 +6,13 @@ import urllib.request
 from voynichdata import aplicar_matriz_sustitucion, motor_prosa_fluida
 
 st.set_page_config(
-    page_title="Intérprete Voynich Total Global",
+    page_title="Intérprete Voynich Ultra Veloz",
     page_icon="📜",
     layout="wide"
 )
 
 st.title("📜 Intérprete Automatizado NLP - Todo el Manuscrito Voynich Real")
-st.write("Mapeo directo del corpus oficial ZL3b-n con simulación de navegación e integración de traducción fragmentada.")
+st.write("Mapeo directo del corpus oficial ZL3b-n optimizado para alta velocidad y limpieza absoluta de etiquetas.")
 
 @st.cache_data(show_spinner=False)
 def descargar_corpus_voynich_real():
@@ -40,21 +40,23 @@ def descargar_corpus_voynich_real():
             
             # Reconocimiento de líneas válidas en formato IVTFF
             if linea.startswith("<f") and ">" in linea:
-                partes = linea.split(">")
-                etiqueta = partes[0].replace("<", "")
-                texto_eva = partes[1].strip()
+                # 1. EXTRAER LA ETIQUETA DEL FOLIO ANTES DE BORRAR LOS < >
+                match_etiqueta = re.search(r'^<(f[^>;]+)', linea)
+                if match_etiqueta:
+                    identificador_folio = match_etiqueta.group(1)
+                else:
+                    continue
                 
-                # Extrae el folio limpio (ej: 'f48r' o 'fros')
-                identificador_folio = re.split(r'[\.;]', etiqueta)[0]
+                # 2. LIMPIEZA ABSOLUTA DE CUALQUIER COSA ENTRE < > 
+                # Esto borra tanto las etiquetas de inicio como los comentarios del tipo <!10:30> o <$
+                texto_eva = re.sub(r'<[^>]*>', ' ', linea)
                 
-                # --- LIMPIEZA AVANZADA DE METADATOS (Especial para fros) ---
-                texto_eva = re.sub(r'<![^>]*>', '', texto_eva)  # Elimina variables tipo <!10:30>, <!Spiral>, etc.
-                texto_eva = re.sub(r'<[^>]*>', '', texto_eva)   # Quita cualquier otra etiqueta interna residual
-                texto_eva = re.sub(r'#.*$', '', texto_eva)       # Quita comentarios del transcriptor
-                texto_eva = re.sub(r'[{}]', '', texto_eva)         # Quita llaves paleográficas
-                texto_eva = texto_eva.replace("<$", "").replace("$", "") # Limpieza de cierres de línea
+                # 3. Limpiezas secundarias de anotaciones internas del archivo de texto
+                texto_eva = re.sub(r'#.*$', '', texto_eva)
+                texto_eva = re.sub(r'[{}]', '', texto_eva)
+                texto_eva = texto_eva.replace("$", "").strip()
                 
-                if texto_eva.strip():
+                if texto_eva:
                     if identificador_folio in corpus:
                         corpus[identificador_folio] += " " + texto_eva
                     else:
@@ -79,7 +81,7 @@ opciones_selector = ["Manual (Texto Libre)"]
 if mapa_completo_folios:
     def ordenar_clave(clave):
         numeros = re.findall(r'\d+', clave)
-        num = int(numeros[0]) if numeros else 999  # Folios como 'fros' van al final
+        num = int(numeros) if numeros else 999  # Folios como 'fros' van al final
         letra = clave[-1] if clave else ''
         return (num, letra)
         
@@ -109,7 +111,7 @@ if st.button("Ejecutar Análisis Paleográfico y Traducción AI", type="primary"
             texto_filtrado = aplicar_matriz_sustitucion(texto_usuario)
             datos_tabla, oracion_completa = motor_prosa_fluida(texto_filtrado, idioma=cod_idioma)
             
-        st.success("¡Pipeline dinámico completado con éxito!")
+        st.success("¡Pipeline completado en milisegundos!")
         
         st.markdown("### 🏛️ Traducción de Prosa Continua Contextual")
         st.write("La IA intenta conectar tus raíces convertidas en Latín para armar una frase con sentido:")
