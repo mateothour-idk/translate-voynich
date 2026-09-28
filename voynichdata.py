@@ -40,18 +40,23 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     """ Desarma morfológicamente las palabras del efecto eco del manuscrito """
     p = palabra.lower()
     
-    # --- CONECTORES Y LETRAS SUELTAS CONTRACCIÓN ROMANCE ---
-    if p == "c": return "con"
-    if p == "i": return "en"
-    if p == "o": return "o"
+    # --- CONECTORES, DETERMINANTES Y CONTRACCIONES ROMANCES ---
+    if p in ["c", "qui", "oquin"]: return "que"
+    if p in ["i", "din"]: return "en"
+    if p in ["o", "qui"]: return "o"
     if p == "l": return "el"
-    if p in ["ar", "al", "dal", "del", "dil"]: return "del"
-    if p in ["da", "di", "din"]: return "de"
+    if p in ["ar", "al", "dal", "del", "dil", "dol", "odal", "ldi"]: return "del"
+    if p in ["da", "di", "odi"]: return "de"
     if p == "qua": return "agua"
     if p in ["olin", "olin"]: return "aceitoso"
-    if p == "itiol": return "un poco (un hilo)"
+    if p in ["itiol", "itidad", "itidad"]: return "un poco"
+    
+    # --- NUEVAS REGLAS: TRATAMIENTO DE TIEMPO, DOSIS Y VERBOS ---
+    if "ctin" in p or "ctan" in p: return "cortando"
+    if "quoteo" in p or "quotar" in p or "tolqueol" in p: return "la dosis"
+    if "oteodin" in p or "ochdin" in p: return "del método (tiempo)"
 
-    # --- ENLACE DIRECTO DE LAS PALABRAS RESTANTES (Efecto Eco / Sufijos) ---
+    # --- ENLACE DIRECTO DE SUFIJOS (Efecto Eco / Sufijos) ---
     if "itedad" in p or "itidad" in p or "ititad" in p: return "repetición (proceso)"
     if "tedad" in p or "tedin" in p: return "entibiamiento"
     if "shdad" in p or "shdi" in p: return "jarabe (elixir)"
