@@ -39,18 +39,11 @@ def resolver_contexto_palabra(palabra: str) -> str:
     return p_baja
 
 def calcular_distancia_levenshtein(str1, str2):
-    """ Mide la similitud ortográfica mediante matriz numérica 100% independiente """
+    """ Mide la similitud ortográfica entre dos términos mediante matriz numérica 100% independiente """
     m, n = len(str1), len(str2)
-    
-    # Inicialización limpia de sublistas independientes con ceros
     dp = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
-    
-    # FIX REAL REPARADO: Indexación correcta usando [i][0] y [0][j] [INDEX]
-    for i in range(m + 1): 
-        dp[i][0] = i
-    for j in range(n + 1): 
-        dp[0][j] = j
-    
+    for i in range(m + 1): dp[i][0] = i
+    for j in range(n + 1): dp[0][j] = j
     for i in range(1, m + 1):
         for j in range(1, n + 1):
             if str1[i - 1] == str2[j - 1]:
@@ -90,7 +83,15 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p == "cri": return "filtrar"
     if p in ["ocor", "ocor", "oqueo"]: return "humedad / yema"
     if p == "ipdi": return "fomento (aplicación)"
-    if p == "uefocl": return "agua al fuego (baño maría)"
+    if p == "uefocl" or p == "uefol": return "agua al fuego (baño maría)"
+
+    # --- NUEVA CAPA DE DESACOPLAMIENTO DE ARTÍCULO 'L' AGLUTINADO ---
+    if p.startswith("l") and len(p) > 2 and p[1] not in ["a", "e", "i", "o", "u"]:
+        raiz_restante = p[1:]
+        # Intenta resolver la raíz restante quitando la L inicial pegada
+        significado_raiz = desarmar_palabra_compuesta(raiz_restante)
+        if significado_raiz and not significado_raiz.startswith("["):
+            return f"la {significado_raiz}"
 
     # --- 3. EXTRACTOR VERBAL Y DE TIEMPO ---
     if "ctin" in p or "ctan" in p: return "cortando"
@@ -98,15 +99,18 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if "oteodin" in p or "ochdin" in p or "ochin" in p: return "del método (tiempo)"
     if p in ["otin", "otar", "itar"]: return "del reposo"
 
-    # --- 4. TRATAMIENTO AUTOMÁTICO DE SUFIJOS ABSTRACTOS ---
+    # --- 4. TRATAMIENTO AUTOMÁTICO DE SUFIJOS ABSTRACTOS (-DAD / -DI / -TI) ---
     if p.endswith("dad") or p.endswith("din") or p.endswith("di") or p.endswith("ti"):
         raiz = p[:-3] if p.endswith("dad") or p.endswith("din") else p[:-2]
         if raiz in ["quoc", "quoqu", "qued"]: return "cocimiento"
-        if raiz == "shed" or raiz == "sheo" or raiz == "she": return "germinación"
+        if raiz in ["shed", "sheo", "she"]: return "germinación"
         if raiz == "ofe": return "dosificación"
         if raiz == "if": return "eficacia"
         if raiz == "opal": return "opacidad"
         if raiz == "lqui": return "liquidez"
+        if raiz == "po" or raiz == "pod": return "propiedad (potencia)"
+        if raiz == "ited" or raiz == "it": return "repetición (proceso)"
+        if len(raiz) > 1: return f"{raiz}dad"
 
     # --- 5. ALGORITMO LOCAL DE RESPALDO (Aproximación por Levenshtein) ---
     glosario_claves = {"piue": "más", "codar": "cocer", "oleis": "aceites", "cipi": "tallos", 
@@ -116,7 +120,6 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
         if calcular_distancia_levenshtein(p, clave) <= 1:
             return significado
 
-    # Si es una letra residual suelta, la elimina para la lectura fluida
     if len(p) == 1: return ""
 
     return f"[{palabra.upper()}]"
