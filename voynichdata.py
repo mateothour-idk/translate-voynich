@@ -4,20 +4,29 @@ import re
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     if not texto_eva:
         return ""
+    
+    # --- FILTRO CRÍTICO: LIMPIEZA DE RUIDO ACADÉMICO ---
     texto = texto_eva.lower()
     texto = re.sub(r'[0-9\*\-\/\=\+\%\&\$\#\_\@]', ' ', texto)
     texto = re.sub(r'\s+', ' ', texto).strip()
     
+    # --- BUCLE DE RETRANSLITERACIÓN RECURSIVA ---
     while True:
         texto_anterior = texto
+        
+        # --- 1. REGLAS DE 4 CARACTERES (Tetragramas) ---
         texto = texto.replace("pcee", "pi")
         texto = texto.replace("qok", "quoqu")
-        texto = texto.replace("iii", "ee") # Tu regla recursiva: iii -> ee -> i
+        
+        # --- 2. REGLAS DE 3 CARACTERES (Trigramas) ---
+        texto = texto.replace("iii", "ee")     # Permite la evolución recursiva iii -> ee -> i
         texto = texto.replace("eee", "ie")     
         texto = texto.replace("dce", "dic")
         texto = texto.replace("cee", "ci")
         texto = texto.replace("eey", "ai")     
         texto = texto.replace("pcs", "pes")
+        
+        # --- 3. REGLAS DE 2 CARACTERES (Bigramas y Dígrafos) ---
         texto = texto.replace("pc", "p")
         texto = texto.replace("ps", "p")
         texto = texto.replace("cp", "p")
@@ -25,10 +34,14 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = texto.replace("tc", "ch")     
         texto = texto.replace("ct", "cut")
         texto = texto.replace("ph", "f")
-        texto = texto.replace("sh", "s")       
+        texto = texto.replace("sh", "x")       # Restaurado por tu listado actual
         texto = texto.replace("th", "t")
         texto = texto.replace("ch", "c")      
         texto = texto.replace("ck", "qu")
+        texto = texto.replace("tt", "t")       # Nueva regla añadida
+        texto = texto.replace("ts", "s")       # Nueva regla añadida
+        
+        # Reglas Vocálicas y Consonánticas secundarias de 2 letras
         texto = texto.replace("ee", "i")
         texto = texto.replace("oe", "ue")     
         texto = texto.replace("iu", "u")
@@ -41,9 +54,13 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = texto.replace("ey", "a")      
         texto = texto.replace("ce", "c")
         texto = texto.replace("ai", "i")      
+        
+        # --- 4. REGLAS DE 1 CARÁCTER CON CONTEXTO (Y inicial/final) ---
         texto = re.sub(r'\by\b', 'i', texto) 
         texto = re.sub(r'\by', 'i', texto)  
         texto = re.sub(r'y\b', 'i', texto)  
+        
+        # --- 5. SUSTITUCIÓN FINAL DE CONSONANTES Q / K ---
         texto = texto.replace("k", "qu")
         texto = texto.replace("q", "qu")
         texto = texto.replace("m", "m")       
@@ -52,10 +69,14 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = texto.replace("n", "n")       
         texto = texto.replace("o", "o")       
         texto = texto.replace("a", "a")       
+        
+        # --- 6. LIMPIEZA TOTAL DE HACHES (H) HUÉRFANAS ---
         texto = texto.replace("h", "")
         texto = texto.replace("quu", "qu")
+        
         if texto == texto_anterior:
             break
+            
     return texto.strip()
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
