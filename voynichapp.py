@@ -3,10 +3,8 @@ import re
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
-# Selector de idioma global en la barra lateral
 idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Español", "English"])
 
-# Estructura de textos para la interfaz de usuario libre de formatos decorativos o emojis
 IFACE = {
     "Español": {
         "titulo": "Traductor Universal del Manuscrito Voynich (Sincronización Total)",
@@ -46,7 +44,6 @@ IFACE = {
     }
 }
 
-# Glosario maestro real indexado en minúsculas y sin acentos para coincidencia infalible
 DICCIONARIO_ES = {
     "pui": "la planta", "cuta": "la corteza", "oarur": "el aroma", "poisoda": "la planta medicinal",
     "quedy": "el elemento", "con": "con", "su": "su", "quoqu": "por lo cual", "caur": "el tallo",
@@ -110,7 +107,6 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
-# Generador de folios
 CORPUS_MANUSCRITO = {
     "1r": ["pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes oas", "tcbaor ceor ctaiin cseey otair opas kedy chidí ceon ceey"],
     "20r": ["kdceody ceopy ceeey qotceoy qotoeey dceorceau ceodey cteey ceotol odaur", "teeodau cseey cpair osaiin yteeoey cseey cpaiin oaiin daiis"],
@@ -133,7 +129,6 @@ for i in range(1, 117):
                 lineas_folio.append(f"{w1} {w2} {w3} ceon ceey cuta ckaur cedy")
             CORPUS_MANUSCRITO[key] = lineas_folio
 
-# --- MATRIZ FONÉTICA CORREGIDA CON ENLACE DE SEMEJANZA ---
 def traducir_a_romance(texto):
     reglas = {
         'pcee': 'pi', 'pdr': 'pedr', 'pcs': 'pes', 'qok': 'quoqu', 'dceorceau': 'dicorcau',
@@ -157,8 +152,6 @@ def traducir_a_romance(texto):
         for k in sorted(reglas.keys(), key=len, reverse=True):
             texto_linea = texto_linea.replace(k, reglas[k])
             
-        # --- NUEVA COMPRESIÓN COHERENTE DE LA COLUMNA DE FONÉTICA ---
-        # Evalúa y corrige dinámicamente cada término hacia la palabra más semejante del diccionario maestro
         palabras_linea = texto_linea.split()
         palabras_corregidas = []
         for pal in palabras_linea:
@@ -243,7 +236,6 @@ def generar_espanol_sintactico(texto_romance, lang):
             
     return "\n\n".join(lineas_traducidas)
 
-# --- DIVISION DE PESTAÑAS ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
