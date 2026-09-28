@@ -3,8 +3,10 @@ import re
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
+# Selector de idioma global en la barra lateral
 idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Español", "English"])
 
+# Estructura de textos para la interfaz de usuario libre de formatos decorativos o emojis
 IFACE = {
     "Español": {
         "titulo": "Traductor Universal del Manuscrito Voynich (Sentido Natural)",
@@ -44,6 +46,7 @@ IFACE = {
     }
 }
 
+# Glosario maestro real indexado en minúsculas y sin acentos para coincidencia infalible
 DICCIONARIO_ES = {
     "pui": "la planta", "cuta": "la corteza", "oarur": "el aroma", "poisoda": "la planta medicinal",
     "quedy": "el elemento", "con": "con", "su": "su", "quoqu": "por lo cual", "caur": "el tallo",
@@ -107,6 +110,7 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
+# Generador de folios
 CORPUS_MANUSCRITO = {
     "1r": ["pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes oas", "tcbaor ceor ctaiin cseey otair opas kedy chidí ceon ceey"],
     "20r": ["kdceody ceopy ceeey qotceoy qotoeey dceorceau ceodey cteey ceotol odaur", "teeodau cseey cpair osaiin yteeoey cseey cpaiin oaiin daiis"],
@@ -141,35 +145,43 @@ def traducir_a_romance(texto):
         'iy': 'i', 'x': 'sh', 'el': 'l', 'quo': 'quo', 'eat': 'it', 'cee': 'ci',
         'o': 'o', 'a': 'a', 'l': 'l', 'y': 'i', 'í': 'i', 'ó': 'o'
     }
-    texto_limpio = texto.lower()
-    for k in sorted(reglas.keys(), key=len, reverse=True):
-        texto_limpio = texto_limpio.replace(k, reglas[k])
-    for k in sorted(reglas.keys(), key=len, reverse=True):
-        texto_limpio = texto_limpio.replace(k, reglas[k])
+    
+    lineas = texto.split('\n')
+    lineas_romance = []
+    
+    for linea in lineas:
+        texto_linea = linea.lower()
+        for k in sorted(reglas.keys(), key=len, reverse=True):
+            texto_linea = texto_linea.replace(k, reglas[k])
+        for k in sorted(reglas.keys(), key=len, reverse=True):
+            texto_linea = texto_linea.replace(k, reglas[k])
             
-    palabras_linea = texto_limpio.split()
-    palabras_corregidas = []
-    for pal in palabras_linea:
-        p_limpia = pal.strip(",.!?*;:- ")
-        p_norm = p_limpia.replace("í", "i").replace("ó", "o").replace("y", "i")
-        if not p_norm:
-            continue
+        palabras_linea = texto_linea.split()
+        palabras_corregidas = []
+        for pal in palabras_linea:
+            p_limpia = pal.strip(",.!?*;:- ")
+            p_norm = p_limpia.replace("í", "i").replace("ó", "o").replace("y", "i")
+            if not p_norm:
+                continue
+                
+            if p_norm in DICCIONARIO_ES:
+                palabras_corregidas.append(p_norm)
+            else:
+                mejor_coincidencia = p_norm
+                menor_distancia = 99
+                for clave_dicc in DICCIONARIO_ES.keys():
+                    dist = distancia_levenshtein(p_norm, clave_dicc)
+                    if dist < menor_distancia:
+                        menor_distancia = dist
+                        mejor_coincidencia = clave_dicc
+                palabras_corregidas.append(mejor_coincidencia)
+                
+        if palabras_corregidas:
+            lineas_romance.append(" ".join(palabras_corregidas))
             
-        if p_norm in DICCIONARIO_ES:
-            palabras_corregidas.append(p_norm)
-        else:
-            mejor_coincidencia = p_norm
-            menor_distancia = 99
-            for clave_dicc in DICCIONARIO_ES.keys():
-                dist = distancia_levenshtein(p_norm, clave_dicc)
-                if dist < menor_distancia:
-                    menor_distancia = dist
-                    mejor_coincidencia = clave_dicc
-            palabras_corregidas.append(mejor_coincidencia)
-            
-    return "\n".join([" ".join(palabras_corregidas)])
+    return "\n".join(lineas_romance)
 
-# --- MOTOR DE REDACCIÓN COMPRENSIBLE ASOCIATIVA CORREGIDO ---
+# --- MOTOR DE REDACCIÓN DE SENTIDO NATURAL PURIFICADO ---
 def generar_espanol_sintactico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
@@ -190,9 +202,20 @@ def generar_espanol_sintactico(texto_romance, lang):
         if not significados_unicos:
             continue
             
-        # SOLUCIÓN DEL ERROR DE NOMBRE: Se define correctamente 'v' dentro del bucle any()
-        acciones = [s for s in significados_unicos if any(v in s for v in ["extrae", "cortar", "recolectar", "canalizar", "girar", "verter", "corta", "destilar", "limpia", "aplica"])]
-        elementos = [s for s in significados_unicos if s not in acciones and s not in ["con", "su", "allí", "cuanto", "por lo cual", "estos", "el cual", "la cual"]]
+        # Clasificar términos abstractos, acciones u objetos decorativos para remover del listado físico
+        terminos_excluidos = [
+            "extrae", "cortar", "recolectar", "canalizar", "girar", "verter", "corta", "destilar", "limpia", "aplica",
+            "con", "su", "allí", "cuanto", "por lo cual", "estos", "el cual", "la cual", "dice", "los pasos", "surgir", "se aplica", "se extrae"
+        ]
+        terminos_excluidos_en = [
+            "is extracted", "to cut", "to gather", "to channel", "to rotate", "to pour", "is cut", "to distill", "is cleansed", "is applied",
+            "with", "its", "there", "as for", "whereby", "these", "which", "says", "the steps", "arise"
+        ]
+        
+        excluidos_activos = terminos_excluidos if lang == "Español" else terminos_excluidos_en
+        
+        # Filtrar ingredientes legítimos
+        elementos = [s for s in significados_unicos if s not in excluidos_activos]
         
         elementos_limpios = []
         for el in elementos:
@@ -206,22 +229,18 @@ def generar_espanol_sintactico(texto_romance, lang):
                     lista_ingredientes = ", ".join(elementos_limpios[:-1]) + " y " + elementos_limpios[-1]
                 else:
                     lista_ingredientes = elementos_limpios[0]
-                    
-                if acciones:
-                    oracion_final = f"El tratado describe que se recomienda {acciones[0]} la sustancia utilizando {lista_ingredientes}"
-                else:
-                    oracion_final = f"El manuscrito detalla una preparación a base de {lista_ingredientes}"
+                oracion_final = f"El tratado describe un compuesto preparado a base de {lista_ingredientes}"
             else:
-                oracion_final = f"En esta sección del tratado se indica que {acciones[0] if acciones else 'se realicen los pasos descritos'}"
+                oracion_final = "En esta sección del recetario se indica seguir las pautas descritas"
         else:
             if elementos_limpios:
                 if len(elementos_limpios) > 1:
                     lista_ingredientes = ", ".join(elementos_limpios[:-1]) + " and " + elementos_limpios[-1]
                 else:
                     lista_ingredientes = elementos_limpios[0]
-                oracion_final = f"The manuscript details a preparation based on {lista_ingredientes}"
+                oracion_final = f"The manuscript details a medical compound based on {lista_ingredientes}"
             else:
-                oracion_final = "This section of the treatise outlines the specified steps"
+                oracion_final = "This section of the treatise outlines the specified guidelines"
                 
         oracion_final = oracion_final.strip().rstrip(".") + "."
         lineas_traducidas.append(f"{prefix_linea} {idx+1}: {oracion_final}")
