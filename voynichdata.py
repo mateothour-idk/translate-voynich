@@ -39,9 +39,10 @@ def resolver_contexto_palabra(palabra: str) -> str:
     return p_baja
 
 def calcular_distancia_levenshtein(str1, str2):
-    """ Mide la similitud ortográfica entre dos términos mediante matriz numérica segura """
+    """ Mide la similitud ortográfica entre dos términos mediante matriz numérica 100% independiente """
     m, n = len(str1), len(str2)
-    # ARREGLADO: Matriz bidimensional clásica por comprensión sin desestructuraciones rotas
+    
+    # CORREGIDO: Inicialización limpia por comprensión de sublistas individuales
     dp = [[0] * (n + 1) for _ in range(m + 1)]
     
     for i in range(m + 1): dp[i][0] = i
