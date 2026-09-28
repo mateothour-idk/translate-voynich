@@ -4,29 +4,20 @@ import re
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     if not texto_eva:
         return ""
-    
-    # --- FILTRO CRÍTICO: LIMPIEZA DE RUIDO ACADÉMICO ---
     texto = texto_eva.lower()
     texto = re.sub(r'[0-9\*\-\/\=\+\%\&\$\#\_\@]', ' ', texto)
     texto = re.sub(r'\s+', ' ', texto).strip()
     
-    # --- BUCLE DE RETRANSLITERACIÓN RECURSIVA ---
     while True:
         texto_anterior = texto
-        
-        # --- 1. REGLAS DE 4 CARACTERES (Tetragramas) ---
         texto = texto.replace("pcee", "pi")
         texto = texto.replace("qok", "quoqu")
-        
-        # --- 2. REGLAS DE 3 CARACTERES (Trigramas) ---
-        texto = texto.replace("iii", "ee")     # Permite la evolución recursiva iii -> ee -> i
+        texto = texto.replace("iii", "ee")     
         texto = texto.replace("eee", "ie")     
         texto = texto.replace("dce", "dic")
         texto = texto.replace("cee", "ci")
         texto = texto.replace("eey", "ai")     
         texto = texto.replace("pcs", "pes")
-        
-        # --- 3. REGLAS DE 2 CARACTERES (Bigramas y Dígrafos) ---
         texto = texto.replace("pc", "p")
         texto = texto.replace("ps", "p")
         texto = texto.replace("cp", "p")
@@ -34,14 +25,12 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = texto.replace("tc", "ch")     
         texto = texto.replace("ct", "cut")
         texto = texto.replace("ph", "f")
-        texto = texto.replace("sh", "x")       # Restaurado por tu listado actual
+        texto = texto.replace("sh", "x")       
         texto = texto.replace("th", "t")
         texto = texto.replace("ch", "c")      
         texto = texto.replace("ck", "qu")
-        texto = texto.replace("tt", "t")       # Nueva regla añadida
-        texto = texto.replace("ts", "s")       # Nueva regla añadida
-        
-        # Reglas Vocálicas y Consonánticas secundarias de 2 letras
+        texto = texto.replace("tt", "t")       
+        texto = texto.replace("ts", "s")       
         texto = texto.replace("ee", "i")
         texto = texto.replace("oe", "ue")     
         texto = texto.replace("iu", "u")
@@ -54,13 +43,9 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = texto.replace("ey", "a")      
         texto = texto.replace("ce", "c")
         texto = texto.replace("ai", "i")      
-        
-        # --- 4. REGLAS DE 1 CARÁCTER CON CONTEXTO (Y inicial/final) ---
         texto = re.sub(r'\by\b', 'i', texto) 
         texto = re.sub(r'\by', 'i', texto)  
         texto = re.sub(r'y\b', 'i', texto)  
-        
-        # --- 5. SUSTITUCIÓN FINAL DE CONSONANTES Q / K ---
         texto = texto.replace("k", "qu")
         texto = texto.replace("q", "qu")
         texto = texto.replace("m", "m")       
@@ -69,14 +54,10 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = texto.replace("n", "n")       
         texto = texto.replace("o", "o")       
         texto = texto.replace("a", "a")       
-        
-        # --- 6. LIMPIEZA TOTAL DE HACHES (H) HUÉRFANAS ---
         texto = texto.replace("h", "")
         texto = texto.replace("quu", "qu")
-        
         if texto == texto_anterior:
             break
-            
     return texto.strip()
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
@@ -175,6 +156,8 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             palabra_para_oracion = traducida + f"({palabra[2:].upper()})"
             tipo = "Match Raíz (2L)" if idioma == "es" else "Root Match (2L)"
         else:
+            # 1. Intentar Anagramas primero
+            anagrama_encontrado = False
             longitud_analisis = min(len(palabra), 4)
             for l in range(longitud_analisis, 2, -1):
                 segmento_ordenado = "".join(sorted(palabra[:l]))
@@ -184,7 +167,20 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
                     excedente = palabra[l:].upper()
                     palabra_para_oracion = traducida + (f"({excedente})" if excedente else "") + "*"
                     tipo = f"Anagrama Raíz ({raiz_encontrada.upper()})" if idioma == "es" else f"Anagram Match ({raiz_encontrada.upper()})"
+                    anagrama_encontrado = True
                     break
+            
+            # 2. SISTEMA DE RESCATE: Si sigue siendo incógnita, busca proximidad fonética consonántica
+            if not anagrama_encontrado:
+                consonantes_palabra = "".join([c for c in palabra if c not in 'aeiouíue'])
+                if consonantes_palabra:
+                    for raiz in diccionario_maestro.keys():
+                        consonantes_raiz = "".join([c for c in raiz if c not in 'aeiouíue'])
+                        if consonantes_raiz and consonantes_palabra.startswith(consonantes_raiz[:2]):
+                            traducida = diccionario_maestro[raiz][idioma]
+                            palabra_para_oracion = traducida + "?"
+                            tipo = f"Aproximación Fonética ({raiz.upper()})" if idioma == "es" else f"Phonetic Match ({raiz.upper()})"
+                            break
             
         analisis_estructurado.append({
             "Morfología Filtrada": palabra.upper(),
