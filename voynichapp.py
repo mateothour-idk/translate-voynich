@@ -20,7 +20,7 @@ def descargar_corpus_voynich_real():
     Descarga en tiempo real la transcripción paleográfica real completa del 
     manuscrito (v01 de Landini) y limpia los códigos de línea.
     """
-    url_corpus = "https://voynich.nu"
+    url_corpus = "https://www.voynich.nu/data/ZL3b-n.txt"
     corpus = {}
     
     try:
