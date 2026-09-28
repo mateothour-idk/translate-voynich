@@ -82,7 +82,6 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     return texto.strip()
 
 def resolver_contexto_palabra(palabra: str) -> str:
-    """ Simplifica los términos antes de pasarlos a la tabla """
     p_baja = palabra.lower()
     if "quu" in p_baja:
         p_baja = p_baja.replace("quu", "qu")
@@ -93,27 +92,29 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     analisis_estructurado = []
     target_lang = "es" if idioma == "es" else "en"
     
-    # Glosario Maestro Sincronizado local de apoyo
+    # Glosario local robustecido con raíces fonéticas medievales comunes del texto
     glosario_maestro = {
         "piue": "más", "piu": "más", "codar": "cocer", "oleis": "aceites", 
         "cipi": "tallos", "seol": "seco", "sequieo": "secado", "otolsai": "extraer",
         "senior": "señor", "olse": "aceitoso", "quodam": "un cierto", "oram": "borde",
         "iquiol": "jugo", "otio": "reposo", "cute": "piel (corteza)", "cior": "mover", 
         "cioquai": "infusión", "cut": "cortar", "quin": "quien (que)", "qin": "que",
-        "tsheos": "esencia"
+        "tsheos": "esencia", "ceepy": "cepas", "ceeor": "cera / aceites",
+        "ceodar": "cocción", "olees": "oleos (aceites)", "qodaiin": "código"
     } if target_lang == "es" else {
         "piue": "more", "piu": "more", "codar": "cook", "oleis": "oils", 
         "cipi": "stems", "seol": "dry", "sequieo": "dried", "otolsai": "extract",
         "senior": "master", "olse": "oily", "quodam": "a certain", "oram": "edge",
         "iquiol": "juice", "otio": "rest", "cute": "skin (bark)", "cior": "move", 
         "cioquai": "decoction", "cut": "cut", "quin": "which", "qin": "which",
-        "tsheos": "essence"
+        "tsheos": "essence", "ceepy": "roots", "ceeor": "wax", "ceodar": "decoction",
+        "olees": "oils", "qodaiin": "code"
     }
     
     if not palabras:
         return [], ""
 
-    # 1. TRADUCCIÓN DE LA ORACIÓN EN BLOQUE CON DEEPL / GOOGLE
+    # 1. TRADUCCIÓN DE LA ORACIÓN EN BLOQUE CON APALANCAMIENTO EN AUTOMÁTICO
     palabras_traducidas_oracion = []
     for palabra in palabras:
         palabra_optimizada = resolver_contexto_palabra(palabra)
@@ -121,12 +122,12 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             palabras_traducidas_oracion.append(glosario_maestro[palabra_optimizada])
         else:
             try:
-                # Intenta usar DeepL sin clave primero
-                trad = DeeplTranslator(source='la', target=target_lang).translate(palabra_optimizada)
+                # Si no está en el glosario, forzamos la detección inteligente con DeepL
+                trad = DeeplTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
                 palabras_traducidas_oracion.append(trad)
             except Exception:
                 try:
-                    # Respaldo automático gratuito si DeepL falla
+                    # Respaldo contextual ágil con Google Translator en modo automático
                     trad_alt = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
                     palabras_traducidas_oracion.append(trad_alt)
                 except Exception:
@@ -134,7 +135,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
 
     oracion_completa = " ".join(palabras_traducidas_oracion)
 
-    # 2. CONSTRUCCIÓN DE LA TABLA INTERACTIVA DE STREAMLIT
+    # 2. CONSTRUCCIÓN DE LA TABLA INTERACTIVA
     for palabra in palabras[:30]:
         if not palabra.strip():
             continue
@@ -146,11 +147,12 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             tipo_match = "Glosario Romance (Estructural)"
         else:
             try:
-                trad_api = DeeplTranslator(source='la', target=target_lang).translate(palabra_optimizada)
-                tipo_match = "Motor DeepL Neural NLP"
+                # DeepL en auto para captar raíces de italiano antiguo, provenzal y latín vulgar
+                trad_api = DeeplTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
+                tipo_match = "DeepL Neural NLP"
                 if trad_api.lower() == palabra_optimizada.lower():
                     trad_api = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
-                    tipo_match = "Aproximación AI Contextual"
+                    tipo_match = "Google AI Contextual"
                 significado_individual = trad_api
             except Exception:
                 try:
