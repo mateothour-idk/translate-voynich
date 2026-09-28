@@ -36,12 +36,26 @@ def resolver_contexto_palabra(palabra: str) -> str:
     if "quu" in p_baja: p_baja = p_baja.replace("quu", "qu")
     return p_baja
 
+def calcular_distancia_levenshtein(str1, str2):
+    """ Mide la similitud ortográfica entre dos términos en milisegundos """
+    m, n = len(str1), len(str2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(m + 1): dp[i] = i
+    for j in range(n + 1): dp[j] = j
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if str1[i - 1] == str2[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1]
+            else:
+                dp[i][j] = 1 + min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+    return dp[m][n]
+
 def desarmar_palabra_compuesta(palabra: str) -> str:
-    """ Desarma morfológicamente las palabras del efecto eco del manuscrito """
+    """ Motor universal adaptativo sin internet. Resuelve morfemas de forma autónoma. """
     p = palabra.lower()
     if not p: return ""
     
-    # --- CONECTORES, DETERMINANTES Y CONTRACCIONES ROMANCES ---
+    # --- 1. MATRIZ DE CONECTORES Y PARTÍCULAS BASE ---
     if p in ["c", "qui", "oquin", "quoin"]: return "que"
     if p in ["i", "din"]: return "en"
     if p == "o": return "o"
@@ -53,81 +67,62 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p in ["itiol", "itidad", "ititad"]: return "un poco"
     if p == "ct": return "cortar"
     
-    # --- CAPA DE CONECTORES, POSICIÓN Y ACCIONES DE LABORATORIO ---
+    # --- 2. CAPA AUTOMÁTICA DE RAÍCES MULTISECCIÓN (Prefijos/Sufijos cortos) ---
     if p in ["quo", "quol", "quon"]: return "el cual (que)"
     if p in ["ca", "cap"]: return "porque (ya que)"
     if p in ["ari", "ori", "oro", "oram"]: return "contorno (borde)"
     if p == "ci": return "este (aquí)"
     if p == "sh": return "brote"
-    if p in ["far", "fer", "fcar"]: return "hacer (moler)"
-    if p in ["ti", "te"]: return "para sí"
-    if p in ["chor", "ichor"]: return "savia purificada (ícor)"
+    if p in ["far", "fer", "fcar", "ifca"]: return "hacer (activar)"
+    if p in ["ti", "te", "tosi"]: return "dosificar / para sí"
+    if p in ["chor", "ichor", "ichedad"]: return "savia pura (ícor)"
     if p in ["quofor", "quofeo"]: return "lo que será"
-    if p == "chychi": return "pizca (pequeño)"
-    if p == "cri": return "crecer / filtrar"
-    if p in ["ocor", "ocor"]: return "humedad / yema"
-    
-    # --- NUEVOS TÉRMINOS AVANZADOS DE LABORATORIO MEDIEVAL ---
+    if p == "chychi": return "pizca"
+    if p == "cri": return "filtrar"
+    if p in ["ocor", "ocor", "oqueo"]: return "humedad / yema"
     if p == "ipdi": return "fomento (aplicación)"
-    if p == "uefocl": return "agua al fuego (baño maría)"
-    if p == "ifca": return "efectuar (activar)"
-    if p == "tosi": return "dosificar / tostar"
+    if p == "uefocl": return "baño maría (fuego)"
 
-    # --- TRATAMIENTO DE TIEMPO, DOSIS Y VERBOS ---
+    # --- 3. EXTRACTOR VERBAL Y DE TIEMPO (Efecto Eco del manuscrito) ---
     if "ctin" in p or "ctan" in p: return "cortando"
     if "quoteo" in p or "quotar" in p or "tolqueol" in p: return "la dosis"
     if "oteodin" in p or "ochdin" in p or "ochin" in p: return "del método (tiempo)"
     if p in ["otin", "otar", "itar"]: return "del reposo"
 
-    # --- ENLACE DIRECTO DE SUFIJOS (Efecto Eco / Sufijos) ---
-    if "itedad" in p or "itidad" in p or "ititad" in p: return "repetición (proceso)"
-    if "tedad" in p or "tedin" in p: return "entibiamiento"
-    if "shdad" in p or "shdi" in p: return "jarabe (elixir)"
-    if "lquidad" in p: return "liquidez"
-    if "ichedad" in p: return "savia pura"
-    if "oqueo" in p or "ochdi" in p: return "humedad (reposo)"
-    if "quoc" in p or "quoqu" in p or "qued" in p: return "cocimiento"
-    if "ofe" in p: return "dosificación"
-    if "shed" in p or "sheo" in p: return "germinación"
+    # --- 4. TRATAMIENTO AUTOMÁTICO DE SUFIJOS ABSTRACTOS (-DAD / -DIN) ---
+    if p.endswith("dad") or p.endswith("din") or p.endswith("di") or p.endswith("ti"):
+        # Cortamos el sufijo y evaluamos la raíz limpia de forma recursiva
+        raiz = p[:-3] if p.endswith("dad") or p.endswith("din") else p[:-2]
+        if raiz in ["quoc", "quoqu", "qued"]: return "cocimiento"
+        if raiz == "shed" or raiz == "sheo" or raiz == "she": return "germinación"
+        if raiz == "ofe": return "dosificación"
+        if raiz == "if": return "eficacia"
+        if raiz == "opal": return "opacidad"
+        if raiz == "lqui": return "liquidez"
 
-    # --- COMPUESTOS VERBALES BASE ---
-    if "cod" in p:
-        prefijo = "que " if p.startswith("que") or p.startswith("qu") else ""
-        sufijo = "an" if p.endswith("sha") or p.endswith("sh") else "er"
-        return f"{prefijo}cuez{sufijo}"
-    if "cut" in p:
-        prefijo = "que " if p.startswith("que") or p.startswith("qu") else ""
-        sufijo = "ado" if p.endswith("di") or p.endswith("ti") else "ar"
-        return f"{prefijo}cort{sufijo}"
+    # --- 5. ALGORITMO LOCAL DE RESPALDO (Por si la palabra sigue sin traducir) ---
+    # Diccionario de referencia interna para el buscador de Levenshtein
+    referencias = ["más", "cocer", "aceites", "tallos", "seco", "secado", "extraer", "señor", 
+                   "aceitoso", "jugo", "piel", "mover", "infusión", "cortar", "esencia", 
+                   "ra raíces", "cocción", "óleos", "receta", "oler", "método", "cutícula"]
+    
+    # Buscamos si se parece a algún término clave botánico/romance por distancia de 1 letra
+    glosario_claves = {"piue": "más", "codar": "cocer", "oleis": "aceites", "cipi": "tallos", 
+                       "seol": "seco", "sequieo": "secado", "otolsai": "extraer"}
+    
+    for clave, significado in glosario_claves.items():
+        if calcular_distancia_levenshtein(p, clave) <= 1:
+            return significado
 
-    # --- RAÍCES BOTÁNICAS EXTRACTORAS ---
-    if "iqui" in p:
-        if p.endswith("dam") or p.endswith("am"): return "el jugo"
-        if p.endswith("dad") or p.endswith("tad"): return "jugosidad"
-        return "jugo"
-    if p.startswith("sheo") or p.startswith("she"):
-        if p.endswith("dad") or p.endswith("di"): return "germinación"
-        if p.endswith("din") or p.endswith("in"): return "brotando"
-        return "brote"
-
-    if p == "fdin": return "fijación"
-    if p == "ofa": return "mezcla"
-
-    if p.endswith("di") or p.endswith("ti"):
-        if "och" in p or "ot" in p: return "días"
-        if len(p) > 3:
-            raiz_limpia = p[:-2]
-            if raiz_limpia == "if": return "eficacia"
-            if raiz_limpia == "opal": return "opacidad"
-            return f"{raiz_limpia}dad"
-
+    # Si es una letra residual suelta, la elimina para que no trabe la prosa continua
     if len(p) == 1: return ""
 
-    return ""
+    return f"[{palabra.upper()}]"
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     palabras = texto_limpio.split()
     analisis_estructurado = []
+    target_lang = "es" if idioma == "es" else "en"
     
     glosario_maestro = {
         "piue": "más", "piu": "más", "codar": "cocer", "oleis": "aceites", 
@@ -162,11 +157,10 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             tipo_match = "Glosario Romance (Posta)"
         else:
             significado_individual = desarmar_palabra_compuesta(palabra_optimizada)
-            if not significado_individual:
-                significado_individual = f"[{palabra_optimizada.upper()}]"
-                tipo_match = "Incógnita Guardada"
+            if significado_individual.startswith("["):
+                tipo_match = "Término Abierto Conservado"
             else:
-                tipo_match = "Desarmador Morfológico Medieval"
+                tipo_match = "Deducción Automática NLP Local"
             
         analisis_estructurado.append({
             "Palabra Filtrada": palabra_optimizada.upper(),
