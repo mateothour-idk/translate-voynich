@@ -86,40 +86,44 @@ def resolver_contexto_palabra(palabra: str) -> str:
         p_baja = p_baja.replace("quu", "qu")
     return p_baja
 
-def calcular_distancia_levenshtein(str1, str2):
-    """ Algoritmo local para buscar similitudes morfológicas sin internet """
-    m, n = len(str1), len(str2)
-    dp = [[0] * (n + 1) for _ in range(m + 1)]
-    for i in range(m + 1): dp[i][0] = i
-    for j in range(n + 1): dp[0][j] = j
-    for i in range(1, m + 1):
-        for j in range(1, n + 1):
-            if str1[i - 1] == str2[j - 1]:
-                dp[i][j] = dp[i - 1][j - 1]
-            else:
-                dp[i][j] = 1 + min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
-    return dp[m][n]
+def desarmar_palabra_compuesta(palabra: str) -> str:
+    """
+    Analiza palabras incógnitas largas (Opción 3) buscando raíces de verbos
+    e incorporando reglas de abreviaturas eclesiásticas (Opción 1).
+    """
+    p = palabra.lower()
+    
+    # --- REGLA OPCIÓN 3: EXTRACTOR DE COMPUESTOS VERBALES ---
+    if "cod" in p:
+        # Ejemplo: quecodsha -> que-cozan / que-cocieran
+        prefijo = "que " if p.startswith("que") or p.startswith("qu") else ""
+        sufijo = "an" if p.endswith("sha") or p.endswith("sh") else "er"
+        return f"{prefijo}cuez{sufijo}"
+    if "cut" in p:
+        # Estructuras derivadas de cortar (cut)
+        prefijo = "que " if p.startswith("que") or p.startswith("qu") else ""
+        sufijo = "ado" if p.endswith("di") or p.endswith("ti") else "ar"
+        return f"{prefijo}cort{sufijo}"
 
-def buscar_aproximacion_local(palabra, glosario):
-    """ Encuentra de forma autónoma la raíz más cercana en el diccionario """
-    mejor_raiz = palabra
-    distancia_minima = 99
-    for raiz in glosario.keys():
-        dist = calcular_distancia_levenshtein(palabra, raiz)
-        if dist < distancia_minima:
-            distancia_minima = dist
-            mejor_raiz = raiz
-    # Si la aproximación es muy lejana, la dejamos como término abierto
-    if distancia_minima <= 2:
-        return glosario[mejor_raiz], f"Aproximación Fonética Local (-{distancia_minima}L)"
-    return f"[{palabra.upper()}]", "Transliteración Criptográfica Abierta"
+    # --- REGLA OPCIÓN 1: ABREVIATURAS MEDIEVALES FINALES DE CUALIDAD/TIEMPO ---
+    if p.endswith("di") or p.endswith("ti"):
+        # Casos especiales de tiempo botánico como ochdi (ocho días)
+        if "och" in p or "ot" in p:
+            return "días"
+        # Casos de cualidad abstracta (sufijo -dad)
+        if len(p) > 3:
+            raiz_limpia = p[:-2]
+            # Ejemplo: ifdi -> if-dad -> eficacia / infinidad
+            if raiz_limpia == "if": return "eficacia"
+            if raiz_limpia == "opal": return "opacidad"
+            return f"{raiz_limpia}dad"
+
+    return f"[{palabra.upper()}]"
 
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     palabras = texto_limpio.split()
     analisis_estructurado = []
-    target_lang = "es" if idioma == "es" else "en"
     
-    # Base de conocimiento extendida local (Latín Romance / Botánica Medieval)
     glosario_maestro = {
         "piue": "más", "piu": "más", "codar": "cocer", "oleis": "aceites", 
         "cipi": "tallos", "seol": "seco", "sequieo": "secado", "otolsai": "extraer",
@@ -130,33 +134,23 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         "ceodar": "cocción", "olees": "óleos", "qodaiin": "código (receta)", "olse": "oler",
         "orain": "oración / borde", "iquiol": "líquido extraído", "oteody": "método",
         "cteeey": "cutícula", "ykeeol": "licor"
-    } if target_lang == "es" else {
-        "piue": "more", "piu": "more", "codar": "cook", "oleis": "oils", 
-        "cipi": "stems", "seol": "dry", "sequieo": "dried", "otolsai": "extract",
-        "senior": "master", "olse": "oily", "quodam": "a certain", "oram": "edge",
-        "iquiol": "juice", "otio": "rest", "cute": "skin (bark)", "cior": "move", 
-        "cioquai": "decoction", "cut": "cut", "quin": "which", "qin": "which",
-        "tsheos": "essence", "ceepy": "roots", "ceeor": "waxes", "ceodar": "decoction",
-        "olees": "oils", "qodaiin": "code", "olse": "smell", "orain": "edge",
-        "iquiol": "juice", "oteody": "method", "cteeey": "cuticle", "ykeeol": "liquor"
     }
     
     if not palabras:
         return [], ""
 
-    # 1. TRADUCCIÓN DE LA ORACIÓN EN BLOQUE LOCAL (Cero latencia de red)
     palabras_traducidas_oracion = []
     for palabra in palabras:
         palabra_optimizada = resolver_contexto_palabra(palabra)
         if palabra_optimizada in glosario_maestro:
             palabras_traducidas_oracion.append(glosario_maestro[palabra_optimizada])
         else:
-            significado, _ = buscar_aproximacion_local(palabra_optimizada, glosario_maestro)
-            palabras_traducidas_oracion.append(significado)
+            # Si no está en el glosario estático, la procesamos dinámicamente con el desarmador local
+            palabras_traducidas_oracion.append(desarmar_palabra_compuesta(palabra_optimizada))
 
     oracion_completa = " ".join(palabras_traducidas_oracion)
 
-    # 2. CONSTRUCCIÓN DE LA TABLA INTERACTIVA
+    # Llenado detallado de la tabla interactiva
     for palabra in palabras[:40]:
         if not palabra.strip():
             continue
@@ -167,7 +161,8 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             significado_individual = glosario_maestro[palabra_optimizada]
             tipo_match = "Glosario Romance (Posta)"
         else:
-            significado_individual, tipo_match = buscar_aproximacion_local(palabra_optimizada, glosario_maestro)
+            significado_individual = desarmar_palabra_compuesta(palabra_optimizada)
+            tipo_match = "Desarmador Morfológico Medieval" if not significado_individual.startswith("[") else "Incógnita Protegida"
             
         analisis_estructurado.append({
             "Palabra Filtrada": palabra_optimizada.upper(),
