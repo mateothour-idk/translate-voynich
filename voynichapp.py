@@ -6,41 +6,41 @@ st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", 
 # Selector de idioma global en la barra lateral
 idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Español", "English"])
 
-# Estructura de textos para la interfaz de usuario libre de formatos decorativos
+# Estructura de textos para la interfaz de usuario libre de formatos decorativos o emojis
 IFACE = {
     "Español": {
-        "titulo": "Traductor Universal del Manuscrito Voynich (Sentido Natural)",
-        "sub": "Explora y traduce cada línea real del manuscrito aplicando tu matriz con un motor sintáctico de lectura fluida.",
+        "titulo": "Traductor Universal del Manuscrito Voynich (Sincronización Total)",
+        "sub": "Explora y traduce cada línea real del manuscrito aplicando tu matriz con alineación fonética y semántica coherente.",
         "tab1": "Laboratorio de Texto Libre",
         "tab2": "Explorador del Corpus Real del Manuscrito (1r a 116v)",
         "lab_sub": "Laboratorio de Entrada Libre",
         "btn_an": "Analizar Fragmento",
-        "fon_rom": "Fonética Romance (Doble Proceso):",
+        "fon_rom": "Fonética Romance Optimizada (Raíces Reales o Semejantes):",
         "trad_auto": "Traducción Narrativa Coherente:",
         "nav_sub": "Traductor de Folios Continuo",
         "nav_sel": "Selecciona un folio del manuscrito entero:",
         "btn_desc": "Descifrar Folio",
         "res_tit": "Traducción Narrativa Coherente para el Folio",
         "col1": "1. Texto EVA Real del Manuscrito:",
-        "col2": "2. Fonética Romance (Doble Matriz):",
+        "col2": "2. Fonética Romance Sincronizada:",
         "col3": "3. Traducción al Español (Lectura de Libro Real):",
         "err_corpus": "No se pudo inicializar el corpus del manuscrito."
     },
     "English": {
-        "titulo": "Universal Automatic Voynich Manuscript Translator (Natural Flow)",
-        "sub": "Explore and translate every single line using your double-processing matrix and a fluent natural weaver.",
+        "titulo": "Universal Automatic Voynich Manuscript Translator (Total Sync)",
+        "sub": "Explore and translate every single line using your matrix with aligned phonetic and semantic coherence.",
         "tab1": "Free Text Laboratory",
         "tab2": "Real Manuscript Corpus Explorer (1r to 116v)",
         "lab_sub": "Free Entry Laboratory",
         "btn_an": "Analyze Fragment",
-        "fon_rom": "Romance Phonetics (Double Process):",
+        "fon_rom": "Optimized Romance Phonetics (Real or Similar Roots):",
         "trad_auto": "Automated Narrative Translation:",
         "nav_sub": "Automatic Folios Navigator (All Pages)",
         "nav_sel": "Select a folio from the entire manuscript:",
         "btn_desc": "Decipher Real Folio",
         "res_tit": "Natural Word-by-Word Translation for Folio",
         "col1": "1. Real EVA Text from Manuscript:",
-        "col2": "2. Romance Phonetics (Double Matrix):",
+        "col2": "2. Aligned Romance Phonetics:",
         "col3": "3. Real Translation to English (Natural Book Flow):",
         "err_corpus": "Could not initialize the manuscript corpus."
     }
@@ -110,7 +110,7 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
-# Generador adaptativo balanceado por folios reales
+# Generador de folios
 CORPUS_MANUSCRITO = {
     "1r": ["pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes oas", "tcbaor ceor ctaiin cseey otair opas kedy chidí ceon ceey"],
     "20r": ["kdceody ceopy ceeey qotceoy qotoeey dceorceau ceodey cteey ceotol odaur", "teeodau cseey cpair osaiin yteeoey cseey cpaiin oaiin daiis"],
@@ -133,6 +133,7 @@ for i in range(1, 117):
                 lineas_folio.append(f"{w1} {w2} {w3} ceon ceey cuta ckaur cedy")
             CORPUS_MANUSCRITO[key] = lineas_folio
 
+# --- MATRIZ FONÉTICA CORREGIDA CON ENLACE DE SEMEJANZA ---
 def traducir_a_romance(texto):
     reglas = {
         'pcee': 'pi', 'pdr': 'pedr', 'pcs': 'pes', 'qok': 'quoqu', 'dceorceau': 'dicorcau',
@@ -145,14 +146,44 @@ def traducir_a_romance(texto):
         'iy': 'i', 'x': 'sh', 'el': 'l', 'quo': 'quo', 'eat': 'it', 'cee': 'ci',
         'o': 'o', 'a': 'a', 'l': 'l', 'y': 'i', 'í': 'i', 'ó': 'o'
     }
-    texto_limpio = texto.lower()
-    for k in sorted(reglas.keys(), key=len, reverse=True):
-        texto_limpio = texto_limpio.replace(k, reglas[k])
-    for k in sorted(reglas.keys(), key=len, reverse=True):
-        texto_limpio = texto_limpio.replace(k, reglas[k])
-    return texto_limpio
+    
+    lineas = texto.split('\n')
+    lineas_romance = []
+    
+    for linea in lineas:
+        texto_linea = linea.lower()
+        for k in sorted(reglas.keys(), key=len, reverse=True):
+            texto_linea = texto_linea.replace(k, reglas[k])
+        for k in sorted(reglas.keys(), key=len, reverse=True):
+            texto_linea = texto_linea.replace(k, reglas[k])
+            
+        # --- NUEVA COMPRESIÓN COHERENTE DE LA COLUMNA DE FONÉTICA ---
+        # Evalúa y corrige dinámicamente cada término hacia la palabra más semejante del diccionario maestro
+        palabras_linea = texto_linea.split()
+        palabras_corregidas = []
+        for pal in palabras_linea:
+            p_limpia = pal.strip(",.!?*;:- ")
+            p_norm = p_limpia.replace("í", "i").replace("ó", "o").replace("y", "i")
+            if not p_norm:
+                continue
+                
+            if p_norm in DICCIONARIO_ES:
+                palabras_corregidas.append(p_norm)
+            else:
+                mejor_coincidencia = p_norm
+                menor_distancia = 99
+                for clave_dicc in DICCIONARIO_ES.keys():
+                    dist = distancia_levenshtein(p_norm, clave_dicc)
+                    if dist < menor_distancia:
+                        menor_distancia = dist
+                        mejor_coincidencia = clave_dicc
+                palabras_corregidas.append(mejor_coincidencia)
+                
+        if palabras_corregidas:
+            lineas_romance.append(" ".join(palabras_corregidas))
+            
+    return "\n".join(lineas_romance)
 
-# --- MOTOR DE TRADUCCIÓN NATURAL INTEGRADO (REDUCE DUPLICADOS Y SUAVIZA TEXTO) ---
 def generar_espanol_sintactico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
@@ -165,31 +196,15 @@ def generar_espanol_sintactico(texto_romance, lang):
         ultima_palabra_traducida = ""
         
         for p_idx, palabra in enumerate(palabras):
-            palabra_limpia = palabra.strip(",.!?*;:- ")
-            palabra_normalizada = palabra_limpia.replace("í", "i").replace("ó", "o").replace("y", "i")
-            if not palabra_normalizada:
+            palabra_norm = palabra.strip(",.!?*;:- ")
+            if not palabra_norm in dict_activo:
                 continue
-                
-            # Mapeo exacto o aproximación difusa por Levenshtein
-            if palabra_normalizada in dict_activo:
-                termino_raw = dict_activo[palabra_normalizada]
-            else:
-                mejor_coincidencia = None
-                menor_distancia = 99
-                for clave_dicc in dict_activo.keys():
-                    dist = distancia_levenshtein(palabra_normalizada, clave_dicc)
-                    if dist < menor_distancia:
-                        menor_distancia = dist
-                        mejor_coincidencia = clave_dicc
-                termino_raw = dict_activo[mejor_coincidencia] if mejor_coincidencia else palabra_limpia
+            termino_raw = dict_activo[palabra_norm]
             
-            # --- FILTRO CRÍTICO ANTI-REPETICIÓN DIRECTA ---
-            # Si el término actual es idéntico al anterior, se ignora para evitar bucles como "cuanto cuanto"
             if termino_raw == ultima_palabra_traducida:
                 continue
             ultima_palabra_traducida = termino_raw
             
-            # --- HILVANADOR TEXTUAL NATURAL ---
             if lang == "Español":
                 if linea_espanol:
                     ultimo = linea_espanol[-1]
@@ -206,7 +221,6 @@ def generar_espanol_sintactico(texto_romance, lang):
                 else:
                     linea_espanol.append(f"En este tratado se describe {termino_raw}")
             else:
-                # Hilvanado natural en idioma inglés
                 if linea_espanol:
                     ultimo = linea_espanol[-1]
                     if "plant" in ultimo or "bark" in ultimo or "vessel" in ultimo or "substance" in ultimo:
@@ -222,7 +236,6 @@ def generar_espanol_sintactico(texto_romance, lang):
                     
         if linea_espanol:
             texto_linea = " ".join(linea_espanol).strip()
-            # Limpieza sintáctica profunda de redundancias
             texto_linea = re.sub(r'\s+', ' ', texto_linea)
             texto_linea = texto_linea.replace(" de de ", " de ").replace(" and and ", " and ").replace(" y y ", " y ")
             texto_linea = texto_linea.replace("del la ", "de la ").replace("de la del ", "de la ")
@@ -230,7 +243,7 @@ def generar_espanol_sintactico(texto_romance, lang):
             
     return "\n\n".join(lineas_traducidas)
 
-# --- CONFIGURACIÓN DE PESTAÑAS GRÁFICAS ---
+# --- DIVISION DE PESTAÑAS ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
