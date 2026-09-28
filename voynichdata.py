@@ -2,7 +2,9 @@
 import re
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
-    """ Aplica las 42 reglas de transliteración estructuradas en capas de longitud para evitar colisiones """
+    """
+    Aplica las 42 reglas de transliteración estructuradas en capas de longitud para evitar colisiones.
+    """
     if not texto_eva: return ""
     texto = texto_eva.lower()
     
@@ -48,27 +50,8 @@ def resolver_contexto_palabra(palabra: str) -> list:
     if p.startswith("l") and len(p) > 1: variaciones.append("e" + p)
     return list(set(variaciones))
 
-def calcular_distancia_levenshtein(str1, str2):
-    """ Mide la similitud ortográfica mediante matriz numérica 100% independiente en la memoria """
-    m, n = len(str1), len(str2)
-    dp = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
-    
-    # CORREGIDO CON SINTAXIS EXACTA: Llenado de bordes indexando la celda interna de la sublista
-    for i in range(m + 1): 
-        dp[i][0] = i
-    for j in range(n + 1): 
-        dp[0][j] = j
-        
-    for i in range(1, m + 1):
-        for j in range(1, n + 1):
-            if str1[i - 1] == str2[j - 1]:
-                dp[i][j] = dp[i - 1][j - 1]
-            else:
-                dp[i][j] = 1 + min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
-    return dp[m][n]
-
 def desarmar_palabra_compuesta(palabra: str) -> str:
-    """ Motor universal adaptativo sin internet. Resuelve morfemas de forma autónoma. """
+    """ Motor universal adaptativo. Resuelve morfemas de forma autónoma sin internet. """
     p = palabra.lower()
     if not p: return ""
     
@@ -127,11 +110,6 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
         if raiz in ["ited", "it"]: return "repetición (proceso)"
         if len(raiz) > 1: return f"{raiz}dad"
 
-    # --- ALGORITMO LOCAL DE RESPALDO (Levenshtein) ---
-    glosario_claves = {"piue": "más", "codar": "cocer", "oleis": "aceites", "cipi": "tallos", "seol": "seco", "sequieo": "secado", "otolsai": "extraer"}
-    for clave, significado in glosario_claves.items():
-        if calcular_distancia_levenshtein(p, clave) <= 1: return significado
-
     if len(p) == 1: return ""
     return f"[{palabra.upper()}]"
 
@@ -181,10 +159,11 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
                     
         if not significado_individual: significado_individual = desarmar_palabra_compuesta(palabra)
             
-        analisis_estructurado.append({
+        analisis_structured = {
             "Palabra Filtrada": "/".join(opciones_palabra).upper(),
             "Equivalencia Semántica": significado_individual,
             "Tipo de Match": tipo_match
-        })
+        }
+        analisis_estructurado.append(analisis_structured)
         
     return analisis_estructurado, oracion_completa
