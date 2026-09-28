@@ -28,7 +28,7 @@ IFACE = {
         "err_corpus": "No se pudo inicializar el corpus del manuscrito."
     },
     "English": {
-        "titulo": "Universal Voynich Manuscript Translator (voynich.nu Corpus)",
+        "titulo": "📜 Universal Voynich Manuscript Translator (voynich.nu Corpus)",
         "sub": "Explore, decipher, and translate every single word of the manuscript using your double-processing matrix.",
         "tab1": "Free Text Laboratory",
         "tab2": "Real Corpus Explorer voynich.nu",
@@ -99,7 +99,7 @@ st.write(IFACE[idioma]["sub"])
 # --- EXTRACTOR SEGURO ---
 @st.cache_data
 def descargar_manuscrito_real():
-    url = "https://www.voynich.nu/data/ZL3b-n.txt"
+    url = "https://voynich.nu"
     archivo_completo = {}
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -149,23 +149,25 @@ def traducir_a_romance(texto):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
-# --- MOTOR DE TRADUCCIÓN AUTOMÁTICA SEGÚN IDIOMA SELECCIONADO ---
+# --- MOTOR DE TRADUCCIÓN AUTOMÁTICA ADAPTATIVO SIN REPETICIÓN FILA POR FILA ---
 def traducir_todo_automatico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
     
     if lang == "Español":
         dict_activo = DICCIONARIO_ES
-        sustantivos = ["el fluido", "la esencia", "el compuesto", "el extracto", "el tallo", "la solucion"]
-        verbos = ["se mezcla", "se observa", "se purifica", "se añade", "se calienta", "se vierte"]
-        adjetivos = ["natural", "medicinal", "liquido", "puro", "caliente", "seco"]
+        sustantivos = ["el extracto", "la esencia", "el compuesto", "la solucion", "el tallo", "el fluido"]
+        verbos = ["se observa", "se purifica", "se vierte", "se añade", "se calienta", "se mezcla"]
+        adjetivos_masc = ["medicinal", "natural", "liquido", "puro", "caliente", "seco"]
+        adjetivos_fem = ["medicinal", "natural", "liquida", "pura", "caliente", "seca"]
         de_la = "de la sustancia"
         prefix_linea = "Linea"
     else:
         dict_activo = DICCIONARIO_EN
-        sustantivos = ["the fluid", "the essence", "the compound", "the extract", "the stalk", "the solution"]
-        verbos = ["is mixed", "is observed", "is purified", "is added", "is heated", "is poured"]
-        adjetivos = ["natural", "medicinal", "liquid", "pure", "hot", "dry"]
+        sustantivos = ["the extract", "the essence", "the compound", "the solution", "the stem", "the fluid"]
+        verbos = ["is observed", "is purified", "is poured", "is added", "is heated", "is mixed"]
+        adjetivos_masc = ["medicinal", "natural", "liquid", "pure", "hot", "dry"]
+        adjetivos_fem = ["medicinal", "natural", "liquid", "pure", "hot", "dry"]
         de_la = "of the substance"
         prefix_linea = "Line"
         
@@ -181,15 +183,22 @@ def traducir_todo_automatico(texto_romance, lang):
             if palabra_limpia in dict_activo:
                 linea_espanol.append(dict_activo[palabra_limpia])
             else:
-                calc = len(palabra_limpia) + p_idx + idx
-                sub = sustantivos[calc % len(sustantivos)]
-                vrb = verbos[(calc + 2) % len(verbos)]
-                adj = adjetivos[(calc + 4) % len(adjetivos)]
+                # El cálculo combina el índice de la línea y la posición de la palabra para romper la igualdad métrica
+                calc_base = idx + p_idx
+                sub_elegido = sustantivos[calc_base % len(sustantivos)]
+                vrb_elegido = verbos[(calc_base + 2) % len(verbos)]
                 
+                # Control estricto de concordancia de género para el idioma español
+                if lang == "Español" and sub_elegido.startswith("la"):
+                    adj_elegido = adjetivos_fem[(calc_base + 4) % len(adjetivos_fem)]
+                else:
+                    adj_elegido = adjetivos_masc[(calc_base + 4) % len(adjetivos_masc)]
+                
+                # Estructuración por tercios para alternar tipos de palabras en la misma línea
                 if p_idx % 3 == 0:
-                    linea_espanol.append(f"{sub} {adj}")
+                    linea_espanol.append(f"{sub_elegido} {adj_elegido}")
                 elif p_idx % 3 == 1:
-                    linea_espanol.append(f"{vrb}")
+                    linea_espanol.append(f"{vrb_elegido}")
                 else:
                     linea_espanol.append(de_la)
         
@@ -198,7 +207,7 @@ def traducir_todo_automatico(texto_romance, lang):
             texto_linea = re.sub(r'\s+', ' ', texto_linea)
             lineas_traducidas.append(f"{prefix_linea} {idx+1}: {texto_linea.capitalize()}. ")
             
-    return "\n".join(lineas_traducidas)
+    return "\n\n".join(lineas_traducidas)
 
 # --- DIVISION DE PESTAÑAS DINÁMICAS ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
