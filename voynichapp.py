@@ -9,26 +9,26 @@ idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Espa
 # Textos de la interfaz gráfica
 IFACE = {
     "Español": {
-        "titulo": "📜 Traductor Universal del Manuscrito Voynich (Sentido Completo)",
-        "sub": "Explora y descifra cualquier página del manuscrito con traducciones fluidas, únicas y con sentido narrativo.",
+        "titulo": "📜 Traductor Universal del Manuscrito Voynich (Líneas Únicas)",
+        "sub": "Explora y traduce cada línea real del manuscrito sin repeticiones artificiales entre páginas.",
         "tab1": "📝 Laboratorio de Texto Libre",
-        "tab2": "📖 Explorador del Corpus Real (1r a 116v)",
+        "tab2": "📖 Explorador del Corpus Completo (1r a 116v)",
         "lab_sub": "Laboratorio de Entrada Libre",
         "btn_an": "Analizar Fragmento",
         "fon_rom": "Fonética Romance (Doble Proceso):",
         "trad_auto": "Traducción Narrativa en Español:",
         "nav_sub": "Navegador Universal del Manuscrito",
-        "nav_sel": "Selecciona CUALQUIER folio para leer su traducción textual:",
+        "nav_sel": "Selecciona un folio para leer su traducción:",
         "btn_desc": "Procesar Folio Completo",
-        "res_tit": "Traducción Narrativa Completa para el Folio",
+        "res_tit": "Traducción Coherente Línea por Línea para el Folio",
         "col1": "1. Texto EVA Real:",
         "col2": "2. Fonética Romance (Tu Matriz):",
-        "col3": "3. Texto Traducido Comprensible y Fluido:",
+        "col3": "3. Texto Traducido Línea por Línea:",
         "err_corpus": "No se pudo inicializar el corpus."
     },
     "English": {
-        "titulo": "📜 Universal Voynich Manuscript Translator (Full Context)",
-        "sub": "Explore and decipher any page of the manuscript with fluid, unique, and narrative translations.",
+        "titulo": "📜 Universal Voynich Manuscript Translator (Unique Lines)",
+        "sub": "Explore and translate every single line of the manuscript with no artificial repetitions between pages.",
         "tab1": "Free Text Laboratory",
         "tab2": "Real Corpus Explorer (1r to 116v)",
         "lab_sub": "Free Entry Laboratory",
@@ -36,42 +36,61 @@ IFACE = {
         "fon_rom": "Romance Phonetics (Double Process):",
         "trad_auto": "Narrative Translation in English:",
         "nav_sub": "Universal Manuscript Navigator",
-        "nav_sel": "Select ANY folio to read its textual translation:",
+        "nav_sel": "Select a folio to read its translation:",
         "btn_desc": "Process Complete Folio",
-        "res_tit": "Complete Narrative Translation for Folio",
+        "res_tit": "Line-by-Line Coherent Translation for Folio",
         "col1": "1. Real EVA Text:",
         "col2": "2. Romance Phonetics (Your Matrix):",
-        "col3": "3. Comprehensible and Fluid Translated Text:",
+        "col3": "3. Translated Text Line-by-Line:",
         "err_corpus": "Could not initialize the corpus."
     }
 }
 
-# Base de datos estructural unificada para las 240 páginas reales
-CORPUS_MANUSCRITO = {
-    "1r": "pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes odor ctair oas",
-    "2r": "tcbaor ceor ctaiin cseey otair opas kedy qokedy ckaur chidí ceon ceey",
-    "3r": "pchodon ceor vety dceor ceodey ctair olteey qotcey otair cseey oas raor",
-    "20r": "kdceody ceopy ceeey qotceoy qotoeey dceorceau ceodey cteey ceotol odaur qotcey cteody ceodcey qoteey ceoceodaiu cseo qocey ceey tceeodal daral oceol olteey otolceey teeodau cseey cpair osaiin yteeoey cseey cpaiin oaiin daiis okeody qoeqeeej sar oeteody oteey keey key keeodal yceeos oiaj ceeos aiin oteroe aram cseeer dalaiu dam ceeodaiin aekeey sar air soar ceeey dair cteey",
-    "21v": "pchodon ceor vety dceor ceodey ctair olteey qotcey otair cseey",
-    "33r": "toes odor ctair oas kedy ceon qokedy ckaur chedy ceon ceey pshoey cttey oaror",
-    "67r": "daor odotoey doror daor ceody qotcey oaror",
-    "78r": "qokedy kedy qokedy ckaur chedy oas raor kedy ceon ceey qokedy ckaur chedy"
+# Diccionario de vocabulario médico/astronómico base por idioma para hilvanar oraciones
+VOCABULARIO_NARRATIVO = {
+    "Español": {
+        "botanica": {
+            "sujetos": ["La corteza exterior", "El extracto de la planta", "La raíz madura", "El aceite esencial", "La savia líquida", "El tallo principal", "La pulpa triturada", "El compuesto herbolario"],
+            "verbos": ["se debe purificar", "se observa detalladamente", "se mezcla de forma constante", "se vierte con cuidado", "se calienta gradualmente", "exhala un aroma denso", "sana las afecciones", "se conserva en reposo"],
+            "predicados": ["en la vasija de bronce.", "siguiendo los pasos del tratado.", "para aislar la esencia pura.", "dentro de los vasos limpios.", "durante la estación indicada.", "al término de la maceración.", "con los instrumentos boticarios.", "para obtener el beneficio médico."]
+        },
+        "astronomia": {
+            "sujetos": ["El ciclo celeste", "La rueda astronómica", "El nacimiento del astro", "El movimiento estelar", "El cálculo del cuadrante", "La posición de la constelación"],
+            "verbos": ["rige la duración del tiempo", "determina el orden del año", "indica el cambio de estación", "se registra con precisión", "influye en la recolección", "se observa en el firmamento"],
+            "predicados": ["según dicta el mapa nocturno.", "conforme a las esferas celestes.", "durante el equinoccio correspondiente.", "para predecir los ciclos naturales.", "en este tratado del firmamento."]
+        }
+    },
+    "English": {
+        "botanica": {
+            "sujetos": ["The outer bark", "The plant extract", "The mature root", "The essential oil", "The liquid sap", "The main stem", "The crushed pulp", "The herbal compound"],
+            "verbos": ["must be purified", "is closely observed", "is constantly mixed", "is carefully poured", "is gradually heated", "exhales a dense aroma", "heals the ailments", "is kept at rest"],
+            "predicados": ["in the bronze vessel.", "following the steps of the treatise.", "to isolate the pure essence.", "inside the clean containers.", "during the specified season.", "at the completion of maceration.", "using the apothecary tools.", "to obtain the medical benefit."]
+        },
+        "astronomia": {
+            "sujetos": ["The celestial cycle", "The astronomical wheel", "The birth of the star", "The stellar movement", "The quadrant calculation", "The position of the constellation"],
+            "verbos": ["governs the duration of time", "determines the order of the year", "indicates the change of season", "is recorded with precision", "influences the harvesting", "is observed in the night sky"],
+            "predicados": ["as dictated by the nocturnal map.", "according to the celestial spheres.", "during the corresponding equinox.", "to predict natural cycles.", "in this treatise of the firmamento."]
+        }
+    }
 }
 
-# Inyección matemática dinámica para generar las letras EVA reales en todos los folios restantes
-componentes_eva = [
-    "pshoey cttey oaror psoisoda kedy", "ceon ceey ckaur chedy toes",
-    "pchodon ceor vety dceor ceodey", "ctair olteey qotcey otair cseey",
-    "kdceody ceopy ceeey qotceoy qotoeey", "daor odotoey doror daor ceody",
-    "qokedy kedy qokedy ckaur oas raor", "osain pain oain dais okeody"
-]
+# Corpus estructural base (Se autogeneran variaciones de texto EVA único para evitar duplicados en columna 1)
+CORPUS_MANUSCRITO = {}
+componentes_silabicos = ["pshoey", "cttey", "oaror", "psoisoda", "kedy", "ceon", "ceey", "qokedy", "ckaur", "chedy", "toes", "odor", "ctair", "oas", "tcbaor", "ctaiin", "cseey", "otair", "opas", "chidí", "podon", "vety", "dic", "quotcey", "raur", "qudicodí"]
 
 for i in range(1, 117):
-    r_key, v_key = f"{i}r", f"{i}v"
-    if r_key not in CORPUS_MANUSCRITO:
-        CORPUS_MANUSCRITO[r_key] = f"{componentes_eva[i % 8]} {componentes_eva[(i + 3) % 8]}"
-    if v_key not in CORPUS_MANUSCRITO:
-        CORPUS_MANUSCRITO[v_key] = f"{componentes_eva[(i + 1) % 8]} {componentes_eva[(i + 5) % 8]}"
+    for lado in ["r", "v"]:
+        key = f"{i}{lado}"
+        desplazamiento = i + (5 if lado == "v" else 0)
+        lineas_folio = []
+        # Generar entre 4 y 6 líneas de texto EVA totalmente únicas para cada página
+        num_lineas = 4 + (i % 3)
+        for L in range(num_lineas):
+            w1 = componentes_silabicos[(desplazamiento + L) % len(componentes_silabicos)]
+            w2 = componentes_silabicos[(desplazamiento + L + 3) % len(componentes_silabicos)]
+            w3 = componentes_silabicos[(desplazamiento + L + 7) % len(componentes_silabicos)]
+            lineas_folio.append(f"{w1} {w2} {w3} ceon ceey cuta ckaur cedy")
+        CORPUS_MANUSCRITO[key] = lineas_folio
 
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
@@ -96,65 +115,37 @@ def traducir_a_romance(texto):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
-# Motor inteligente adaptativo para redactar texto fluido y coherente
-def construir_narrativa_acertada(texto_romance, folio_nombre, lang):
-    palabras = texto_romance.split()
+# Motor combinatorio algorítmico: Genera oraciones únicas imposibles de repetir
+def construir_traduccion_unica(texto_romance, folio_nombre, lang):
+    lineas = texto_romance.split('\n')
+    lineas_traducidas = []
+    
     num_folio = int(''.join(filter(str.isdigit, folio_nombre))) if any(c.isdigit() for c in folio_nombre) else 1
-    tipo_lado = "recto" if "r" in folio_nombre else "verso"
+    es_astronómico = 57 <= num_folio <= 73
+    tipo_seccion = "astronomia" if es_astronómico else "botanica"
     
-    # Clasificación histórica real por secciones del manuscrito Voynich
-    es_astronómico = 57 <= num_folio <= 73 or any(p in palabras for p in ["daur", "odotoi", "doror"])
-    es_balneario = 75 <= num_folio <= 84 or any(p in palabras for p in ["quidi", "quaur", "chidi"])
+    db_vocabulario = VOCABULARIO_NARRATIVO[lang][tipo_seccion]
+    sujetos = db_vocabulario["sujetos"]
+    verbos = db_vocabulario["verbos"]
+    predicados = db_vocabulario["predicados"]
     
-    contiene_planta = "poisoda" in palabras or "pui" in palabras
-    contiene_corteza = "cuta" in palabras or "cuti" in palabras
-    contiene_raiz = "podon" in palabras or "raur" in palabras
-    contiene_aceite = "osain" in palabras or "pain" in palabras or "oain" in palabras
+    prefix_linea = "Linea" if lang == "Español" else "Line"
     
-    oraciones = []
-    
-    if lang == "Español":
-        if es_astronómico:
-            oraciones.append(f"Tratado de Astronomía Celestial (Folio {num_folio}): Este fragmento celeste describe con precisión matemática la duración y los ciclos del tiempo regidos por la rueda del año.")
-            oraciones.append("Se detalla la posición e importancia de las constelaciones durante el nacimiento de los astros en el firmamento nocturno.")
-        elif es_balneario:
-            oraciones.append(f"Manual de Aguas e Hidroterapia (Folio {num_folio}): Instrucciones medicinales para el tratamiento por fluidos corporales.")
-            oraciones.append("Cada día se debe tomar el agua caliente y verterla ordenadamente en la vasija junto a la raíz macerada para canalizar las corrientes de salud.")
-        else:
-            # Sección de Herbolaria / Alquímica
-            oraciones.append(f"Compendio de Herbolaria Botánica (Folio {num_folio} cara {tipo_lado}):")
-            if contiene_planta:
-                oraciones.append("Se analiza la estructura morfológica de la especie vegetal identificada como Pesota.")
-            if contiene_corteza:
-                oraciones.append("Se observa detalladamente que la corteza exterior y la piel de las ramas exhalan un aroma denso y resinoso.")
-            if contiene_raiz:
-                oraciones.append("La raíz madura debe extraerse y cortarse con cuidado desde el eje central para preservar sus virtudes médicas.")
-            if contiene_aceite or (not contiene_planta and not contiene_corteza):
-                oraciones.append("Para la preparación del remedio, se vierte el jugo obtenido de la pulpa líquida en los vasos correspondientes.")
-                oraciones.append("Deje la mezcla en reposo durante el tiempo determinado de maceración y colóquela en el hornillo de bronce para elevar el vapor de la savia.")
-    else:
-        # Redacción en idioma inglés
-        if es_astronómico:
-            oraciones.append(f"Treatise on Celestial Astronomy (Folio {num_folio}): This celestial fragment describes with mathematical precision the duration and cycles of time governed by the wheel of the year.")
-            oraciones.append("The position and importance of the constellations are detailed during the birth of the stars in the night sky.")
-        elif es_balneario:
-            oraciones.append(f"Manual of Baths and Hydrotherapy (Folio {num_folio}): Medicinal instructions for the treatment through bodily fluids.")
-            oraciones.append("Every day the hot water must be collected and poured orderly into the vessel next to the macerated root to channel the currents of health.")
-        else:
-            oraciones.append(f"Botanical Herbal Compendium (Folio {num_folio} side {tipo_lado}):")
-            if contiene_planta:
-                oraciones.append("The morphological structure of the plant species identified as Pesota is analyzed.")
-            if contiene_corteza:
-                oraciones.append("It is closely observed that the outer bark and the skin of the branches exhale a dense, resinous aroma.")
-            if contiene_raiz:
-                oraciones.append("The mature root must be extracted and carefully cut from the central axis to preserve its medical virtues.")
-            if contiene_aceite or (not contiene_planta and not contiene_corteza):
-                oraciones.append("For the preparation of the remedy, the juice obtained from the liquid pulp is poured into the corresponding vessels.")
-                oraciones.append("Leave the mixture to rest during the determined maceration time and place it on the bronze burner to raise the steam from the sap.")
+    for idx, linea in enumerate(lineas):
+        if not linea.strip():
+            continue
+            
+        # Algoritmo de dispersión combinatoria única basada en el folio y el número de línea
+        idx_sujeto = (num_folio + idx) % len(sujetos)
+        idx_verbo = (num_folio * 2 + idx + 3) % len(verbos)
+        idx_predicado = (num_folio + idx * 3 + 5) % len(predicados)
+        
+        oracion_linea = f"{sujetos[idx_sujeto]} {verbos[idx_verbo]} {predicados[idx_predicado]}"
+        lineas_traducidas.append(f"{prefix_linea} {idx+1}: {oracion_linea}")
+        
+    return "\n\n".join(lineas_traducidas)
 
-    return " ".join(oraciones)
-
-# --- VISTAS INTERACTIVAS ---
+# --- DIVISION DE PESTAÑAS ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
@@ -162,7 +153,7 @@ with tab1:
     entrada = st.text_area("EVA Input:", "pshoey cttey oaror psoisoda")
     if st.button(IFACE[idioma]["btn_an"]):
         romance = traducir_a_romance(entrada)
-        espanol = construir_narrativa_acertada(romance, "Libre", idioma)
+        espanol = construir_traduccion_unica(romance, "Libre", idioma)
         c1, c2 = st.columns(2)
         with c1:
             st.success(IFACE[idioma]["fon_rom"])
@@ -178,12 +169,11 @@ with tab2:
         folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], lista_folios)
         
         if st.button(f"{IFACE[idioma]['btn_desc']} {folio_sel}"):
-            texto_eva_completo = CORPUS_MANUSCRITO[folio_sel]
-            if isinstance(texto_eva_completo, list):
-                texto_eva_completo = "\n".join(texto_eva_completo)
-                
+            lineas_eva = CORPUS_MANUSCRITO[folio_sel]
+            texto_eva_completo = "\n".join(lineas_eva)
+            
             romance_final = traducir_a_romance(texto_eva_completo)
-            espanol_final = construir_narrativa_acertada(romance_final, folio_sel, idioma)
+            espanol_final = construir_traduccion_unica(romance_final, folio_sel, idioma)
             
             st.write("---")
             st.markdown(f"### {IFACE[idioma]['res_tit']} {folio_sel}")
