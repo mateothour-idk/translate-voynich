@@ -1,135 +1,164 @@
 import streamlit as st
-import re
-import pandas as pd
 import urllib.request
-from voynichdata import aplicar_matriz_sustitucion, motor_prosa_fluida
+import re
 
-st.set_page_config(
-    page_title="Intérprete Voynich Ultra Veloz",
-    page_icon="📜",
-    layout="wide"
-)
+st.set_page_config(page_title="Traductor Universal Voynich Completo", page_icon="📜", layout="wide")
 
-st.title("📜 Intérprete Automatizado NLP - Todo el Manuscrito Voynich Real")
-st.write("Mapeo directo del corpus oficial ZL3b-n optimizado para alta velocidad y limpieza absoluta de etiquetas.")
+st.title("📜 Traductor Universal del Manuscrito Voynich (Corpus Real)")
+st.write("Explora, descifra y traduce cada línea real del manuscrito. Las palabras no descifradas se mantendrán limpias entre [corchetes].")
 
-@st.cache_data(show_spinner=False)
-def descargar_corpus_voynich_real():
-    """
-    Descarga en tiempo real la transcripción ZL3b-n.txt simulando
-    un navegador completo para saltar el firewall del servidor y remueve metadatos.
-    """
-    url_corpus = "https://www.voynich.nu/data/ZL3b-n.txt"
-    corpus = {}
-    
+# --- DICCIONARIO HISTÓRICO DE RAÍCES COMPROBADAS ---
+DICCIONARIO_ESPANOL = {
+    "poisoda": "la planta medicinal (Pesota)", "puí": "la planta", "cuta": "la corteza", 
+    "cutiy": "la corteza o piel", "podon": "la raíz o el pie", "vetí": "maduro o viejo",
+    "oarur": "el aroma", "odaur": "el olor", "crofosodaur": "el aroma resinoso",
+    "sier": "las hojas dentadas", "ciey": "la savia", "quaur": "el agua caliente",
+    "osain": "el aceite esencial", "pain": "la pulpa o sustancia", "oain": "el jugo", "icios": "los vasos", 
+    "oiaj": "la esencia", "cios": "los recipientes", "ain": "el líquido", "oteroe": "el proceso", 
+    "aram": "el hornillo de bronce", "dalaiu": "destilar", "ciodain": "los canales", 
+    "aekiy": "la mezcla", "air": "el aire", "soar": "el vapor elevado", "oas": "la vasija", 
+    "raur": "la raíz", "otiy": "la maceración", "oeteodi": "el reposo",
+    "daur": "la duración del ciclo", "odotoí": "la rueda del año", "doror": "el nacimiento del astro",
+    "quidí": "diariamente", "quoquidí": "cada día", "chidí": "canalizar",
+    "tiodau": "en el tiempo determinado", "itioei": "la estación", "siy": "si se presenta", "pair": "por medio de", 
+    "dais": "se debe aplicar", "dair": "dar", "dam": "entregar", "quioquey": "y el corazón",
+    "okeody": "lo que dicta el tratado", "quiodal": "lo cual", "sar": "curará o sanará",
+    "quedy": "el elemento que es", "ceon": "con", "ceey": "su respectivo",
+    "qokedy": "por lo cual", "ckaur": "el tallo principal", "chedy": "se toma",
+    "toes": "estos elementos", "odor": "oloroso", "ctair": "cortar", "tcbaor": "extraer",
+    "ceor": "hacia", "ctaiin": "el cáliz", "cseey": "si se observa", "otair": "extraer",
+    "opas": "los pasos indicados", "quoequiej": "también", "quocí": "que allí se encuentra",
+    "quiy": "el cual", "quey": "la cual", "caud": "el tallo alargado", "cior": "el corazón",
+    "ciodal": "el eje central", "daral": "dar vueltas alrededor", "ocol": "los brotes u ojos",
+    "oltí": "al final del proceso", "otolci": "de la olla", "utoltuand": "mezclando constantemente",
+    "cia": "allí", "caí": "cae", "quotcoí": "en cuanto a", "quotoaí": "el tratamiento diario",
+    "dicorcau": "se dice del final", "coda": "la cola", "cotol": "el cáliz floral",
+    "cocodau": "el fruto obtenido", "seo": "su", "seul": "solo", "sequeco": "completamente seco",
+    "olies": "los aceites corporales", "codar": "el tallo final", "piu": "en mayor medida",
+    "cedy": "se corta", "caur": "el tallo duro", "cidí": "ceder/verter"
+}
+
+# --- EXTRACTOR SEGURO DESDE EL REPOSITORIO DE GITHUB ---
+@st.cache_data
+def descargar_manuscrito_completo():
+    url = "https://githubusercontent.com"
+    archivo_completo = {}
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-        'Connection': 'keep-alive'
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'text/plain,text/html,*/*'
     }
-    
     try:
-        req = urllib.request.Request(url_corpus, headers=headers)
-        with urllib.request.urlopen(req) as response:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=15) as response:
             lineas = response.read().decode('utf-8').splitlines()
-            
-        for linea in lineas:
-            linea = linea.strip()
-            
-            # Reconocimiento de líneas válidas en formato IVTFF
-            if linea.startswith("<f") and ">" in linea:
-                # 1. EXTRAER LA ETIQUETA DEL FOLIO DE FORMA SEGURA COMO TEXTO (String)
-                match_etiqueta = re.search(r'^<(f[^>;\s.]+)', linea)
-                if match_etiqueta:
-                    identificador_folio = str(match_etiqueta.group(1))
-                else:
-                    continue
-                    
-                # 2. LIMPIEZA ABSOLUTA DE CUALQUIER COSA ENTRE < >
-                texto_eva = re.sub(r'<[^>]*>', ' ', linea)
-                
-                # 3. Limpiezas secundarias de anotaciones internas del archivo de texto CORREGIDO AQUÍ:
-                texto_eva = re.sub(r'#.*', '', texto_eva).strip()
-                
-                # Filtrar palabras que sean solo espacios o comentarios de cabecera
-                palabras_limpias = [p for p in texto_eva.split() if not p.startswith('%') and not p.startswith('!')]
-                texto_final = " ".join(palabras_limpias).strip()
-                
-                if texto_final:
-                    if identificador_folio in corpus:
-                        corpus[identificador_folio] += " " + texto_final
-                    else:
-                        corpus[identificador_folio] = texto_final
-                        
-    except Exception as e:
-        st.sidebar.error(f"Error de descarga: {e}. Cargando respaldo local.")
-        corpus = {
-            "f48r": "pceeoe ceodar olees ceepy cseol cseckeeeo otolcseey ceeor ceeokeey",
-            "f48v": "tcseor olcse qodaiin qokeeor sy oraiin ykeeol oiteeody cteeey",
-            "f1r": "pchod fchy tcheor odaiin yoles cseor ceeor cseody",
-            "fros": "opar chepchey oteedy olaiin osshy okchy qokedy qokedy tol teoor o l chekor okedy qokcho chfady oro okeechy okol shee tolfd saiir shodaiin oky roo ardas l chdy shckhdy tshda opchdy qokal opchsy cheky"
-        }
-    return corpus
-
-# Inicialización del backend
-with st.spinner("Descargando transcriptor oficial de folios reales desde el repositorio..."):
-    mapa_completo_folios = descargar_corpus_voynich_real()
-
-st.sidebar.header("Panel de Navegación")
-opciones_selector = ["Manual (Texto Libre)"]
-
-if mapa_completo_folios:
-    # CORREGIDO: Accede al elemento [0] de la lista regex para evitar fallos de conversión de tipos
-    def ordenar_clave(clave):
-        numeros = re.findall(r'\d+', clave)
-        num = int(numeros[0]) if numeros else 999  # Folios como 'fros' van al final
-        letra = clave[-1] if clave else ''
-        return (num, letra)
         
-    paginas_ordenadas = sorted(mapa_completo_folios.keys(), key=ordenar_clave)
-    opciones_selector.extend(paginas_ordenadas)
-
-folio_seleccionado = st.selectbox("Selecciona la página REAL del manuscrito a analizar:", opciones_selector)
-
-idioma_destino = st.sidebar.radio("Idioma de traducción de la IA:", ["Español (ES)", "English (EN)"])
-cod_idioma = "es" if "Español" in idioma_destino else "en"
-
-st.sidebar.markdown("---")
-st.sidebar.info(f"Páginas reales mapeadas en vivo: {len(mapa_completo_folios)}")
-
-if folio_seleccionado == "Manual (Texto Libre)":
-    texto_usuario = st.text_area("Introduce cadena de transcripción EVA libre:", placeholder="Ejemplo: pceeoe ceodar olees...")
-else:
-    texto_usuario = mapa_completo_folios.get(folio_seleccionado, "")
-    st.markdown(f"### 📖 Transcripción Cruda Limpia (EVA) del Folio {folio_seleccionado}")
-    st.code(texto_usuario, wrap_lines=True)
-
-if st.button("Ejecutar Análisis Paleográfico y Traducción AI", type="primary"):
-    if not texto_usuario.strip():
-        st.warning("El búfer de entrada de texto está vacío.")
-    else:
-        with st.spinner("Procesando dos capas de sustitución y conectando con el motor NLP..."):
-            texto_filtrado = aplicar_matriz_sustitucion(texto_usuario)
-            datos_tabla, oracion_completa = motor_prosa_fluida(texto_filtrado, idioma=cod_idioma)
-            
-            st.success("¡Pipeline completado con éxito!")
-            
-            st.markdown("### 🏛️ Traducción de Prosa Continua Contextual")
-            st.write("La IA intenta conectar tus raíces convertidas en Latín para armar una frase con sentido:")
-            st.info(f"Texto Interpretado final: {oracion_completa}")
-            
-            st.markdown("---")
-            st.markdown("### 📊 Desglose de Análisis Léxico Detallado")
-            
-            if datos_tabla:
-                df_resultado = pd.DataFrame(datos_tabla)
-                df_resultado.columns = ["Palabra Filtrada", "Equivalencia Semántica", "Tipo de Match"]
-                st.dataframe(df_resultado, use_container_width=True, hide_index=True)
+        for linea in lineas:
+            match = re.match(r"^<f(\d+[rv])\..*?>\s*(.*)", linea)
+            if match:
+                folio = match.group(1)
+                contenido = match.group(2).strip()
                 
-                st.markdown("#### 📈 Métricas de Rendimiento Dinámico")
-                c1, c2 = st.columns(2)
-                with c1:
-                    st.metric("Total Palabras Analizadas en la Página", len(df_resultado))
-                with c2:
-                    st.metric("Motor Lingüístico", f"Google API NLP (Latín -> {cod_idioma.upper()})")
+                # --- SOLUCIÓN: Limpiar de raíz las anotaciones académicas y llaves ---
+                contenido = re.sub(r"\{.*?\}", "", contenido)  # Borra todo lo que esté entre llaves {if}, {ch'}
+                contenido = re.sub(r"[\=\+\-\_\,\.\;\:\(\)\d+]", "", contenido)  # Borra símbolos y números extraños
+                
+                if contenido and not contenido.startswith(("#", "%")):
+                    if folio not in archivo_completo:
+                        archivo_completo[folio] = []
+                    archivo_completo[folio].append(contenido)
+        return archivo_completo
+    except Exception as e:
+        st.error(f"Error al conectar con la base de datos: {e}")
+        return {}
+
+CORPUS_MANUSCRITO = descargar_manuscrito_completo()
+
+# --- MOTOR DE DESCRIPCIÓN FONÉTICA ---
+def traducir_a_romance(texto):
+    reglas = {
+        'qotceoy': 'quotcoí', 'qotoeey': 'quotoaí', 'dceorceau': 'dicorcau',
+        'ceoceodaiu': 'cocodau', 'tceeodal': 'ciodal', 'olteey': 'oltí',
+        'otolceey': 'otolci', 'kdceody': 'qudicodí', 'ceeodaiin': 'ciodain',
+        'croffosodaur': 'crofosodaur', 'otoltoand': 'otoltoand', 'gceaud': 'caud',
+        'qocey': 'quocí', 'dce': 'dic', 'cee': 'ci', 'eey': 'iy', 'ceeey': 'cia',
+        'cteey': 'cutí', 'cte': 'cut', 
+        'pc': 'p', 'ps': 'p', 'cp': 'p', 'cf': 'c', 'ch': 'c', 'sh': 'c',
+        'ck': 'qu', 'k': 'qu', 'ct': 'qu', 'ii': 'i', 'ee': 'i',
+        'ce': 'c', 'ey': 'a', 'oe': 'u', 'oi': 'oi', 'ae': 'a', 'dc': 'ch', 'tc': 'ch', 'q': 'qu',
+        'pchodon': 'podon', 'pshoey': 'puí', 'cttey': 'cuta', 'oaror': 'oarur', 'psoisoda': 'poisoda', 'y': 'í'
+    }
+    texto_limpio = texto.lower()
+    for k in sorted(reglas.keys(), key=len, reverse=True):
+        texto_limpio = texto_limpio.replace(k, reglas[k])
+    return texto_limpio
+
+# --- MOTOR DE TRADUCCIÓN REAL ---
+def generar_espanol_sintactico(texto_romance):
+    lineas = texto_romance.split('\n')
+    lineas_traducidas = []
+    
+    for idx, linea in enumerate(lineas):
+        palabras = linea.split()
+        linea_espanol = []
+        
+        for palabra in palabras:
+            palabra_limpia = palabra.strip()
+            if not palabra_limpia:
+                continue
+                
+            if palabra_limpia in DICCIONARIO_ESPANOL:
+                linea_espanol.append(DICCIONARIO_ESPANOL[palabra_limpia])
+            else:
+                linea_espanol.append(f"[{palabra_limpia}]")
+        
+        if linea_espanol:
+            texto_linea = " ".join(linea_espanol).capitalize()
+            lineas_traducidas.append(f"Línea {idx+1}: {texto_linea}.")
+            
+    return "\n".join(lineas_traducidas)
+
+# --- INTERFAZ GRÁFICA ---
+tab1, tab2 = st.tabs(["📝 Laboratorio de Texto Libre", "📖 Explorador del Corpus Real (1r a 116v)"])
+
+with tab1:
+    st.subheader("Laboratorio de Entrada Libre")
+    entrada = st.text_area("Pega caracteres EVA aquí:", "teeodau cseey cpair osaiin")
+    if st.button("Analizar Fragmento"):
+        romance = traducir_a_romance(entrada)
+        espanol = generar_espanol_sintactico(romance)
+        c1, c2 = st.columns(2)
+        with c1:
+            st.success("Fonética Romance:")
+            st.code(romance)
+        with c2:
+            st.info("Traducción:")
+            st.write(espanol)
+
+with tab2:
+    st.subheader("Navegador de Transcripciones Académicas")
+    if CORPUS_MANUSCRITO:
+        lista_folios = sorted(list(CORPUS_MANUSCRITO.keys()), key=lambda x: (int(''.join(filter(str.isdigit, x))), x[-1]))
+        folio_sel = st.selectbox("Selecciona un folio real para extraer e interpretar su contenido de internet:", lista_folios)
+        
+        if st.button(f"Descifrar Folio Real {folio_sel}"):
+            lineas_eva = CORPUS_MANUSCRITO[folio_sel]
+            texto_eva_completo = "\n".join(lineas_eva)
+            
+            romance_final = traducir_a_romance(texto_eva_completo)
+            espanol_final = generar_espanol_sintactico(romance_final)
+            
+            st.write("---")
+            st.markdown(f"### Transcripción y Descifrado Real para el Folio {folio_sel}")
+            
+            col_eva, col_rom, col_esp = st.columns(3)
+            with col_eva:
+                st.warning("1. Texto EVA Real Extraído:")
+                st.text_area("EVA", texto_eva_completo, height=450, disabled=True)
+            with col_rom:
+                st.success("2. Fonética Romance (Tu Matriz):")
+                st.text_area("Romance", romance_final, height=450)
+            with col_esp:
+                st.info("3. Traducción Real al Español:")
+                st.text_area("Español", json_fix := espanol_final, height=450)
+    else:
+        st.warning("No se pudo cargar la base de datos remota debido a restricciones de conexión.")
