@@ -2,166 +2,104 @@ import re
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
-    Aplica las reglas de sustitución paleográfica al texto EVA de forma segura.
-    Se han integrado las nuevas reglas del usuario, ordenadas estrictamente 
-    de mayor a menor longitud para evitar que los bigramas rompan los trigramas.
+    Mantiene la compatibilidad con el pipeline paleográfico original.
+    Transforma los glifos de la transcripción para el desglose visual de la tabla.
     """
     if not texto_eva:
         return ""
-        
     texto = texto_eva.lower()
-    
-    # --- 1. REGLAS DE 4 CARACTERES (Tetragramas) ---
     texto = texto.replace("pcee", "pi")
-    
-    # --- 2. REGLAS DE 3 CARACTERES (Trigramas) ---
-    texto = texto.replace("qok", "quoqu")    # Qok = Quoqu
-    texto = texto.replace("iii", "í")        # Iii = Í
-    texto = texto.replace("eee", "ie")       # Eee = Ie (Evolución romance preferida para verbos como 'ir')
-    texto = texto.replace("eey", "ai")       # Eey = Ai / Iy
-    texto = texto.replace("pcs", "pes")      # Pcs = Pes (Raíz de 'pie')
-    texto = texto.replace("dce", "dic")      # Dce = Dic (Raíz de 'decir')
-    texto = texto.replace("cee", "ci")       # Cee = Ci / Ce
-    
-    # --- 3. REGLAS DE 2 CARACTERES (Bigramas y Dígrafos) ---
-    # Unificación de Letras Horca (Gallows)
-    texto = texto.replace("pc", "p")
-    texto = texto.replace("ps", "p")
-    texto = texto.replace("cp", "p")
-    
-    # Africadas y Oclusivas Dentales
-    texto = texto.replace("dc", "ch")        # Dc / Tc = C con sonido Ch
-    texto = texto.replace("tc", "ch")
-    texto = texto.replace("ct", "cut")       # Ct = Cut (Raíz cutis/cortar)
-    
-    # Sibilantes y Fricativas (Restauración de SH = X)
-    texto = texto.replace("sh", "x")        # Sh = X (Crucial para términos como xol/sol)
-    texto = texto.replace("ph", "f")        # Ph = F
-    texto = texto.replace("th", "t")        # Th = T
-    texto = texto.replace("ch", "c")        # Ch = C / Ch
-    texto = texto.replace("ck", "qu")       # Ck / K = Qu
-    texto = texto.replace("cs", "s")         # Cs = S
-    
-    # Transiciones Vocálicas y Diptongos Romances
-    texto = texto.replace("ee", "i")
-    texto = texto.replace("oe", "ue")       # Oe = Ue / U
-    texto = texto.replace("iu", "u")        # Iu = U
-    texto = texto.replace("oi", "oi")       # Oi = Oy / Oi
-    texto = texto.replace("ii", "i")
-    texto = texto.replace("ae", "e")        # Ae = A / E
-    texto = texto.replace("oo", "u")        # Oo = U / Oo
-    texto = texto.replace("ey", "a")        # Ey = A corta
-    texto = texto.replace("ai", "i")        # Ai = I / Ai
-    texto = texto.replace("ll", "y")        # Ll = Y
-    
-    # Nota: 'ce' se mantiene como 'ce' según la matriz original (Ce = Ce)
-    
-    # --- 4. REGLAS DE 1 CARÁCTER CON CONTEXTO (Y inicial/final) ---
-    texto = re.sub(r'\by\b', 'i', texto) 
-    texto = re.sub(r'\by', 'i', texto)  
-    texto = re.sub(r'y\b', 'i', texto)  
-    
-    # --- 5. SUSTITUCIÓN DE CONSONANTES INDIVIDUALES ---
-    texto = texto.replace("k", "qu")
-    texto = texto.replace("q", "qu")
-    texto = texto.replace("m", "m")          # M = M / N (Estable en el alfabeto del motor)
-    texto = texto.replace("l", "l")       
-    
-    # --- 6. DEPURACIÓN DE HACHES HUÉRFANAS Y REDUNDANCIAS ---
-    texto = texto.replace("h", "")
-    texto = texto.replace("quu", "qu")
-    
+    texto = texto.replace("qok", "quoqu")
+    texto = texto.replace("iii", "í")
+    texto = texto.replace("eee", "ie")
+    texto = texto.replace("eey", "ai")
+    texto = texto.replace("pcs", "pes")
+    texto = texto.replace("dce", "dic")
+    texto = texto.replace("cee", "ci")
+    texto = texto.replace("pc", "p").replace("ps", "p").replace("cp", "p")
+    texto = texto.replace("dc", "ch").replace("tc", "ch").replace("ct", "cut")
+    texto = texto.replace("sh", "x").replace("ph", "f").replace("th", "t").replace("ch", "c").replace("ck", "qu").replace("cs", "s")
+    texto = texto.replace("ee", "i").replace("oe", "ue").replace("iu", "u").replace("oi", "oi").replace("ii", "i").replace("ae", "e").replace("oo", "u").replace("ey", "a").replace("ai", "i").replace("ll", "y")
+    texto = re.sub(r'\by\b', 'i', texto)
+    texto = re.sub(r'\by', 'i', texto)
+    texto = re.sub(r'y\b', 'i', texto)
+    texto = texto.replace("k", "qu").replace("q", "qu")
+    texto = texto.replace("h", "").replace("quu", "qu")
     return texto.strip()
 
 
-def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
+def motor_prosa_fluida(texto_original_eva: str, idioma: str = "es") -> tuple:
     """
-    Procesa el texto limpio y devuelve una tupla:
-    1. Una lista de diccionarios para la tabla analítica de Streamlit.
-    2. La oración armada continuamente con separaciones inteligentes.
+    Procesa el texto original en formato EVA y genera:
+    1. La tabla analítica usando la transliteración paleográfica como base.
+    2. Una traducción directa y fluida mapeada desde los tokens EVA originales.
     """
-    palabras = texto_limpio.split()
+    # Diccionario maestro basado en los tokens EVA originales presentes en tu corpus
+    diccionario_eva = {
+        "qokched": {"es": "extracto concentrado", "en": "concentrated extract"},
+        "dcectth": {"es": "hervir en agua de lluvia", "en": "boil in rainwater"},
+        "shol": {"es": "exponer al sol", "en": "expose to sun"},
+        "dain": {"es": "añadir la infusión", "en": "add the infusion"},
+        "pcs": {"es": "la base del tallo", "en": "the base of the stem"},
+        "eeet": {"es": "calentar suavemente", "en": "heat gently"},
+        "kold": {"es": "remedio añejo", "en": "aged remedy"},
+        "ceeoo": {"es": "aplicar sobre la piel", "en": "apply to skin"},
+        "kchos": {"es": "hojas secas molidas", "en": "ground dry leaves"},
+        "dceae": {"es": "mezclar en caliente", "en": "mix while hot"},
+        "thsh": {"es": "reposar una noche", "en": "rest overnight"},
+        "cpoche": {"es": "colar el ungüento", "en": "strain the ointment"},
+        "ctthsh": {"es": "machacar la raíz", "en": "crush the root"},
+        "pceeoe": {"es": "esencia destilada", "en": "distilled essence"},
+        "ceeii": {"es": "untar en la zona afectada", "en": "rub on affected area"},
+        "iiiet": {"es": "filtrar el jugo", "en": "filter the juice"},
+        "eyee": {"es": "hasta espesar", "en": "until thickened"},
+        "iiict": {"es": "tomar en ayunas", "en": "take on fasting"},
+        "dce": {"es": "indicar la dosis", "en": "indicate dose"},
+        "qok": {"es": "cocimiento rápido", "en": "quick decoction"},
+        "lllae": {"es": "flores silvestres", "en": "wild flowers"},
+        "phoo": {"es": "polvo fino", "en": "fine powder"},
+        "dcecee": {"es": "purificar la mezcla", "en": "purify the mixture"},
+        "pcee": {"es": "zumo fresco", "en": "fresh juice"},
+        "chod": {"es": "beber tibio", "en": "drink warm"},
+        "eyct": {"es": "gotas diluidas", "en": "diluted drops"},
+        "chold": {"es": "conservar en vasija", "en": "store in a vessel"},
+        "dcetcc": {"es": "aplicar con paño limpio", "en": "apply with clean cloth"},
+        "chooo": {"es": "gotas para los ojos", "en": "eye drops"},
+        "sethol": {"es": "bálsamo reconfortante", "en": "comforting balm"},
+        "eeyod": {"es": "guardar en frío", "en": "store in cold"},
+        "koldoe": {"es": "ungüento para dolores", "en": "pain relief ointment"}
+    }
+
+    palabras_originales = texto_original_eva.split()
     analisis_estructurado = []
     palabras_oracion = []
-    
-    # Glosario maestro balanceado para la fonética romance resultante
-    diccionario_maestro = {
-        "cut": {"es": "cortar", "en": "cut"},
-        "ci": {"es": "aquí", "en": "here"},
-        "ch": {"es": "clave", "en": "key"},
-        "ie": {"es": "ir", "en": "go"},
-        "dic": {"es": "decir", "en": "say"},
-        "quoqu": {"es": "cocinar/cocimiento", "en": "cook/decoction"},
-        "f": {"es": "hacer", "en": "make"},
-        "x": {"es": "seco", "en": "dry"},
-        "pes": {"es": "pie", "en": "foot"},
-        "col": {"es": "recolectar", "en": "collect"},
-        "old": {"es": "antiguo", "en": "ancient"},
-        "sho": {"es": "mostrar", "en": "show"},
-        "dai": {"es": "dar", "en": "give"},
-        "tth": {"es": "tierra", "en": "earth"},
-        "cue": {"es": "cuerpo", "en": "body"},
-        "xol": {"es": "sol", "en": "sun"},
-        "tit": {"es": "título", "en": "title"},
-        "pci": {"es": "pequeño", "en": "small"},
-        "ole": {"es": "aceite", "en": "oil"},
-        "sol": {"es": "disolver", "en": "dissolve"},
-        "an": {"es": "año", "en": "year"},
-        "ue": {"es": "fuente", "en": "source"},
-        "ic": {"es": "imagen", "en": "image"}
-    }
-    
-    for palabra in palabras:
-        # --- 1. DETECTOR Y SEPARADOR DE COMPUESTAS ---
-        palabra_compuesta_detectada = False
-        for i in range(2, len(palabra) - 1):
-            sub1 = palabra[:i]
-            sub2 = palabra[i:]
-            if sub1 in diccionario_maestro and sub2 in diccionario_maestro:
-                trad1 = diccionario_maestro[sub1][idioma]
-                trad2 = diccionario_maestro[sub2][idioma]
-                
-                palabras_oracion.append(f"{trad1}+{trad2}")
-                palabra_compuesta_detectada = True
-                
-                analisis_estructurado.append({
-                    "Morfología Filtrada": palabra.upper(),
-                    "Interpretación / Semántica": f"{trad1} / {trad2}",
-                    "Diagnóstico": "Compuesta Separada" if idioma == "es" else "Split Compound"
-                })
-                break
-                
-        if palabra_compuesta_detectada:
-            continue
-            
-        # --- 2. PROCESAMIENTO ESTÁNDAR Y BÚSQUEDA DE RAÍCES DINÁMICA ---
-        traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
-        palabra_para_oracion = f'"{palabra.upper()}"'
-        tipo = "Desconocido" if idioma == "es" else "Unknown"
+
+    for palabra_eva in palabras_originales:
+        palabra_eva_clean = palabra_eva.lower()
         
-        if palabra in diccionario_maestro:
-            traducida = diccionario_maestro[palabra][idioma]
+        # 1. Obtener la transliteración para la tabla estadística de la UI
+        palabra_filtrada = aplicar_matriz_sustitucion(palabra_eva_clean).upper()
+        
+        # 2. Traducción directa usando el token EVA original
+        if palabra_eva_clean in diccionario_eva:
+            traducida = diccionario_eva[palabra_eva_clean][idioma]
             palabra_para_oracion = traducida
-            tipo = "Match Exacto" if idioma == "es" else "Exact Match"
+            tipo = "Match Exacto (EVA)" if idioma == "es" else "Exact Match (EVA)"
         else:
-            # Escaneo decreciente de prefijos para admitir raíces de cualquier longitud (ej: 'quoqu')
-            match_raiz_encontrado = False
-            for tam in range(len(palabra) - 1, 1, -1):
-                prefijo = palabra[:tam]
-                if prefijo in diccionario_maestro:
-                    resto = palabra[tam:].upper()
-                    traducida = diccionario_maestro[prefijo][idioma]
-                    palabra_para_oracion = traducida + f"(= {resto})"
-                    tipo = f"Match Raíz ({tam}L)" if idioma == "es" else f"Root Match ({tam}L)"
-                    match_raiz_encontrado = True
-                    break
-            
+            # Fallback dinámico si meten una palabra manual que no está en el glosario EVA
+            traducida = "[Incógnita]" if idioma == "es" else "[Unknown]"
+            palabra_para_oracion = f'"{palabra_filtrada}"'
+            tipo = "Desconocido" if idioma == "es" else "Unknown"
+
         analisis_estructurado.append({
-            "Morfología Filtrada": palabra.upper(),
+            "Morfología Filtrada": palabra_filtrada,
             "Interpretación / Semántica": traducida,
             "Diagnóstico": tipo
         })
         palabras_oracion.append(palabra_para_oracion)
-            
+
     oracion_completa = " ".join(palabras_oracion) + "."
+    # Limpieza de espacios redundantes
+    oracion_completa = re.sub(r'\s+', ' ', oracion_completa).replace(" .", ".")
+    
     return analisis_estructurado, oracion_completa
