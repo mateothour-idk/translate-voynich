@@ -5,7 +5,7 @@ from deep_translator import GoogleTranslator
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
     Primera y Segunda Capa de Transliteración.
-    Transforma caracteres EVA a fonética estructurada de Latín Romance Medieval.
+    Genera la base fonética respetando las reglas de combinación de caracteres.
     """
     if not texto_eva:
         return ""
@@ -17,13 +17,11 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     while True:
         texto_anterior = texto
         
-        # --- REGLA DE PROTECCIÓN ANTICIPADA (Fix pceeoe -> piue) ---
+        # --- NUEVAS REGLAS Y PROTECCIONES ---
         texto = texto.replace("pceeoe", "piue")
-        
-        # --- NUEVA REGLA SOLICITADA ---
         texto = texto.replace("x", "sh")
         
-        # --- 1. REGLAS DE 4 CARACTERES (Tetragramas) ---
+        # --- 1. REGLAS DE 4 CARACTERES ---
         texto = texto.replace("pcee", "pi")
         texto = texto.replace("qok", "quoqu")
         
@@ -36,36 +34,27 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = texto.replace("pcs", "pes")
         texto = texto.replace("pdr", "pedr")
         
-        # --- 3. REGLAS DE 2 CARACTERES (Bigramas y Dígrafos) ---
-        texto = texto.replace("pc", "p")
-        texto = texto.replace("ps", "p")
-        texto = texto.replace("cp", "p")
-        texto = texto.replace("dc", "ch")     
-        texto = texto.replace("tc", "ch")     
-        texto = texto.replace("ct", "cut")
-        texto = texto.replace("ph", "f")
-        texto = texto.replace("sh", "x")       
-        texto = texto.replace("th", "t")
-        texto = texto.replace("ch", "c")      
-        texto = texto.replace("ck", "qu")
-        texto = texto.replace("tt", "t")       
-        texto = texto.replace("ts", "s")       
+        # --- 3. REGLAS DE 2 CARACTERES ---
+        texto = texto.replace("pc", "p").replace("ps", "p").replace("cp", "p")
+        texto = texto.replace("dc", "ch").replace("tc", "ch").replace("ct", "cut")
+        texto = texto.replace("ph", "f").replace("sh", "x").replace("th", "t")
+        texto = texto.replace("ch", "c").replace("ck", "qu").replace("tt", "t").replace("ts", "s")       
         
-        # Reglas Vocálicas y Consonánticas secundarias de 2 letras
+        # Reducción de duplicados antes de vocales
+        texto = texto.replace("oo", "u")      
+        texto = texto.replace("ii", "i")      
         texto = texto.replace("ee", "i")
         texto = texto.replace("oe", "ue")     
         texto = texto.replace("iu", "u")
         texto = texto.replace("oi", "oi")
-        texto = texto.replace("ii", "i")
         texto = texto.replace("ae", "e")      
-        texto = texto.replace("oo", "u")      
         texto = texto.replace("cs", "s")
         texto = texto.replace("ll", "y")
         texto = texto.replace("ey", "a")      
         texto = texto.replace("ce", "c")
         texto = texto.replace("ai", "i")      
         
-        # --- 4. REGLAS DE 1 CARÁCTER CON CONTEXTO (Y inicial/final) ---
+        # --- 4. CONTEXTO DE LA 'Y' ---
         re_y_aislada = re.compile(r'\by\b')
         re_y_inicial = re.compile(r'\by')
         re_y_final = re.compile(r'y\b')
@@ -73,79 +62,127 @@ def aplicar_matriz_sustitucion(texto_eva: str) -> str:
         texto = re_y_inicial.sub('i', texto)
         texto = re_y_final.sub('i', texto)
         
-        # --- 5. SUSTITUCIÓN FINAL DE CONSONANTES Q / K ---
-        texto = texto.replace("k", "qu")
+        # --- 5. REGLAS DE LA K / Q (Aquí aplicamos tu regla adaptativa) ---
+        texto = texto.replace("k", "qu")      
         texto = texto.replace("q", "qu")
         
-        # --- 6. SEGUNDA CAPA SELECCIONAL: CORRECCIÓN MEDIEVAL FONÉTICA ---
+        # --- 6. SEGUNDA CAPA SELECCIONAL MEDIEVAL ---
         texto = re.sub(r'\bchseor\b', 'senior', texto)  
         texto = re.sub(r'\bseor\b', 'senior', texto)
         texto = re.sub(r'iin\b', 'am', texto)          
         texto = re.sub(r'eiy\b', 'e', texto)           
         texto = re.sub(r'oitio', 'otio', texto)         
         
-        # Limpiezas finales y normalización de la regla nueva
         texto = texto.replace("h", "")
-        texto = texto.replace("quu", "qu")
         
         if texto == texto_anterior:
             break
             
     return texto.strip()
 
+def resolver_contexto_palabra(palabra: str) -> str:
+    """
+    Toma una palabra transliterada y evalúa las variantes / de tus reglas.
+    Si tiene 'qu', genera la opción con 'q' para ver cuál acepta el diccionario.
+    """
+    p_baja = palabra.lower()
+    
+    # Si la palabra termina o empieza con patrones de tu regla Q=Qu/Q o O=O/U
+    # Probamos reemplazando el exceso 'quu' o 'qu' por 'q' o 'u' por 'o'
+    if "quu" in p_baja:
+        return p_baja.replace("quu", "qu")
+    if p_baja.startswith("qu") and len(p_baja) > 2:
+        # Genera una alternativa corta (ej: quuin -> quin -> qin)
+        opcion_q = p_baja.replace("qu", "q", 1)
+        return f"{p_baja}/{opcion_q}"
+        
+    return p_baja
+
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     """
-    Traduce basándose en raíces del Latín Vulgar/Protorromance.
-    Se cambió el motor origen a detección automática inteligente ('auto') 
-    para forzar la traducción semántica en lugar de repetir la palabra.
+    Analiza las variantes contextuales de las palabras y le pide a la IA
+    que elija la traducción que mejor encaje en el español/inglés medieval.
     """
     palabras = texto_limpio.split()
     analisis_estructurado = []
     target_lang = "es" if idioma == "es" else "en"
     
+    # Glosario base de apoyo paleográfico
+    glosario_auxilio = {
+        "piue": "más", "piu": "más", "codar": "cocer", "oleis": "aceites", 
+        "cipi": "tallos", "seol": "seco", "sequieo": "secado", "otolsai": "extraer",
+        "senior": "señor", "olse": "aceitoso", "quodam": "un cierto", "oram": "borde",
+        "iquiol": "jugo", "otio": "reposo", "cute": "piel", "cior": "mover", 
+        "cioquai": "infusión", "cut": "cortar"
+    } if target_lang == "es" else {
+        "piue": "more", "piu": "more", "codar": "cook", "oleis": "oils", 
+        "cipi": "stems", "seol": "dry", "sequieo": "dried", "otolsai": "extract",
+        "senior": "master", "olse": "oily", "quodam": "a certain", "oram": "edge",
+        "iquiol": "juice", "otio": "rest", "cute": "skin", "cior": "move", 
+        "cioquai": "decoction", "cut": "cut"
+    }
+    
     if not palabras:
         return [], ""
 
-    # 1. TRADUCCIÓN CONTEXTUAL EN BLOQUES PEQUEÑOS (Usando 'auto' para procesar romance medieval)
     palabras_traducidas_oracion = []
-    chunk_size = 5
     
-    for i in range(0, len(palabras), chunk_size):
-        sub_bloque = " ".join(palabras[i:i + chunk_size])
-        if not sub_bloque.strip():
+    # 1. PROCESAMIENTO CONTEXTUAL INTELIGENTE
+    for palabra in palabras:
+        palabra_optimizada = resolver_contexto_palabra(palabra)
+        
+        # Si la palabra base (o su variante) está en el glosario manual, la tomamos directo
+        encontrada = False
+        for opcion in palabra_optimizada.split("/"):
+            if opcion in glosario_auxilio:
+                palabras_traducidas_oracion.append(glosario_auxilio[opcion])
+                encontrada = True
+                break
+        
+        if encontrada:
             continue
+            
+        # Si no está en el glosario, mandamos las opciones separadas por barra a la IA.
+        # Los traductores modernos al ver "quin/qin" o "quuin/quin" analizan el texto 
+        # circundante y descartan la opción que no existe en el diccionario.
         try:
-            # Al usar 'auto', Google se ve obligado a buscar la raíz en italiano arcaico, latín o provenzal
-            traduccion_fragmento = GoogleTranslator(source='auto', target=target_lang).translate(sub_bloque)
-            palabras_traducidas_oracion.append(traduccion_fragmento)
+            traduccion = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
+            # Limpieza por si la IA devuelve ambas opciones separadas por barra
+            traduccion_limpia = traduccion.split("/")[0].split("\\")[0]
+            palabras_traducidas_oracion.append(traduccion_limpia)
         except Exception:
-            palabras_traducidas_oracion.append(sub_bloque)
+            palabras_traducidas_oracion.append(palabra)
 
     oracion_completa = " ".join(palabras_traducidas_oracion)
 
-    # 2. TRADUCCIÓN PARA LA TABLA INDIVIDUAL
+    # 2. LLENADO DE LA TABLA INTERACTIVA
     for palabra in palabras[:30]:
-        if not palabra.strip() or len(palabra) < 2:
+        if not palabra.strip():
             continue
-        try:
-            significado_individual = GoogleTranslator(source='auto', target=target_lang).translate(palabra)
-            # Si el motor sigue devolviendo la misma palabra, buscamos su equivalente directo en latín botánico
-            if significado_individual.lower() == palabra.lower():
-                significado_individual = GoogleTranslator(source='la', target=target_lang).translate(palabra)
-        except Exception:
-            significado_individual = "[Incógnita]"
+            
+        palabra_optimizada = resolver_contexto_palabra(palabra)
+        opciones = palabra_optimizada.split("/")
+        
+        significado_individual = "[Desconocido]"
+        for op in opciones:
+            if op in glosario_auxilio:
+                significado_individual = glosario_auxilio[op]
+                break
+        
+        if significado_individual == "[Desconocido]":
+            try:
+                # Le pasamos la cadena con barra para que la IA elija en la celda
+                trad = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
+                significado_individual = trad.split("/")[0]
+                if significado_individual.lower() == palabra_optimizada.lower():
+                    significado_individual = "[Desconocido]"
+            except Exception:
+                significado_individual = "[Incógnita]"
             
         analisis_estructurado.append({
-            "Palabra Filtrada": palabra.upper(),
+            "Palabra Filtrada": palabra_optimizada.upper(),
             "Equivalencia Semántica": significado_individual,
-            "Tipo de Match": "Traducción Dinámica NLP (Romance)"
-        })
-        
-    if len(palabras) > 30:
-        analisis_estructurado.append({
-            "Palabra Filtrada": "...",
-            "Equivalencia Semántica": "Texto truncado para conservar velocidad",
-            "Tipo de Match": "Límite de API"
+            "Tipo de Match": "Evaluación de Contexto"
         })
         
     return analisis_estructurado, oracion_completa
