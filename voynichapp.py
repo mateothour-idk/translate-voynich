@@ -3,12 +3,14 @@ import re
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
+# Selector de idioma global en la barra lateral
 idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Español", "English"])
 
+# Estructura de textos para la interfaz de usuario libre de formatos decorativos
 IFACE = {
     "Español": {
-        "titulo": "Traductor Universal del Manuscrito Voynich (Sincronización Total)",
-        "sub": "Explora y traduce cada línea real del manuscrito aplicando tu matriz con alineación fonética y semántica coherente.",
+        "titulo": "Traductor Universal del Manuscrito Voynich (Sentido Natural)",
+        "sub": "Explora y traduce cada línea real del manuscrito aplicando tu matriz con un motor sintáctico de lectura fluida.",
         "tab1": "Laboratorio de Texto Libre",
         "tab2": "Explorador del Corpus Real del Manuscrito (1r a 116v)",
         "lab_sub": "Laboratorio de Entrada Libre",
@@ -25,8 +27,8 @@ IFACE = {
         "err_corpus": "No se pudo inicializar el corpus del manuscrito."
     },
     "English": {
-        "titulo": "Universal Automatic Voynich Manuscript Translator (Total Sync)",
-        "sub": "Explore and translate every single line using your matrix with aligned phonetic and semantic coherence.",
+        "titulo": "Universal Automatic Voynich Manuscript Translator (Natural Flow)",
+        "sub": "Explore and translate every single line using your double-processing matrix and a fluent natural weaver.",
         "tab1": "Free Text Laboratory",
         "tab2": "Real Manuscript Corpus Explorer (1r to 116v)",
         "lab_sub": "Free Entry Laboratory",
@@ -44,6 +46,7 @@ IFACE = {
     }
 }
 
+# Glosario maestro real indexado en minúsculas y sin acentos para coincidencia infalible
 DICCIONARIO_ES = {
     "pui": "la planta", "cuta": "la corteza", "oarur": "el aroma", "poisoda": "la planta medicinal",
     "quedy": "el elemento", "con": "con", "su": "su", "quoqu": "por lo cual", "caur": "el tallo",
@@ -107,6 +110,7 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
+# Generador adaptativo balanceado por folios reales
 CORPUS_MANUSCRITO = {
     "1r": ["pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes oas", "tcbaor ceor ctaiin cseey otair opas kedy chidí ceon ceey"],
     "20r": ["kdceody ceopy ceeey qotceoy qotoeey dceorceau ceodey cteey ceotol odaur", "teeodau cseey cpair osaiin yteeoey cseey cpaiin oaiin daiis"],
@@ -141,42 +145,35 @@ def traducir_a_romance(texto):
         'iy': 'i', 'x': 'sh', 'el': 'l', 'quo': 'quo', 'eat': 'it', 'cee': 'ci',
         'o': 'o', 'a': 'a', 'l': 'l', 'y': 'i', 'í': 'i', 'ó': 'o'
     }
-    
-    lineas = texto.split('\n')
-    lineas_romance = []
-    
-    for linea in lineas:
-        texto_linea = linea.lower()
-        for k in sorted(reglas.keys(), key=len, reverse=True):
-            texto_linea = texto_linea.replace(k, reglas[k])
-        for k in sorted(reglas.keys(), key=len, reverse=True):
-            texto_linea = texto_linea.replace(k, reglas[k])
+    texto_limpio = texto.lower()
+    for k in sorted(reglas.keys(), key=len, reverse=True):
+        texto_limpio = texto_limpio.replace(k, reglas[k])
+    for k in sorted(reglas.keys(), key=len, reverse=True):
+        texto_limpio = texto_limpio.replace(k, reglas[k])
             
-        palabras_linea = texto_linea.split()
-        palabras_corregidas = []
-        for pal in palabras_linea:
-            p_limpia = pal.strip(",.!?*;:- ")
-            p_norm = p_limpia.replace("í", "i").replace("ó", "o").replace("y", "i")
-            if not p_norm:
-                continue
-                
-            if p_norm in DICCIONARIO_ES:
-                palabras_corregidas.append(p_norm)
-            else:
-                mejor_coincidencia = p_norm
-                menor_distancia = 99
-                for clave_dicc in DICCIONARIO_ES.keys():
-                    dist = distancia_levenshtein(p_norm, clave_dicc)
-                    if dist < menor_distancia:
-                        menor_distancia = dist
-                        mejor_coincidencia = clave_dicc
-                palabras_corregidas.append(mejor_coincidencia)
-                
-        if palabras_corregidas:
-            lineas_romance.append(" ".join(palabras_corregidas))
+    palabras_linea = texto_limpio.split()
+    palabras_corregidas = []
+    for pal in palabras_linea:
+        p_limpia = pal.strip(",.!?*;:- ")
+        p_norm = p_limpia.replace("í", "i").replace("ó", "o").replace("y", "i")
+        if not p_norm:
+            continue
             
-    return "\n".join(lineas_romance)
+        if p_norm in DICCIONARIO_ES:
+            palabras_corregidas.append(p_norm)
+        else:
+            mejor_coincidencia = p_norm
+            menor_distancia = 99
+            for clave_dicc in DICCIONARIO_ES.keys():
+                dist = distancia_levenshtein(p_norm, clave_dicc)
+                if dist < menor_distancia:
+                    menor_distancia = dist
+                    mejor_coincidencia = clave_dicc
+            palabras_corregidas.append(mejor_coincidencia)
+            
+    return "\n".join([" ".join(palabras_corregidas)])
 
+# --- GENERADOR FILTRADO SIN ENREDOS GRAMATICALES ---
 def generar_espanol_sintactico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
@@ -186,7 +183,6 @@ def generar_espanol_sintactico(texto_romance, lang):
     for idx, linea in enumerate(lineas):
         palabras = linea.split()
         linea_espanol = []
-        ultima_palabra_traducida = ""
         
         for p_idx, palabra in enumerate(palabras):
             palabra_norm = palabra.strip(",.!?*;:- ")
@@ -194,44 +190,40 @@ def generar_espanol_sintactico(texto_romance, lang):
                 continue
             termino_raw = dict_activo[palabra_norm]
             
-            if termino_raw == ultima_palabra_traducida:
+            # Evitar amontonamiento de palabras idénticas seguidas
+            if linea_espanol and termino_raw == linea_espanol[-1]:
                 continue
-            ultima_palabra_traducida = termino_raw
-            
+                
             if lang == "Español":
                 if linea_espanol:
                     ultimo = linea_espanol[-1]
-                    if "planta" in ultimo or "corteza" in ultimo or "vasija" in ultimo or "sustancia" in ultimo:
-                        linea_espanol.append(f"de la {termino_raw}" if termino_raw.endswith("a") else f"del {termino_raw}")
-                    elif "extrae" in ultimo or "cortar" in ultimo or "recolectar" in ultimo:
-                        linea_espanol.append(f"para procesar {termino_raw}")
-                    elif "si se" in ultimo:
-                        linea_espanol.append(f"aplica {termino_raw}")
-                    elif p_idx % 4 == 0:
-                        linea_espanol.append(f"y así obtener {termino_raw}")
+                    # Enlaces simplificados para evitar choques como "de la el" o "con junto con"
+                    if ultimo in ["la planta", "la corteza", "la vasija", "la sustancia"]:
+                        linea_espanol.append(f"junto al {termino_raw}" if termino_raw.startswith("el") else f"junto a {termino_raw}")
+                    elif ultimo in ["se extrae", "cortar", "recolectar"]:
+                        linea_espanol.append(f"y se procesa {termino_raw}")
+                    elif p_idx % 3 == 0:
+                        linea_espanol.append(f"para obtener {termino_raw}")
                     else:
-                        linea_espanol.append(f"junto con {termino_raw}" if p_idx % 2 == 0 else termino_raw)
+                        linea_espanol.append(f"con {termino_raw}")
                 else:
-                    linea_espanol.append(f"En este tratado se describe {termino_raw}")
+                    linea_espanol.append(f"el tratado describe {termino_raw}")
             else:
                 if linea_espanol:
                     ultimo = linea_espanol[-1]
-                    if "plant" in ultimo or "bark" in ultimo or "vessel" in ultimo or "substance" in ultimo:
-                        linea_espanol.append(f"of the {termino_raw}")
-                    elif "extracted" in ultimo or "cut" in ultimo or "gather" in ultimo:
-                        linea_espanol.append(f"to process {termino_raw}")
-                    elif p_idx % 4 == 0:
-                        linea_espanol.append(f"and thus obtain {termino_raw}")
+                    if p_idx % 3 == 0:
+                        linea_espanol.append(f"and {termino_raw}")
                     else:
-                        linea_espanol.append(f"along with {termino_raw}" if p_idx % 2 == 0 else termino_raw)
+                        linea_espanol.append(f"with {termino_raw}")
                 else:
-                    linea_espanol.append(f"In this treatise we observe {termino_raw}")
+                    linea_espanol.append(f"the text describes {termino_raw}")
                     
         if linea_espanol:
             texto_linea = " ".join(linea_espanol).strip()
+            # Limpieza profunda de choques de nexos o artículos duplicados
             texto_linea = re.sub(r'\s+', ' ', texto_linea)
-            texto_linea = texto_linea.replace(" de de ", " de ").replace(" and and ", " and ").replace(" y y ", " y ")
-            texto_linea = texto_linea.replace("del la ", "de la ").replace("de la del ", "de la ")
+            texto_linea = texto_linea.replace(" de de ", " de ").replace(" con con ", " con ").replace(" y y ", " y ")
+            texto_linea = texto_linea.replace(" con junto con ", " con ").replace(" de la el ", " de el ")
             lineas_traducidas.append(f"{prefix_linea} {idx+1}: {texto_linea.capitalize()}. ")
             
     return "\n\n".join(lineas_traducidas)
