@@ -42,7 +42,7 @@ def calcular_distancia_levenshtein(str1, str2):
     """ Mide la similitud ortográfica entre dos términos mediante matriz numérica 100% independiente """
     m, n = len(str1), len(str2)
     
-    # CORREGIDO: Inicialización limpia por comprensión de sublistas individuales
+    # CORREGIDO DEFINITIVO: Matriz inicializada correctamente con ceros [0]
     dp = [[0] * (n + 1) for _ in range(m + 1)]
     
     for i in range(m + 1): dp[i][0] = i
@@ -87,7 +87,7 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p == "cri": return "filtrar"
     if p in ["ocor", "ocor", "oqueo"]: return "humedad / yema"
     if p == "ipdi": return "fomento (aplicación)"
-    if p == "uefocl": return "baño maría (fuego)"
+    if p == "uefocl": return "agua al fuego (baño maría)"
 
     # --- 3. EXTRACTOR VERBAL Y DE TIEMPO ---
     if "ctin" in p or "ctan" in p: return "cortando"
@@ -121,7 +121,6 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
 def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     palabras = texto_limpio.split()
     analisis_estructurado = []
-    target_lang = "es" if idioma == "es" else "en"
     
     glosario_maestro = {
         "piue": "más", "piu": "más", "codar": "cocer", "oleis": "aceites", 
