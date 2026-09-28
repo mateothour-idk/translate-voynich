@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit st
 import re
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
@@ -169,7 +169,7 @@ def traducir_a_romance(texto):
             
     return "\n".join([" ".join(palabras_corregidas)])
 
-# --- FILTRADO DE REDUNDANCIAS Y ENLACES COHERENTES ---
+# --- MOTOR DE REDACCIÓN COMPRENSIBLE ASOCIATIVA ---
 def generar_espanol_sintactico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
@@ -178,45 +178,55 @@ def generar_espanol_sintactico(texto_romance, lang):
         
     for idx, linea in enumerate(lineas):
         palabras = linea.split()
-        conceptos_unicos = []
+        significados_unicos = []
         
-        # Eliminar duplicados continuos y limpiar palabras vacías
+        # Mapear las palabras de forma limpia evitando duplicaciones
         for palabra in palabras:
             palabra_norm = palabra.strip(",.!?*;:- ")
             if palabra_norm in dict_activo:
                 significado = dict_activo[palabra_norm]
-                if not conceptos_unicos or conceptos_unicos[-1] != significado:
-                    conceptos_unicos.append(significado)
+                if significado not in significados_unicos:
+                    significados_unicos.append(significado)
                     
-        linea_espanol = []
-        for p_idx, termino in enumerate(conceptos_unicos):
-            if lang == "Español":
-                if linea_espanol:
-                    # Estructuración limpia basada en comas y conectores condicionales no repetitivos
-                    if p_idx % 3 == 0:
-                        linea_espanol.append(f", para obtener {termino}")
-                    elif p_idx % 2 == 0:
-                        linea_espanol.append(f", procesando {termino}")
-                    else:
-                        linea_espanol.append(f" con {termino}")
+        if not significados_unicos:
+            continue
+            
+        # Separar las acciones de los ingredientes para construir la frase como un humano
+        acciones = [s for s in significados_unicos if any(v in s for s in ["extrae", "cortar", "recolectar", "canalizar", "girar", "verter", "corta", "destilar", "limpia", "aplica"])]
+        elementos = [s for s in significados_unicos if s not in acciones and s not in ["con", "su", "allí", "cuanto", "por lo cual", "estos", "el cual", "la cual"]]
+        
+        # Limpiar artículos iniciales para poder listar los ingredientes limpiamente
+        elementos_limpios = []
+        for el in elementos:
+            el_clean = re.sub(r'^(el |la |los |las |the )', '', el).strip()
+            if el_clean and el_clean not in elementos_limpios:
+                elementos_limpios.append(el_clean)
+                
+        if lang == "Español":
+            if elementos_limpios:
+                if len(elementos_limpios) > 1:
+                    lista_ingredientes = ", ".join(elementos_limpios[:-1]) + " y " + elementos_limpios[-1]
                 else:
-                    linea_espanol.append(f"El tratado describe {termino}")
+                    lista_ingredientes = elementos_limpios[0]
+                    
+                if acciones:
+                    oracion_final = f"El tratado describe que se recomienda {acciones[0]} la sustancia utilizando {lista_ingredientes}"
+                else:
+                    oracion_final = f"El manuscrito detalla una preparación a base de {lista_ingredientes}"
             else:
-                if linea_espanol:
-                    if p_idx % 2 == 0:
-                        linea_espanol.append(f", processing {termino}")
-                    else:
-                        linea_espanol.append(f" with {termino}")
+                oracion_final = f"En esta sección del tratado se indica que {acciones[0] if acciones else 'se realicen los pasos descritos'}"
+        else:
+            if elementos_limpios:
+                if len(elementos_limpios) > 1:
+                    lista_ingredientes = ", ".join(elementos_limpios[:-1]) + " and " + elementos_limpios[-1]
                 else:
-                    linea_espanol.append(f"The text describes {termino}")
-                    
-        if linea_espanol:
-            texto_linea = "".join(linea_espanol).strip()
-            # Limpieza sintáctica para normalizar comas y espacios dobles
-            texto_linea = re.sub(r'\s+', ' ', texto_linea)
-            texto_linea = texto_linea.replace(", ,", ",").replace("con con", "con")
-            texto_linea = texto_linea.replace("con ,", ",").replace("describe ,", "describe ")
-            lineas_traducidas.append(f"{prefix_linea} {idx+1}: {texto_linea.capitalize()}. ")
+                    lista_ingredientes = elementos_limpios[0]
+                oracion_final = f"The manuscript details a preparation based on {lista_ingredientes}"
+            else:
+                oracion_final = "This section of the treatise outlines the specified steps"
+                
+        oracion_final = oracion_final.strip().rstrip(".") + "."
+        lineas_traducidas.append(f"{prefix_linea} {idx+1}: {oracion_final}")
             
     return "\n\n".join(lineas_traducidas)
 
