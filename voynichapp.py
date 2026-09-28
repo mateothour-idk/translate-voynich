@@ -7,14 +7,14 @@ idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Espa
 
 IFACE = {
     "Español": {
-        "titulo": "📜 Traductor Universal del Manuscrito Voynich (Base Local Segura)",
-        "sub": "Explora y traduce cada línea real de los folios analizados aplicando tu matriz de doble procesamiento estricto.",
+        "titulo": "📜 Traductor Universal del Manuscrito Voynich (Motor de Semejanza)",
+        "sub": "Explora y traduce cada línea aplicando tu matriz de doble procesamiento con un motor inteligente de palabras semejantes.",
         "tab1": "📝 Laboratorio de Texto Libre",
         "tab2": "📖 Explorador del Corpus Real del Manuscrito",
         "lab_sub": "Laboratorio de Entrada Libre",
         "btn_an": "Analizar Fragmento",
         "fon_rom": "Fonética Romance (Doble Proceso):",
-        "trad_auto": "Traducción Estricta Basada en Glosario:",
+        "trad_auto": "Traducción Inteligente por Semejanza:",
         "nav_sub": "Navegador de Folios Verificados",
         "nav_sel": "Selecciona un folio del manuscrito:",
         "btn_desc": "Descifrar Folio",
@@ -25,14 +25,14 @@ IFACE = {
         "err_corpus": "No se pudo inicializar el corpus del manuscrito."
     },
     "English": {
-        "titulo": "📜 Universal Voynich Manuscript Translator (Secure Local Corpus)",
-        "sub": "Explore and translate every single line of the analyzed folios using your strict double-processing matrix.",
+        "titulo": "📜 Universal Voynich Manuscript Translator (Similarity Engine)",
+        "sub": "Explore and translate every single line using your double-processing matrix and a fuzzy word-matching engine.",
         "tab1": "Free Text Laboratory",
         "tab2": "Real Manuscript Corpus Explorer",
         "lab_sub": "Free Entry Laboratory",
         "btn_an": "Analyze Fragment",
         "fon_rom": "Romance Phonetics (Double Process):",
-        "trad_auto": "Strict Glossary-Based Translation:",
+        "trad_auto": "Fuzzy Glossary-Based Translation:",
         "nav_sub": "Verified Folios Navigator",
         "nav_sel": "Select a folio from the manuscript:",
         "btn_desc": "Decipher Folio",
@@ -91,7 +91,25 @@ DICCIONARIO_EN = {
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
 
-# --- BASE DE DATOS LOCAL EXCLUSIVA CON CORPUS COMPLETO REAL ---
+# --- ALGORITMO NATIIVO DE LEVENSHTEIN PARA SEMEJANZA DIFUSA ---
+def distancia_levenshtein(s1, s2):
+    if len(s1) < len(s2):
+        return distancia_levenshtein(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+    
+    fila_previa = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        fila_actual = [i + 1]
+        for j, c2 in enumerate(s2):
+            inserciones = fila_previa[j + 1] + 1
+            eliminaciones = fila_actual[j] + 1
+            sustituciones = fila_previa[j] + (c1 != c2)
+            fila_actual.append(min(inserciones, eliminaciones, sustituciones))
+        fila_previa = fila_actual
+    return fila_previa[-1]
+
+# --- BASE DE DATOS LOCAL EXCLUSIVA ---
 CORPUS_MANUSCRITO = {
     "1r (Apertura Botánica)": [
         "pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes odor ctair oas",
@@ -139,7 +157,6 @@ CORPUS_MANUSCRITO = {
     ]
 }
 
-# --- MATRIZ DE TRADUCCIÓN FONÉTICA ---
 def traducir_a_romance(texto):
     reglas = {
         'pcee': 'pi', 'pdr': 'pedr', 'pcs': 'pes', 'qok': 'quoqu', 'dceorceau': 'dicorcau',
@@ -159,7 +176,6 @@ def traducir_a_romance(texto):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
-# --- MOTOR DE TRADUCCIÓN ESTRICTO ---
 def generar_espanol_sintactico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
@@ -177,10 +193,25 @@ def generar_espanol_sintactico(texto_romance, lang):
             if not palabra_normalizada:
                 continue
                 
+            # 1. Intento de coincidencia estricta primero
             if palabra_normalizada in dict_activo:
                 linea_espanol.append(dict_activo[palabra_normalizada])
             else:
-                linea_espanol.append(f"[{palabra_limpia}]")
+                # 2. MOTOR DE SEMEJANZA: Buscar si se parece a alguna palabra del glosario
+                mejor_coincidencia = None
+                menor_distancia = 99
+                
+                for clave_dicc in dict_activo.keys():
+                    dist = distancia_levenshtein(palabra_normalizada, clave_dicc)
+                    if dist < menor_distancia:
+                        menor_distancia = dist
+                        mejor_coincidencia = clave_dicc
+                
+                # Tolerancia estricta: Si la diferencia es de 1 sola letra (palabra larga) o muy cercana, la acepta
+                if menor_distancia <= 1 or (len(palabra_normalizada) > 4 and menor_distancia <= 2):
+                    linea_espanol.append(f"{dict_activo[mejor_coincidencia]}*")
+                else:
+                    linea_espanol.append(f"[{palabra_limpia}]")
         
         if linea_espanol:
             texto_linea = " ".join(linea_espanol).strip()
