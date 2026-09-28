@@ -1,4 +1,4 @@
-import streamlit st
+import streamlit as st
 import re
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
