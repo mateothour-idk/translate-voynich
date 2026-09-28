@@ -1,6 +1,6 @@
 # voynichdata.py
 import re
-from deep_translator import DeepLScraper
+from deep_translator import DeeplTranslator, GoogleTranslator
 
 def aplicar_matriz_sustitucion(texto_eva: str) -> str:
     """
@@ -93,7 +93,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     analisis_estructurado = []
     target_lang = "es" if idioma == "es" else "en"
     
-    # Glosario Maestro Sincronizado con las salidas de tu pipeline lineal
+    # Glosario Maestro Sincronizado local de apoyo
     glosario_maestro = {
         "piue": "más", "piu": "más", "codar": "cocer", "oleis": "aceites", 
         "cipi": "tallos", "seol": "seco", "sequieo": "secado", "otolsai": "extraer",
@@ -105,7 +105,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         "piue": "more", "piu": "more", "codar": "cook", "oleis": "oils", 
         "cipi": "stems", "seol": "dry", "sequieo": "dried", "otolsai": "extract",
         "senior": "master", "olse": "oily", "quodam": "a certain", "oram": "edge",
-        "iquiol": "juice", "otio": "rest", "cute": "skin", "cior": "move", 
+        "iquiol": "juice", "otio": "rest", "cute": "skin (bark)", "cior": "move", 
         "cioquai": "decoction", "cut": "cut", "quin": "which", "qin": "which",
         "tsheos": "essence"
     }
@@ -113,7 +113,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     if not palabras:
         return [], ""
 
-    # 1. TRADUCCIÓN DE LA ORACIÓN EN BLOQUE CON DEEPL (MÁXIMA CALIDAD CONTEXTUAL)
+    # 1. TRADUCCIÓN DE LA ORACIÓN EN BLOQUE CON DEEPL / GOOGLE
     palabras_traducidas_oracion = []
     for palabra in palabras:
         palabra_optimizada = resolver_contexto_palabra(palabra)
@@ -121,11 +121,16 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             palabras_traducidas_oracion.append(glosario_maestro[palabra_optimizada])
         else:
             try:
-                # DeepL Scraper busca de forma inteligente el sentido en Latín/Romance
-                trad = DeepLScraper(source='la', target=target_lang).translate(palabra_optimizada)
+                # Intenta usar DeepL sin clave primero
+                trad = DeeplTranslator(source='la', target=target_lang).translate(palabra_optimizada)
                 palabras_traducidas_oracion.append(trad)
             except Exception:
-                palabras_traducidas_oracion.append(palabra_optimizada)
+                try:
+                    # Respaldo automático gratuito si DeepL falla
+                    trad_alt = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
+                    palabras_traducidas_oracion.append(trad_alt)
+                except Exception:
+                    palabras_traducidas_oracion.append(palabra_optimizada)
 
     oracion_completa = " ".join(palabras_traducidas_oracion)
 
@@ -141,16 +146,19 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
             tipo_match = "Glosario Romance (Estructural)"
         else:
             try:
-                trad_api = DeepLScraper(source='la', target=target_lang).translate(palabra_optimizada)
+                trad_api = DeeplTranslator(source='la', target=target_lang).translate(palabra_optimizada)
+                tipo_match = "Motor DeepL Neural NLP"
                 if trad_api.lower() == palabra_optimizada.lower():
-                    significado_individual = f"{palabra_optimizada}/{palabra_optimizada[:-1] if len(palabra_optimizada)>2 else palabra_optimizada}"
-                    tipo_match = "Ajuste de Contexto Requerido"
-                else:
-                    significado_individual = trad_api
-                    tipo_match = "Motor DeepL Neural NLP"
+                    trad_api = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
+                    tipo_match = "Aproximación AI Contextual"
+                significado_individual = trad_api
             except Exception:
-                significado_individual = "[Incógnita]"
-                tipo_match = "Fallo de Conexión API"
+                try:
+                    significado_individual = GoogleTranslator(source='auto', target=target_lang).translate(palabra_optimizada)
+                    tipo_match = "Respaldo Motor AI"
+                except Exception:
+                    significado_individual = "[Incógnita]"
+                    tipo_match = "Fallo de Red"
             
         analisis_estructurado.append({
             "Palabra Filtrada": palabra_optimizada.upper(),
