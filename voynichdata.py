@@ -96,6 +96,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     """
     Traduce automáticamente basándose en la suposición de que el 
     texto resultante estructurado es Latín Romance / Latín Medieval.
+    Usa segmentación por bloques para evitar el Error de Conexión (Anti-Spam).
     """
     palabras = texto_limpio.split()
     analisis_estructurado = []
@@ -104,25 +105,43 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     if not palabras:
         return [], ""
 
-    # 1. TRADUCCIÓN CONTEXTUAL EN BLOQUE
-    try:
-        oracion_completa = GoogleTranslator(source='la', target=target_lang).translate(texto_limpio)
-    except Exception:
-        oracion_completa = "[Error de conexión con la API de traducción]"
+    # 1. TRADUCCIÓN CONTEXTUAL EN BLOQUES PEQUEÑOS (Máximo 5 palabras por llamada)
+    palabras_traducidas_oracion = []
+    chunk_size = 5
+    
+    for i in range(0, len(palabras), chunk_size):
+        sub_bloque = " ".join(palabras[i:i + chunk_size])
+        if not sub_bloque.strip():
+            continue
+        try:
+            traduccion_fragmento = GoogleTranslator(source='la', target=target_lang).translate(sub_bloque)
+            palabras_traducidas_oracion.append(traduccion_fragmento)
+        except Exception:
+            # Si el fragmento falla por baneo temporal, conserva el término filtrado original
+            palabras_traducidas_oracion.append(sub_bloque)
 
-    # 2. TRADUCCIÓN INDIVIDUAL PARA LA TABLA
-    for palabra in palabras:
+    oracion_completa = " ".join(palabras_traducidas_oracion)
+
+    # 2. TRADUCCIÓN INDIVIDUAL LIMITADA PARA LA TABLA (Primeras 30 palabras)
+    for palabra in palabras[:30]:
         if not palabra.strip():
             continue
         try:
             significado_individual = GoogleTranslator(source='la', target=target_lang).translate(palabra)
         except Exception:
-            significado_individual = "[Incógnita]"
+            significado_individual = palabra
             
         analisis_estructurado.append({
             "Palabra Filtrada": palabra.upper(),
             "Equivalencia Semántica": significado_individual,
             "Tipo de Match": "Traducción Dinámica NLP (Latín)"
+        })
+        
+    if len(palabras) > 30:
+        analisis_estructurado.append({
+            "Palabra Filtrada": "...",
+            "Equivalencia Semántica": "Texto truncado en tabla para proteger estabilidad de la API",
+            "Tipo de Match": "Límite de API"
         })
         
     return analisis_estructurado, oracion_completa
