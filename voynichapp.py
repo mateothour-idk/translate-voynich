@@ -90,7 +90,7 @@ if st.button("Ejecutar Análisis Paleográfico", type="primary"):
         
         if datos_tabla:
             df_resultado = pd.DataFrame(datos_tabla)
-            df_resultado.columns = ["Palabra Filtrada", "Equivalencia Semántica", "Tipo de Match" if cod_idioma == "es" else "Match Type"]
+            df_resultado.columns = ["Palabra Filtrada", "Equivalencia Semántica", "Tipo de Match"]
             st.dataframe(df_resultado, use_container_width=True, hide_index=True)
             
             st.markdown("#### 📈 Métricas de Rendimiento")
@@ -98,7 +98,7 @@ if st.button("Ejecutar Análisis Paleográfico", type="primary"):
             with c1:
                 st.metric("Total Palabras", len(df_resultado))
             with c2:
-                col_diag = "Tipo de Match" if cod_idioma == "es" else "Match Type"
+                col_diag = "Tipo de Match"
                 exactos = len(df_resultado[df_resultado[col_diag].str.contains("Exacto|Exact", regex=True)])
                 raices = len(df_resultado[df_resultado[col_diag].str.contains("Raíz|Root", regex=True)])
                 st.metric("Palabras Identificadas", exactos + raices)
