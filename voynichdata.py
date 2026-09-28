@@ -37,34 +37,41 @@ def resolver_contexto_palabra(palabra: str) -> str:
     return p_baja
 
 def desarmar_palabra_compuesta(palabra: str) -> str:
-    """ Desarma morfológicamente las palabras incorporando un motor automatizado """
+    """ Desarma morfológicamente las palabras del efecto eco del manuscrito """
     p = palabra.lower()
     if not p: return ""
     
     # --- CONECTORES, DETERMINANTES Y CONTRACCIONES ROMANCES ---
-    if p in ["c", "qui", "oquin"]: return "que"
+    if p in ["c", "qui", "oquin", "quoin"]: return "que"
     if p in ["i", "din"]: return "en"
     if p == "o": return "o"
     if p == "l": return "el"
     if p in ["ar", "al", "dal", "del", "dil", "dol", "odal", "ldi"]: return "del"
-    if p in ["da", "di", "odi"]: return "de"
+    if p in ["da", "di", "odi", "dom"]: return "de"
     if p == "qua": return "agua"
     if p in ["olin", "olin"]: return "aceitoso"
     if p in ["itiol", "itidad", "ititad"]: return "un poco"
     if p == "ct": return "cortar"
     
-    # --- CAPA NUEVA: AUTOMATIZADOR EXCLUSIVO DE CONECTORES CORTOS ---
+    # --- CAPA DE CONECTORES, POSICIÓN Y ACCIONES DE LABORATORIO ---
     if p in ["quo", "quol", "quon"]: return "el cual (que)"
     if p in ["ca", "cap"]: return "porque (ya que)"
     if p in ["ari", "ori", "oro", "oram"]: return "contorno (borde)"
     if p == "ci": return "este (aquí)"
     if p == "sh": return "brote"
+    if p in ["far", "fer", "fcar"]: return "hacer (moler)"
+    if p in ["ti", "te"]: return "para sí"
+    if p in ["chor", "ichor"]: return "savia purificada (ícor)"
+    if p in ["quofor", "quofeo"]: return "lo que será"
+    if p == "chychi": return "pizca (pequeño)"
+    if p == "cri": return "crecer / filtrar"
+    if p in ["ocor", "ocor"]: return "humedad / yema"
 
     # --- TRATAMIENTO DE TIEMPO, DOSIS Y VERBOS ---
     if "ctin" in p or "ctan" in p: return "cortando"
     if "quoteo" in p or "quotar" in p or "tolqueol" in p: return "la dosis"
-    if "oteodin" in p or "ochdin" in p: return "del método (tiempo)"
-    if p == "otin": return "del reposo"
+    if "oteodin" in p or "ochdin" in p or "ochin" in p: return "del método (tiempo)"
+    if p in ["otin", "otar", "itar"]: return "del reposo"
 
     # --- ENLACE DIRECTO DE SUFIJOS (Efecto Eco / Sufijos) ---
     if "itedad" in p or "itidad" in p or "ititad" in p: return "repetición (proceso)"
@@ -107,6 +114,9 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
             if raiz_limpia == "if": return "eficacia"
             if raiz_limpia == "opal": return "opacidad"
             return f"{raiz_limpia}dad"
+
+    # Si es una letra suelta residual que no está mapeada, la limpia para no trabar la prosa
+    if len(p) == 1: return ""
 
     return ""
 
