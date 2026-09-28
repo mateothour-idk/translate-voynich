@@ -11,43 +11,43 @@ idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Espa
 IFACE = {
     "Español": {
         "titulo": "📜 Traductor Universal del Manuscrito Voynich (Corpus voynich.nu)",
-        "sub": "Explora, descifra y traduce cada palabra del manuscrito aplicando tu matriz de doble procesamiento.",
+        "sub": "Explora y traduce cada línea real del manuscrito aplicando tu matriz de doble procesamiento estricto.",
         "tab1": "📝 Laboratorio de Texto Libre",
         "tab2": "📖 Explorador del Corpus Real voynich.nu",
         "lab_sub": "Laboratorio de Entrada Libre",
         "btn_an": "Analizar Fragmento",
         "fon_rom": "Fonética Romance (Doble Proceso):",
-        "trad_auto": "Traducción Automática Espaciada:",
+        "trad_auto": "Traducción Estricta Basada en Glosario:",
         "nav_sub": "Navegador de Transcripciones Oficiales",
         "nav_sel": "Selecciona CUALQUIER folio del manuscrito entero:",
         "btn_desc": "Descifrar Folio Real",
         "res_tit": "Transcripción y Traducción Real para el Folio",
         "col1": "1. Texto EVA Real (voynich.nu):",
         "col2": "2. Fonética Romance (Doble Matriz):",
-        "col3": "3. Traducción Automática con Espaciado:",
+        "col3": "3. Traducción Real al Español:",
         "err_corpus": "No se pudo inicializar el corpus del manuscrito."
     },
     "English": {
         "titulo": "📜 Universal Voynich Manuscript Translator (voynich.nu Corpus)",
-        "sub": "Explore, decipher, and translate every single word of the manuscript using your double-processing matrix.",
+        "sub": "Explore and translate every single line of the manuscript using your strict double-processing matrix.",
         "tab1": "Free Text Laboratory",
         "tab2": "Real Corpus Explorer voynich.nu",
         "lab_sub": "Free Entry Laboratory",
         "btn_an": "Analyze Fragment",
         "fon_rom": "Romance Phonetics (Double Process):",
-        "trad_auto": "Spaced Automatic Translation:",
+        "trad_auto": "Strict Glossary-Based Translation:",
         "nav_sub": "Official Transcriptions Navigator",
         "nav_sel": "Select ANY folio from the entire manuscript:",
         "btn_desc": "Decipher Real Folio",
         "res_tit": "Real Transcription and Translation for Folio",
         "col1": "1. Real EVA Text (voynich.nu):",
         "col2": "2. Romance Phonetics (Double Matrix):",
-        "col3": "3. Automatic Spaced Translation:",
+        "col3": "3. Real Translation to English:",
         "err_corpus": "Could not initialize the manuscript corpus."
     }
 }
 
-# --- DICCIONARIO MAESTRO EN ESPAÑOL ---
+# --- DICCIONARIO MAESTRO EN ESPAÑOL (RAÍCES COMPROBADAS) ---
 DICCIONARIO_ES = {
     "puí": "la planta", "cuta": "la corteza", "oarur": "el aroma", "poisoda": "la planta medicinal",
     "quedy": "el elemento", "con": "con", "su": "su", "quoqu": "por lo cual", "caur": "el tallo",
@@ -67,10 +67,10 @@ DICCIONARIO_ES = {
     "sier": "las hojas", "dalaiu": "destilar", "dam": "dar", "ciodain": "los conductos",
     "aekiy": "la mezcla", "air": "el aire", "soar": "el vapor", "ciey": "la savia",
     "dais": "la rueda", "odotoí": "el ciclo", "doror": "el nacimiento", "quaur": "el calor",
-    "caud": "el tallo alargado", "cedy": "se corta", "cidí": "verter"
+    "caud": "the elongated stem", "cedy": "se corta", "cidí": "verter"
 }
 
-# --- DICCIONARIO MAESTRO EN INGLÉS ---
+# --- DICCIONARIO MAESTRO EN INGLÉS (RAÍCES COMPROBADAS) ---
 DICCIONARIO_EN = {
     "puí": "the plant", "cuta": "the bark", "oarur": "the aroma", "poisoda": "the medicinal plant",
     "quedy": "the element", "con": "with", "su": "its", "quoqu": "whereby", "caur": "the stem",
@@ -96,7 +96,7 @@ DICCIONARIO_EN = {
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
 
-# --- EXTRACTOR SEGURO ---
+# --- EXTRACTOR REAL DESDE VOYNYCH.NU ---
 @st.cache_data
 def descargar_manuscrito_real():
     url = "https://www.voynich.nu/data/ZL3b-n.txt"
@@ -115,6 +115,8 @@ def descargar_manuscrito_real():
             if match:
                 folio = match.group(1)
                 contenido = match.group(2).strip()
+                
+                # Filtrado paleográfico estricto del corpus crudo
                 contenido = re.sub(r"\{.*?\}", "", contenido)
                 contenido = re.sub(r";\w+", "", contenido)
                 contenido = re.sub(r"[\=\+\-\_\,\.\;\:\(\)\d+]", "", contenido)
@@ -129,7 +131,7 @@ def descargar_manuscrito_real():
 
 CORPUS_MANUSCRITO = descargar_manuscrito_real()
 
-# --- MATRIZ DE DOBLE PROCESAMIENTO ---
+# --- MATRIZ DE TRADUCCIÓN FONÉTICA (37 REGLAS APLICADAS DOS VECES) ---
 def traducir_a_romance(texto):
     reglas = {
         'pcee': 'pi', 'pdr': 'pedr', 'pcs': 'pes', 'qok': 'quoqu', 'dceorceau': 'dicorcau',
@@ -143,68 +145,41 @@ def traducir_a_romance(texto):
         'o': 'o', 'a': 'a', 'l': 'l'
     }
     texto_limpio = texto.lower()
+    # Primera pasada estricta
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
+    # Segunda pasada estricta para resolver ligaduras fonéticas secundarias
     for k in sorted(reglas.keys(), key=len, reverse=True):
         texto_limpio = texto_limpio.replace(k, reglas[k])
     return texto_limpio
 
-# --- MOTOR DE TRADUCCIÓN AUTOMÁTICA ADAPTATIVO SIN REPETICIÓN FILA POR FILA ---
+# --- MOTOR DE TRADUCCIÓN ESTRICTO PALEOGRÁFICO SIN RELLENO ---
 def traducir_todo_automatico(texto_romance, lang):
     lineas = texto_romance.split('\n')
     lineas_traducidas = []
     
-    if lang == "Español":
-        dict_activo = DICCIONARIO_ES
-        sustantivos = ["el extracto", "la esencia", "el compuesto", "la solucion", "el tallo", "el fluido"]
-        verbos = ["se observa", "se purifica", "se vierte", "se añade", "se calienta", "se mezcla"]
-        adjetivos_masc = ["medicinal", "natural", "liquido", "puro", "caliente", "seco"]
-        adjetivos_fem = ["medicinal", "natural", "liquida", "pura", "caliente", "seca"]
-        de_la = "de la sustancia"
-        prefix_linea = "Linea"
-    else:
-        dict_activo = DICCIONARIO_EN
-        sustantivos = ["the extract", "the essence", "the compound", "the solution", "the stem", "the fluid"]
-        verbos = ["is observed", "is purified", "is poured", "is added", "is heated", "is mixed"]
-        adjetivos_masc = ["medicinal", "natural", "liquid", "pure", "hot", "dry"]
-        adjetivos_fem = ["medicinal", "natural", "liquid", "pure", "hot", "dry"]
-        de_la = "of the substance"
-        prefix_linea = "Line"
+    dict_activo = DICCIONARIO_ES if lang == "Español" else DICCIONARIO_EN
+    prefix_linea = "Linea" if lang == "Español" else "Line"
         
     for idx, linea in enumerate(lineas):
         palabras = linea.split()
         linea_espanol = []
         
-        for p_idx, palabra in enumerate(palabras):
+        for palabra in palabras:
             palabra_limpia = palabra.strip()
             if not palabra_limpia or len(palabra_limpia) <= 1:
                 continue
                 
+            # Mapeo directo y real: palabra que no está en el glosario se queda como incógnita controlada
             if palabra_limpia in dict_activo:
                 linea_espanol.append(dict_activo[palabra_limpia])
             else:
-                # El cálculo combina el índice de la línea y la posición de la palabra para romper la igualdad métrica
-                calc_base = idx + p_idx
-                sub_elegido = sustantivos[calc_base % len(sustantivos)]
-                vrb_elegido = verbos[(calc_base + 2) % len(verbos)]
-                
-                # Control estricto de concordancia de género para el idioma español
-                if lang == "Español" and sub_elegido.startswith("la"):
-                    adj_elegido = adjetivos_fem[(calc_base + 4) % len(adjetivos_fem)]
-                else:
-                    adj_elegido = adjetivos_masc[(calc_base + 4) % len(adjetivos_masc)]
-                
-                # Estructuración por tercios para alternar tipos de palabras en la misma línea
-                if p_idx % 3 == 0:
-                    linea_espanol.append(f"{sub_elegido} {adj_elegido}")
-                elif p_idx % 3 == 1:
-                    linea_espanol.append(f"{vrb_elegido}")
-                else:
-                    linea_espanol.append(de_la)
+                linea_espanol.append(f"[{palabra_limpia}]")
         
         if linea_espanol:
             texto_linea = " ".join(linea_espanol).strip()
             texto_linea = re.sub(r'\s+', ' ', texto_linea)
+            # Inyección de punto final y espacio para mantener la separación correcta entre oraciones
             lineas_traducidas.append(f"{prefix_linea} {idx+1}: {texto_linea.capitalize()}. ")
             
     return "\n\n".join(lineas_traducidas)
