@@ -37,10 +37,14 @@ def resolver_contexto_palabra(palabra: str) -> str:
     return p_baja
 
 def desarmar_palabra_compuesta(palabra: str) -> str:
-    """ Desarma morfológicamente las palabras del efecto eco del manuscrito """
+    """ 
+    Desarma morfológicamente las palabras incorporando un motor automatizado
+    de lematización por aproximación de prefijos y conectores romances.
+    """
     p = palabra.lower()
+    if not p: return ""
     
-    # --- CONECTORES, DETERMINANTES Y CONTRACCIONES ROMANCES ---
+    # --- CONECTORES, DETERMINANTES Y CONTRACCIONES ROMANCES BASE ---
     if p in ["c", "qui", "oquin"]: return "que"
     if p in ["i", "din"]: return "en"
     if p == "o": return "o"
@@ -52,13 +56,27 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     if p in ["itiol", "itidad", "ititad"]: return "un poco"
     if p == "ct": return "cortar"
     
+    # --- AUTOMATIZADOR DE CONECTORES NUEVOS POR PREFIJO (Solución Automática) ---
+    # Detecta de forma automática variantes como 'quo', 'quol', 'quon', etc.
+    if p.startswith("quo") or p.startswith("que") or p.startswith("qui"):
+        if p.endswith("l") or p.endswith("m"): return "del cual / que"
+        return "que / cual"
+        
+    # Detecta variantes de preposiciones de lugar/origen como 'ari', 'al', 'ar'
+    if p.startswith("ar") or p.startswith("al"):
+        return "del"
+        
+    # Detecta partículas demostrativas o conjunciones breves como 'ca', 'ci', 'ce'
+    if p.startswith("ca") or p.startswith("ce") or p.startswith("co"):
+        if len(p) <= 3: return "con / este"
+
     # --- TRATAMIENTO DE TIEMPO, DOSIS Y VERBOS ---
     if "ctin" in p or "ctan" in p: return "cortando"
     if "quoteo" in p or "quotar" in p or "tolqueol" in p: return "la dosis"
     if "oteodin" in p or "ochdin" in p: return "del método (tiempo)"
     if p == "otin": return "del reposo"
 
-    # --- ENLACE DIRECTO DE SUFIJOS (Efecto Eco / Sufijos) ---
+    # --- ENLACE DIRECTO DE SUFIJOS (Efecto Eco) ---
     if "itedad" in p or "itidad" in p or "ititad" in p: return "repetición (proceso)"
     if "tedad" in p or "tedin" in p: return "entibiamiento"
     if "shdad" in p or "shdi" in p: return "jarabe (elixir)"
@@ -143,7 +161,7 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
                 significado_individual = f"[{palabra_optimizada.upper()}]"
                 tipo_match = "Incógnita Guardada"
             else:
-                tipo_match = "Desarmador Morfológico Medieval"
+                tipo_match = "Deducción Automática de Conector"
             
         analisis_estructurado.append({
             "Palabra Filtrada": palabra_optimizada.upper(),
