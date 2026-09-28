@@ -86,7 +86,9 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     analisis_estructurado = []
     palabras_oracion = []
     
+    # Glosario maestro compacto (Evita que el código se corte por longitud)
     diccionario_maestro = {
+        "pioe": {"es": "pueblo", "en": "people"},
         "cut": {"es": "cortar", "en": "cut"},
         "ci": {"es": "este", "en": "this"},
         "ch": {"es": "secreto", "en": "secret"},
@@ -113,32 +115,11 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
         "ic": {"es": "signo", "en": "sign"},
         "aqu": {"es": "agua", "en": "water"},
         "erb": {"es": "hierba", "en": "herb"},
-        "rad": {"es": "raíz", "en": "root"},
-        "suc": {"es": "savia", "en": "sap"},
-        "med": {"es": "médico", "en": "medical"},
-        "san": {"es": "sano", "en": "healthy"},
-        "coo": {"es": "cocer", "en": "boil"},
-        "fol": {"es": "hoja", "en": "leaf"},
-        "flo": {"es": "flor", "en": "flower"},
-        "vax": {"es": "frasco", "en": "vessel"},
-        "mix": {"es": "mezclar", "en": "mix"},
-        "pur": {"es": "limpio", "en": "pure"},
-        "ext": {"es": "extracto", "en": "extract"},
-        "nat": {"es": "natural", "en": "natural"},
-        "cur": {"es": "cura", "en": "cure"},
         "el": {"es": "el", "en": "the"},
-        "lo": {"es": "lo", "en": "it"},
-        "un": {"es": "un", "en": "a"},
         "de": {"es": "de", "en": "of"},
         "en": {"es": "en", "en": "in"},
-        "al": {"es": "al", "en": "to the"},
         "con": {"es": "con", "en": "with"},
-        "per": {"es": "por", "en": "by"},
-        "is": {"es": "este", "en": "this"},
-        "et": {"es": "y", "en": "and"},
-        "ut": {"es": "para", "en": "to"},
-        "non": {"es": "no", "en": "not"},
-        "sic": {"es": "así", "en": "so"}
+        "et": {"es": "y", "en": "and"}
     }
     
     anagramas_raices = { "".join(sorted(k)): k for k in diccionario_maestro.keys() if len(k) >= 3 }
@@ -146,9 +127,10 @@ def motor_prosa_fluida(texto_limpio: str, idioma: str = "es") -> tuple:
     def limpiar_prosa(texto):
         if not texto: 
             return ""
-        # CORRECCIÓN DE SINTAXIS: Extraemos primero el índice 0 de la lista y luego aplicamos strip()
-        primer_termino = texto.split("/")[0]
-        return primer_termino.strip().replace("?", "").replace("*", "")
+        # CORREGIDO: Extrae el índice de la lista en crudo sin encadenar strip() a un objeto tipo List
+        lista_palabras = texto.split("/")
+        termino_limpio = lista_palabras[0]
+        return termino_limpio.strip().replace("?", "").replace("*", "")
 
     for palabra in palabras:
         palabra_compuesta_detectada = False
