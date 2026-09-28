@@ -40,16 +40,18 @@ def desarmar_palabra_compuesta(palabra: str) -> str:
     """ Desarma morfológicamente las palabras del efecto eco del manuscrito """
     p = palabra.lower()
     
-    # --- CONECTORES Y LETRAS SUELTAS ---
+    # --- CONECTORES Y LETRAS SUELTAS CONTRACCIÓN ROMANCE ---
     if p == "c": return "con"
     if p == "i": return "en"
     if p == "o": return "o"
     if p == "l": return "el"
-    if p in ["ar", "al"]: return "del"
-    if p in ["da", "di"]: return "de"
+    if p in ["ar", "al", "dal", "del", "dil"]: return "del"
+    if p in ["da", "di", "din"]: return "de"
     if p == "qua": return "agua"
+    if p in ["olin", "olin"]: return "aceitoso"
+    if p == "itiol": return "un poco (un hilo)"
 
-    # --- ENLACE DIRECTO DE LAS ÚLTIMAS 9 PALABRAS RESTANTES (Efecto Eco / Sufijos) ---
+    # --- ENLACE DIRECTO DE LAS PALABRAS RESTANTES (Efecto Eco / Sufijos) ---
     if "itedad" in p or "itidad" in p or "ititad" in p: return "repetición (proceso)"
     if "tedad" in p or "tedin" in p: return "entibiamiento"
     if "shdad" in p or "shdi" in p: return "jarabe (elixir)"
