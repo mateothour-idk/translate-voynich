@@ -1,7 +1,6 @@
 # --- ARCHIVO 1: voynichdatos.py ---
 import re
 
-# Diccionario optimizado con raíces reales del proto-romance y latín vulgar (Estudio Cheshire)
 DICCIONARIO_ES = {
     "pui": "planta", "cuta": "corteza", "oarur": "aroma", "poisoda": "pocion (medicina)",
     "quedy": "elemento", "con": "cum (con)", "su": "su", "quoqu": "por lo tanto", 
@@ -49,7 +48,7 @@ DICCIONARIO_EN = {
 CORPUS_MANUSCRITO = {}
 
 def cargar_todas_las_paginas_reales():
-    """Indexa el manuscrito de forma robusta extrayendo strings válidos para re.search."""
+    """Indexa las páginas del archivo limpiando caracteres espurios de control de forma determinista."""
     global CORPUS_MANUSCRITO
     CORPUS_MANUSCRITO.clear()
     
@@ -64,8 +63,8 @@ def cargar_todas_las_paginas_reales():
                 if len(partes) < 2:
                     continue
                     
-                identificador = partes[0]  
-                texto_eva = partes[1]       
+                identificador = partes[0]
+                texto_eva = partes[1]
                 
                 match = re.search(r'(\d+[rv])', identificador)
                 if match:
@@ -73,7 +72,7 @@ def cargar_todas_las_paginas_reales():
                 else:
                     continue
                 
-                # Filtrar metadatos y comentarios tipográficos ruidosos de la transcripción
+                # Quitar llaves, corchetes, porcentajes, arrobas y caracteres ruidosos
                 texto_eva_limpio = re.sub(r'\{.*?\}|\[.*?\]', '', texto_eva)
                 texto_eva_limpio = re.sub(r'%|\@\d+|;\d*|[:\$\#\-\+=<>\/]', '', texto_eva_limpio)
                 texto_eva_limpio = re.sub(r'[*.,!?]', '', texto_eva_limpio)
