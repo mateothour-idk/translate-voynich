@@ -68,7 +68,7 @@ def limpiar_fonetica_posicional(palabra_eva):
     return palabra_final
 
 def traducir_palabra_automatica(palabra_eva, diccionario):
-    """Garantiza la traducción absoluta aislando los caracteres residuales uno por uno."""
+    """Traduce de forma masiva aislando caracteres sobrantes uno por uno."""
     p_limpia = limpiar_fonetica_posicional(palabra_eva.lower().replace('íd', 'id').replace('í', 'i'))
     
     if not p_limpia:
@@ -81,7 +81,10 @@ def traducir_palabra_automatica(palabra_eva, diccionario):
     llaves_ordenadas = sorted(diccionario.keys(), key=len, reverse=True)
     
     palabra_restante = p_limpia
-    while len(palabra_restante) > 0:
+    seguridad = 0
+    
+    while len(palabra_restante) > 0 and seguridad < 100:
+        seguridad += 1
         encontrado = False
         for llave in llaves_ordenadas:
             if palabra_restante.startswith(llave):
@@ -90,12 +93,12 @@ def traducir_palabra_automatica(palabra_eva, diccionario):
                 encontrado = True
                 break
         
-        # CORREGIDO: Aísla estrictamente el primer carácter usando [0] para forzar el avance lineal
+        # CORREGIDO: Indexación estricta al primer carácter [0] para forzar el avance seguro
         if not encontrado:
             letra_actual = palabra_restante[0]  
             letra_traducida = TRADUCCION_FONEMAS_DEFECTO.get(letra_actual, letra_actual)
             traducciones_parciales.append(letra_traducida)
-            palabra_restante = palabra_restante[1:]  # Reduce la longitud de la cadena
+            palabra_restante = palabra_restante[1:]  
             
     resultado_unido = "".join(traducciones_parciales)
     resultado_unido = " ".join(resultado_unido.split())
