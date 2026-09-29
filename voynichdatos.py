@@ -45,10 +45,18 @@ DICCIONARIO_EN = {
     "doror": "birth", "quaur": "heat", "caud": "stem", "cedy": "cut", "cidí": "pour"
 }
 
+# NUEVO: Diccionario para identificar códigos Currier, marcadores de párrafo y macroglifos
+DICCIONARIO_MACRO_GLIFOS = {
+    "QA": "[Sección Astral]", "PC": "[Párrafo Central]", "FB": "[Folio Botánico]", 
+    "B2": "[Grupo Biológico 2]", "IH": "[Ilustración de Herboristería]", "LA": "[Línea Alta]", 
+    "H1": "[Encabezado Principal]", "C1": "[Cifrado Primario]", "QA": "[Sección Astral]", 
+    "PC": "[Párrafo Central]", "IH": "[Ilustración Central]", "LA": "[Línea Superior]"
+}
+
 CORPUS_MANUSCRITO = {}
 
 def cargar_todas_las_paginas_reales():
-    """Indexa las páginas del archivo limpiando caracteres espurios de control de forma determinista."""
+    """Indexa las páginas conservando las estructuras de mayúsculas macro-glíficas sin corromperlas."""
     global CORPUS_MANUSCRITO
     CORPUS_MANUSCRITO.clear()
     
@@ -72,9 +80,9 @@ def cargar_todas_las_paginas_reales():
                 else:
                     continue
                 
-                # Quitar llaves, corchetes, porcentajes, arrobas y caracteres ruidosos
+                # Quitar llaves y corchetes de comentarios pero conservar combinaciones alfanuméricas
                 texto_eva_limpio = re.sub(r'\{.*?\}|\[.*?\]', '', texto_eva)
-                texto_eva_limpio = re.sub(r'%|\@\d+|;\d*|[:\$\#\-\+=<>\/]', '', texto_eva_limpio)
+                texto_eva_limpio = re.sub(r'%|\@|;\d*|[:\$\-\+=<>\/]', '', texto_eva_limpio)
                 texto_eva_limpio = re.sub(r'[*.,!?]', '', texto_eva_limpio)
                 texto_eva_limpio = " ".join(texto_eva_limpio.split())
                 
