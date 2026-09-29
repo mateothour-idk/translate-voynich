@@ -3,12 +3,11 @@ import streamlit as st
 import re
 import voynichdatos as vd
 
-# Forzar la carga limpia de datos al arrancar la app
 if not vd.CORPUS_MANUSCRITO:
     vd.cargar_todas_las_paginas_reales()
 
 # =============================================================================
-# REGLAS DEL ALGORITMO CRIPTOGRÁFICO
+# MOTOR CRIPTOGRÁFICO AVANZADO
 # =============================================================================
 
 REGLAS_FONETICAS_FIJAS = {
@@ -25,7 +24,7 @@ MODIFICADORES_CONTEXTUALES = {
 }
 
 def limpiar_fonetica_posicional(palabra_eva):
-    """Limpia los glifos de EVA para remover acumulaciones imposibles."""
+    """Limpia los glifos removiendo acumulaciones imposibles."""
     if not palabra_eva:
         return ""
     resultado = []
@@ -61,14 +60,37 @@ def limpiar_fonetica_posicional(palabra_eva):
     return palabra_final
 
 def traducir_palabra_automatica(palabra_eva, diccionario):
-    """Busca y extrae la traducción desde la clave limpia del diccionario."""
+    """Busca subcadenas y raíces dentro de palabras largas del manuscrito."""
     p_limpia = limpiar_fonetica_posicional(palabra_eva.lower().replace('íd', 'id').replace('í', 'i'))
+    
     if p_limpia in diccionario:
         return diccionario[p_limpia]
-    return f"[{p_limpia}]"
+        
+    traducciones_parciales = []
+    llaves_ordenadas = sorted(diccionario.keys(), key=len, reverse=True)
+    
+    palabra_restante = p_limpia
+    while palabra_restante:
+        encontrado = False
+        for llave in llaves_ordenadas:
+            if palabra_restante.startswith(llave):
+                traducciones_parciales.append(diccionario[llave])
+                palabra_restante = palabra_restante[len(llave):]
+                encontrado = True
+                break
+        if not encontrado:
+            traducciones_parciales.append(palabra_restante[0])
+            palabra_restante = palabra_restante[1:]
+            
+    resultado_parcial = " ".join([t for t in traducciones_parciales if t])
+    
+    if resultado_parcial.replace(" ", "") == p_limpia:
+        return f"[{p_limpia}]"
+        
+    return f"({resultado_parcial})"
 
 def traducir_palabra_manual(palabra_eva, mapa_manual):
-    """Traducción interactiva por caracteres usando el mapa personalizado del usuario."""
+    """Traducción carácter por carácter interactiva."""
     resultado = []
     for letra in palabra_eva.lower():
         if letra in mapa_manual and mapa_manual[letra].strip():
@@ -78,7 +100,7 @@ def traducir_palabra_manual(palabra_eva, mapa_manual):
     return "".join(resultado)
 
 # =============================================================================
-# DISEÑO DE LA INTERFAZ WEB (STREAMLIT)
+# INTERFAZ GRÁFICA DE STREAMLIT
 # =============================================================================
 
 st.set_page_config(page_title="Archivo Global Voynich", page_icon="📖", layout="wide")
@@ -86,7 +108,6 @@ st.set_page_config(page_title="Archivo Global Voynich", page_icon="📖", layout
 st.title("📖 Intérprete Global del Manuscrito Voynich")
 st.write("Exploración completa del texto auténtico y herramientas avanzadas de descifrado.")
 
-# Configuración en Barra Lateral
 st.sidebar.header("📂 Navegación de Páginas")
 
 def ordenar_folios(key):
@@ -113,9 +134,7 @@ else:
         target_col = col1 if idx % 2 == 0 else col2
         mapa_usuario[glifo] = target_col.text_input(f"EVA '{glifo}' ->", value=glifo, key=f"m_{glifo}")
 
-# Bloques de Visualización (Texto Original Izquierda vs Traducción Derecha)
 col_izq, col_der = st.columns(2)
-
 lineas_originales = vd.CORPUS_MANUSCRITO.get(folio_seleccionado, ["Página vacía"])
 
 with col_izq:
