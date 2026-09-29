@@ -1,10 +1,15 @@
+# voynichapp.py
 import streamlit as st
 import re
+import sys
+import os
+
+# Forzar a Python a encontrar el archivo voynichdatos en la nube
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN, CORPUS_MANUSCRITO
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
-# Selector de idioma global en la barra lateral
 idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Español", "English"])
 
 IFACE = {
@@ -48,10 +53,8 @@ st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
 
 def distancia_levenshtein(s1, s2):
-    if len(s1) < len(s2):
-        return distancia_levenshtein(s2, s1)
-    if len(s2) == 0:
-        return len(s1)
+    if len(s1) < len(s2): return distancia_levenshtein(s2, s1)
+    if len(s2) == 0: return len(s1)
     fila_previa = range(len(s2) + 1)
     for i, c1 in enumerate(s1):
         fila_actual = [i + 1]
@@ -63,11 +66,8 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
-# --- TRANSLITERADOR EXPANDIDO CON TU MATRIZ DE REGLAS ACTUALIZADA ---
 def traducir_a_romance(texto):
     dicc_activo = DICCIONARIO_ES if idioma == "Español" else DICCIONARIO_EN
-    
-    # 1. Pipeline de Limpieza Física y Normalización EVA
     texto_limpio = texto.lower()
     texto_limpio = re.sub(r'[^a-z0-9\s]', '', texto_limpio)
     palabras = texto_limpio.split()
@@ -76,43 +76,37 @@ def traducir_a_romance(texto):
     traduccion_lista = []
     
     for pal in palabras:
-        # 2. Matriz Estricta de Transliteración Fonética Romance
         fon = pal
         fon = re.sub(r'^qok', 'qu', fon)
         fon = re.sub(r'^eeey', 'ey', fon)
         fon = re.sub(r'ii', 'i', fon)
         fon = re.sub(r'ck', 'c', fon)
         fon = re.sub(r'^k', 'qu', fon)
-        fon = re.sub(r'([a-z])\1+', r'\1', fon) # Remueve caracteres duplicados de baja entropía
+        fon = re.sub(r'([a-z])\1+', r'\1', fon)
         fonetica_lista.append(fon)
         
-        # 3. Mapeo por Distancia de Levenshtein contra el Diccionario Activo
         if fon in dicc_activo:
             traduccion_lista.append(dicc_activo[fon])
         else:
             mejor_coincidencia = None
             distancia_minima = float('inf')
-            
             for clave in dicc_activo.keys():
                 dist = distancia_levenshtein(fon, clave)
                 if dist < distancia_minima:
                     distancia_minima = dist
                     mejor_coincidencia = clave
-            
-            # Umbral de tolerancia de mutación de baja entropía
             if distancia_minima <= 2 and mejor_coincidencia:
                 traduccion_lista.append(dicc_activo[mejor_coincidencia] + "*")
             else:
-                traduccion_lista.append(f"[{pal}]") # Mantiene el token original si está fuera de rango
+                traduccion_lista.append(f"[{pal}]")
                 
     return " ".join(fonetica_lista), " ".join(traduccion_lista)
 
-# --- INTERFAZ DE USUARIO (TABS) ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
     st.subheader(IFACE[idioma]["lab_sub"])
-    area_texto = st.text_area("Input EVA Text / Introduce Texto EVA:", value="pshoey cttey oaror psoisoda")
+    area_texto = st.text_area("Input EVA Text:", value="pshoey cttey oaror psoisoda")
     if st.button(IFACE[idioma]["btn_an"]):
         fon, trad = traducir_a_romance(area_texto)
         st.markdown(f"**{IFACE[idioma]['fon_rom']}** `{fon}`")
@@ -120,28 +114,22 @@ with tab1:
 
 with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
-    
-    # Ordenación natural de los folios (1r, 1v, 2r, 2v...)
     folios_ordenados = sorted(list(CORPUS_MANUSCRITO.keys()), key=lambda x: (int(re.sub(r'\D', '', x)), x[-1]))
     folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], folios_ordenados)
     
     if st.button(IFACE[idioma]["btn_desc"]):
         st.markdown(f"### {IFACE[idioma]['res_tit']} {folio_sel}")
         lineas = CORPUS_MANUSCRITO[folio_sel]
-        
         col1, col2, col3 = st.columns(3)
         
         with col1:
             st.markdown(f"**{IFACE[idioma]['col1']}**")
-            for l in lineas:
-                st.write(l)
-                
+            for l in lineas: st.write(l)
         with col2:
             st.markdown(f"**{IFACE[idioma]['col2']}**")
             for l in lineas:
                 fon, _ = traducir_a_romance(l)
                 st.write(fon)
-                
         with col3:
             st.markdown(f"**{IFACE[idioma]['col3']}**")
             for l in lineas:
