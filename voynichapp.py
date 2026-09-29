@@ -48,8 +48,25 @@ IFACE = {
 try:
     from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN
 except ImportError:
-    DICCIONARIO_ES = {"pui": "la planta", "cuta": "la corteza"}
-    DICCIONARIO_EN = {"pui": "the plant", "cuta": "the bark"}
+    # --- DICCIONARIO EXPANDIDO CON RAÍCES EVA FRECUENTES ---
+    DICCIONARIO_ES = {
+        "pui": "la planta", "cuta": "la corteza", "chol": "raíz", "shol": "líquido",
+        "daiin": "el día", "daien": "luz", "choal": "tierra", "sho": "agua",
+        "cthain": "creación", "am": "madre", "al": "el/la", "ar": "elemento",
+        "shey": "esencia", "or": "oro", "ol": "óleo", "otol": "estrellas",
+        "qoke": "fuente", "qok": "que", "ok": "hacia", "otey": "origen",
+        "ched": "cortar", "chedy": "hojas", "lke": "fuego", "shk": "viento",
+        "sol": "sol", "chy": "semilla", "shyn": "brote", "dair": "tallo"
+    }
+    DICCIONARIO_EN = {
+        "pui": "the plant", "cuta": "the bark", "chol": "root", "shol": "liquid",
+        "daiin": "the day", "daien": "light", "choal": "earth", "sho": "water",
+        "cthain": "creation", "am": "mother", "al": "the", "ar": "element",
+        "shey": "essence", "or": "gold", "ol": "oil", "otol": "stars",
+        "qoke": "source", "qok": "which", "ok": "towards", "otey": "origin",
+        "ched": "to cut", "chedy": "leaves", "lke": "fire", "shk": "wind",
+        "sol": "sun", "chy": "seed", "shyn": "sprout", "dair": "stalk"
+    }
 
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
@@ -74,42 +91,29 @@ def descargar_corpus_web():
     for linea in lineas:
         linea = linea.strip()
         
-        # 1. Ignorar comentarios básicos y cabeceras estructurales
         if not linea or linea.startswith("#") or linea.startswith("<%") or linea.startswith("=IVTFF"):
             continue
 
-        # 2. FILTRO RADICAL: Eliminar cualquier línea que contenga asignaciones de alfabetos o caracteres sueltos (< Q A P ... > o = Alphabet)
         if "Alphabet" in linea or "=" in linea:
             continue
             
-        # Detecta patrones con más de 3 mayúsculas consecutivas separadas por espacios (característico de mapeos e índices de transcripción)
         if re.search(r'<\s*([A-Z?\]\[!]\s*){3,}>', linea) or re.search(r'([A-Z]\s+){3,}[A-Z]', linea):
             continue
 
-        # 3. Detectar folios válidos del manuscrito (formato estándar como <f1r.1> o columnas <f10v.c1.1>)
         match_folio = re.search(r'<f(\d+[r|v])', linea)
         if match_folio:
             folio = match_folio.group(1)
         else:
             continue
 
-        # Extraer el texto eliminando la etiqueta de folio inicial
         texto_crudo = re.sub(r'^<[^>]+>', '', linea)
-        
-        # Eliminar cualquier etiqueta interna o residual que contenga letras mayúsculas separadas por espacios
         texto_crudo = re.sub(r'<\s*([A-Z]\s*)+>', ' ', texto_crudo)
-        
-        # Eliminar comentarios embebidos entre llaves {} agregados por el transcriptor
         texto_crudo = re.sub(r'\{[^}]*\}', ' ', texto_crudo)
-        
-        # LIMPIEZA PROFUNDA: Quitar números aislados, puntuación y caracteres especiales del formato
         texto_crudo = re.sub(r'[-.=,;\$*!{}\[\]\d?:]', ' ', texto_crudo)
         
-        # Reemplazar caracteres especiales de transcripción conocidos
         texto_crudo = texto_crudo.replace('ý', 'y').replace('í', 'i')
         texto_limpio = " ".join(texto_crudo.split())
         
-        # Filtro de validación lingüística: si lo que queda son solo letras mayúsculas aisladas o caracteres vacíos, se descarta
         if re.match(r'^([A-Z]\s*)+$', texto_limpio) or not texto_limpio or len(texto_limpio) <= 1:
             continue
             
@@ -175,12 +179,12 @@ def traducir_a_romance(texto):
             
         fonetica_lista.append(fon)
         
-        # Búsqueda aproximada mediante Levenshtein
-        mejor_coincidencia = fon
+        # Búsqueda aproximada aumentando la tolerancia de Levenshtein a 3 para forzar más traducciones
+        mejor_coincidencia = f"[{fon}]"  # Se encierra entre corchetes si no encuentra traducción exacta
         menor_distancia = 999
         for k, v in dicc_activo.items():
             dist = distancia_levenshtein(fon, k)
-            if dist < menor_distancia and dist <= 2:
+            if dist < menor_distancia and dist <= 3:
                 menor_distancia = dist
                 mejor_coincidencia = v
         traduccion_lista.append(mejor_coincidencia)
@@ -192,7 +196,7 @@ tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
     st.subheader(IFACE[idioma]["lab_sub"])
-    texto_usuario = st.text_area("Input / Entrada:", "pui cuta")
+    texto_usuario = st.text_area("Input / Entrada:", "pui cuta chol")
     if st.button(IFACE[idioma]["btn_an"]):
         fon, trad = traducir_a_romance(texto_usuario)
         st.markdown(f"**{IFACE[idioma]['fon_rom']}** {fon}")
