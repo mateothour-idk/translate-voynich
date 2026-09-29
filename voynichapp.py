@@ -8,7 +8,7 @@ if not vd.CORPUS_MANUSCRITO:
     vd.cargar_todas_las_paginas_reales()
 
 # =============================================================================
-# MOTOR CRIPTOGRÁFICO DE TRANSLITERACIÓN DE PROCTOROMANCE (Sustitución Total)
+# MOTOR CRIPTOGRÁFICO DE TRANSLITERACIÓN DE PROTO-ROMANCE (Sustitución Total)
 # =============================================================================
 
 REGLAS_FONETICAS_FIJAS = {
@@ -24,7 +24,7 @@ MODIFICADORES_CONTEXTUALES = {
     'p': {'s': 'f', 'h': 'f'}
 }
 
-# Tabla de sustitución fonética fonológica oficial para raíces proto-romances sueltas
+# Tabla fonética oficial para desarmar de forma estricta los caracteres sobrantes
 TRADUCCION_FONEMAS_DEFECTO = {
     'a': 'a', 'b': 'b', 'c': 'c', 'd': 'da', 'e': 'e', 'f': 'f', 'g': 'g', 
     'h': 'h', 'i': 'i', 'k': 'ca', 'l': 'la', 'm': 'ma', 'n': 'na', 'o': 'o', 
@@ -68,7 +68,7 @@ def limpiar_fonetica_posicional(palabra_eva):
     return palabra_final
 
 def traducir_palabra_automatica(palabra_eva, diccionario):
-    """Traduce el 100% de la cadena desglosándola de forma obligatoria carácter por carácter."""
+    """Garantiza la traducción absoluta aislando los caracteres residuales uno por uno."""
     p_limpia = limpiar_fonetica_posicional(palabra_eva.lower().replace('íd', 'id').replace('í', 'i'))
     
     if not p_limpia:
@@ -90,12 +90,12 @@ def traducir_palabra_automatica(palabra_eva, diccionario):
                 encontrado = True
                 break
         
-        # CORREGIDO: Fuerza de forma obligatoria el avance indexando la primera letra suelta
+        # CORREGIDO: Aísla estrictamente el primer carácter usando [0] para forzar el avance lineal
         if not encontrado:
-            letra_actual = palabra_restante[0] # Extrae solo la primera letra remanente
+            letra_actual = palabra_restante[0]  
             letra_traducida = TRADUCCION_FONEMAS_DEFECTO.get(letra_actual, letra_actual)
             traducciones_parciales.append(letra_traducida)
-            palabra_restante = palabra_restante[1:] # Reduce la cadena de forma segura
+            palabra_restante = palabra_restante[1:]  # Reduce la longitud de la cadena
             
     resultado_unido = "".join(traducciones_parciales)
     resultado_unido = " ".join(resultado_unido.split())
@@ -111,7 +111,7 @@ def traducir_palabra_manual(palabra_eva, mapa_manual):
     return "".join(resultado)
 
 # =============================================================================
-# INTERFAZ GRÁFICA DE USUARIO
+# INTERFAZ GRÁFICA DE STREAMLIT
 # =============================================================================
 
 st.set_page_config(page_title="Archivo Global Voynich", page_icon="📖", layout="wide")
