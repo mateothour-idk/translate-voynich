@@ -15,7 +15,7 @@ DICCIONARIO_ES = {
     "otolci": "la olla", "tiodau": "el tiempo", "pair": "por", "osain": "el aceite",
     "pain": "la pulpa", "oain": "el jugo", "dais": "se aplica", "okeody": "la regla",
     "quoequiej": "también", "sar": "sanará", "oeteody": "el reposo", "otiy": "la maceración",
-    "quiy": "el cual", "quey": "la cual", "icios": "los vasos", "oiaj": "la esencia",
+    "quiy": "el cual", "quey": "la cual", "icios": "los vasos", "oiaj": "la essence",
     "cios": "los recipientes", "ain": "el líquido", "oteroe": "el proceso", "aram": "el hornillo",
     "sier": "las hojas", "dalaiu": "destilar", "dam": "dar", "ciodain": "los conductos",
     "aekiy": "la mezcla", "air": "el aire", "soar": "el vapor", "ciey": "la savia",
@@ -48,7 +48,7 @@ DICCIONARIO_EN = {
 CORPUS_MANUSCRITO = {}
 
 def cargar_todas_las_paginas_reales():
-    """Lee e indexa limpiamente el archivo completo del manuscrito."""
+    """Lee e indexa limpiamente el archivo completo borrando anotaciones de control."""
     global CORPUS_MANUSCRITO
     CORPUS_MANUSCRITO.clear()
     
@@ -63,8 +63,8 @@ def cargar_todas_las_paginas_reales():
                 if len(partes) < 2:
                     continue
                     
-                identificador = partes[0]  # CORREGIDO: Extrae la etiqueta de la línea
-                texto_eva = partes[1]       # CORREGIDO: Extrae solo el contenido EVA
+                identificador = partes[0]
+                texto_eva = partes[1]
                 
                 match = re.search(r'(\d+[rv])', identificador)
                 if match:
@@ -72,9 +72,10 @@ def cargar_todas_las_paginas_reales():
                 else:
                     continue
                 
-                # Quitar ligaduras adicionales y caracteres especiales de daño del pergamino
-                texto_eva_limpio = re.sub(r'=[^ ]*', '', texto_eva)  
-                texto_eva_limpio = re.sub(r'[*.,!?<>{}\[\]\-]', '', texto_eva_limpio) 
+                # Limpieza de caracteres de anotaciones de transcripción
+                texto_eva_limpio = re.sub(r'\{.*?\}|\[.*?\]', '', texto_eva)
+                texto_eva_limpio = re.sub(r'%|\@\d+|;\d*|[:\$\#\-\+=<>\/]', '', texto_eva_limpio)
+                texto_eva_limpio = re.sub(r'[*.,!?]', '', texto_eva_limpio)
                 texto_eva_limpio = " ".join(texto_eva_limpio.split())
                 
                 if folio_key not in CORPUS_MANUSCRITO:
@@ -84,7 +85,6 @@ def cargar_todas_las_paginas_reales():
                     CORPUS_MANUSCRITO[folio_key].append(texto_eva_limpio)
                     
     except FileNotFoundError:
-        # Fallback de desarrollo con vocabulario base estructurado
         vocablos_base_manuscrito = ["pshoey", "cttey", "oaror", "psoisoda", "kedy", "ceon", "ceey", "qokedy", "ckaur", "chedy", "toes", "odor", "ctair", "oas", "tcbaor", "ctaiin", "cseey", "otair", "opas", "chidí", "podon", "vety", "dic", "quotcey", "raur", "qudicodi"]
         for i in range(1, 117):
             for lado in ["r", "v"]:
