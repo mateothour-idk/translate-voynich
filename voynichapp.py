@@ -1,6 +1,6 @@
 import streamlit as st
 import re
-from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN, CORPUS_MANUSCRITO
+from voynichdata import DICCIONARIO_ES, DICCIONARIO_EN, CORPUS_MANUSCRITO
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
