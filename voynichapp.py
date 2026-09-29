@@ -190,7 +190,8 @@ with tab1:
 with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
     if CORPUS_REAL:
-        folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: [int(re.findall(r'\d+', x)), x[-1]])
+        # CORRECCIÓN DE ORDENACIÓN NATURAL: Extrae el primer elemento coincidente antes de transformar a entero
+        folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: [int(re.findall(r'\d+', x)[0]), x[-1]])
         folio_seleccionado = st.selectbox(IFACE[idioma]["nav_sel"], folios_disponibles)
         
         if st.button(IFACE[idioma]["btn_desc"]):
