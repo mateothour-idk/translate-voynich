@@ -1,7 +1,6 @@
 # --- ARCHIVO 1: voynichdatos.py ---
 import re
 
-# Diccionario basado en estudios paleográficos (raíces medievales y botánicas estables)
 DICCIONARIO_ES = {
     "pui": "planta", "cuta": "corteza", "oarur": "aroma", "poisoda": "medicinal",
     "quedy": "elemento", "con": "cum (con)", "su": "su", "quoqu": "quocirca (por lo cual)", 
@@ -14,15 +13,15 @@ DICCIONARIO_ES = {
     "dicorcau": "substancia", "cuti": "cutis (piel)", "cotol": "cáliz", "odaur": "olor", 
     "cocodau": "fructus (fruto)", "seo": "su", "quoci": "allí", "ciodal": "eje", 
     "daral": "rotación", "ocol": "germinación", "olti": "término", "otolci": "olla", 
-    "tiodau": "tempus (tiempo)", "pair": "per (por)", "osain": "oleum (aceite)", 
-    "pain": "pulpa", "oain": "suco", "dais": "aplicación", "okeody": "regula (regla)", 
-    "quoequiej": "item (también)", "sar": "sanación", "oeteody": "quietus (reposo)", 
-    "otiy": "maceración", "quiy": "el cual", "quey": "la cual", "icios": "vasos", 
-    "oiaj": "esencia", "cios": "recipientes", "ain": "líquido", "oteroe": "proceso", 
-    "aram": "fornax (hornillo)", "sier": "folia (hojas)", "dalaiu": "destilación", 
-    "dam": "dar", "ciodain": "conductos", "aekiy": "mixtura", "air": "aer (aire)", 
-    "soar": "vapor", "ciey": "savia", "odotoi": "ciclo", "doror": "ortus (nacimiento)", 
-    "quaur": "calor", "caud": "cauda (tallo largo)", "cedy": "sección", "cidí": "fusión"
+    "tiodau": "tempus (tiempo)", "pair": "per (por)", "osain": "oleum (aceite)", "pain": "pulpa", 
+    "oain": "suco", "dais": "aplicación", "okeody": "regula (regla)", "quoequiej": "item (también)", 
+    "sar": "sanación", "oeteody": "quietus (reposo)", "otiy": "maceración", "quiy": "el cual", 
+    "quey": "la cual", "icios": "vasos", "oiaj": "esencia", "cios": "recipientes", 
+    "ain": "líquido", "oteroe": "proceso", "aram": "fornax (hornillo)", "sier": "folia (hojas)", 
+    "dalaiu": "destilación", "dam": "dar", "ciodain": "conductos", "aekiy": "mixtura", 
+    "air": "aer (aire)", "soar": "vapor", "ciey": "savia", "odotoi": "ciclo", 
+    "doror": "ortus (nacimiento)", "quaur": "calor", "caud": "cauda (tallo largo)", 
+    "cedy": "sección", "cidí": "fusión"
 }
 
 DICCIONARIO_EN = {
@@ -65,8 +64,8 @@ def cargar_todas_las_paginas_reales():
                 if len(partes) < 2:
                     continue
                     
-                identificador = partes
-                texto_eva = partes
+                identificador = partes[0]  # CORREGIDO: Toma el string de la etiqueta de la línea
+                texto_eva = partes[1]       # CORREGIDO: Toma el string del texto EVA restante
                 
                 match = re.search(r'(\d+[rv])', identificador)
                 if match:
