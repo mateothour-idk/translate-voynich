@@ -1,5 +1,6 @@
 import streamlit as st
 import re
+from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN, CORPUS_MANUSCRITO
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
@@ -22,8 +23,7 @@ IFACE = {
         "res_tit": "Traducción Literal Estricta para el Folio",
         "col1": "1. Texto EVA Real del Manuscrito:",
         "col2": "2. Fonética Romance Sincronizada:",
-        "col3": "3. Traducción Real (Orden Medieval Estricto):",
-        "err_corpus": "No se pudo inicializar el corpus del manuscrito."
+        "col3": "3. Traducción Real (Orden Medieval Estricto):"
     },
     "English": {
         "titulo": "Universal Automatic Voynich Manuscript Translator (Final Matrix)",
@@ -40,53 +40,8 @@ IFACE = {
         "res_tit": "Strict Literal Translation for Folio",
         "col1": "1. Real EVA Text from Manuscript:",
         "col2": "2. Aligned Romance Phonetics:",
-        "col3": "3. Real Translation (Strict Medieval Word Order):",
-        "err_corpus": "The file was not found in your repository."
+        "col3": "3. Real Translation (Strict Medieval Word Order):"
     }
-}
-
-DICCIONARIO_ES = {
-    "pui": "la planta", "cuta": "la corteza", "oarur": "el aroma", "poisoda": "la planta medicinal",
-    "quedy": "el elemento", "con": "con", "su": "su", "quoqu": "por lo cual", "caur": "el tallo",
-    "chedy": "se extrae", "toes": "estos", "odor": "oloroso", "cutair": "cortar", "oas": "la vasija",
-    "tcbaor": "recolectar", "hacia": "hacia", "ctaiin": "el cáliz", "si": "si se", "otair": "surgir",
-    "opas": "los pasos", "chidi": "canalizar", "podon": "la raíz", "vety": "maduro",
-    "dic": "dice", "olteey": "al final", "quotcey": "se limpia", "raur": "la base",
-    "qudicodi": "el tratado", "copi": "abundante", "cia": "allí", "quotcoi": "cuanto",
-    "quotoai": "diariamente", "dicorcau": "la sustancia", "cuti": "la piel", "cotol": "el cáliz",
-    "odaur": "el olor", "cocodau": "el fruto", "seo": "su", "quoci": "allí",
-    "ciodal": "el eje", "daral": "girar", "ocol": "los brotes", "olti": "al término",
-    "otolci": "la olla", "tiodau": "el tiempo", "pair": "por", "osain": "el aceite",
-    "pain": "la pulpa", "oain": "el jugo", "dais": "se aplica", "okeody": "la regla",
-    "quoequiej": "también", "sar": "sanará", "oeteody": "el reposo", "otiy": "la maceración",
-    "quiy": "el cual", "quey": "la cual", "icios": "los vasos", "oiaj": "la esencia",
-    "cios": "los recipientes", "ain": "el líquido", "oteroe": "el proceso", "aram": "el hornillo",
-    "sier": "las hojas", "dalaiu": "destilar", "dam": "dar", "ciodain": "los conductos",
-    "aekiy": "la mezcla", "air": "el aire", "soar": "el vapor", "ciey": "la savia",
-    "dais": "la rueda", "odotoi": "el ciclo", "doror": "el nacimiento", "quaur": "el calor",
-    "caud": "el tallo alargado", "cedy": "se corta", "cidí": "verter"
-}
-
-DICCIONARIO_EN = {
-    "pui": "the plant", "cuta": "the bark", "oarur": "the aroma", "poisoda": "the medicinal plant",
-    "quedy": "the element", "con": "with", "su": "its", "quoqu": "whereby", "caur": "the stem",
-    "chedy": "is extracted", "toes": "these", "odor": "scented", "cutair": "to cut", "oas": "the vessel",
-    "tcbaor": "to gather", "hacia": "towards", "ctaiin": "the calyx", "si": "if it", "otair": "arise",
-    "opas": "the steps", "chidi": "to channel", "podon": "the root", "vety": "mature",
-    "dic": "says", "olteey": "at the end", "quotcey": "is cleansed", "raur": "the base",
-    "qudicodi": "the treatise", "copi": "abundant", "cia": "there", "quotcoi": "as for",
-    "quotoai": "daily", "dicorcau": "the substance", "cuti": "the skin", "cotol": "the calyx",
-    "odaur": "the scent", "cocodau": "the fruit", "seo": "its", "quoci": "there",
-    "ciodal": "the axis", "daral": "to rotate", "ocol": "the buds", "olti": "at the completion",
-    "otolci": "the pot", "tiodau": "the time", "pair": "by", "osain": "the oil",
-    "pain": "the pulp", "oain": "the juice", "dais": "is applied", "okeody": "the rule",
-    "quoequiej": "also", "sar": "will heal", "oeteody": "the rest", "otiy": "the maceration",
-    "quiy": "which", "quey": "which", "icios": "the vessels", "oiaj": "the essence",
-    "cios": "the containers", "ain": "the liquid", "oteroe": "the process", "aram": "the burner",
-    "sier": "the leaves", "dalaiu": "to distill", "dam": "to give", "ciodain": "the ducts",
-    "aekiy": "the mixture", "air": "the air", "soar": "the steam", "ciey": "the sap",
-    "dais": "the wheel", "odotoi": "the cycle", "doror": "the birth", "quaur": "the heat",
-    "caud": "the elongated stem", "cedy": "is cut", "cidí": "to pour"
 }
 
 st.title(IFACE[idioma]["titulo"])
@@ -108,147 +63,87 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
-# Reconstrucción dinámica del corpus real de las 240 páginas independientes
-CORPUS_MANUSCRITO = {
-    "1r": ["pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes oas", "tcbaor ceor ctaiin cseey otair opas kedy chidí ceon ceey"],
-    "20r": ["kdceody ceopy ceeey qotceoy qotoeey dceorceau ceodey cteey ceotol odaur", "teeodau cseey cpair osaiin yteeoey cseey cpaiin oaiin daiis"],
-    "67r": ["daor odotoey doror daor ceody qotcey oaror", "toes odor ctair oas kedy ceon qokedy"],
-    "78r": ["qokedy kedy qokedy ckaur chedy oas raor kedy ceon ceey", "kdceody ceopy ceeey qotceoy qotoeey dceorceau"]
-}
-
-vocablos_base_manuscrito = ["pshoey", "cttey", "oaror", "psoisoda", "kedy", "ceon", "ceey", "qokedy", "ckaur", "chedy", "toes", "odor", "ctair", "oas", "tcbaor", "ctaiin", "cseey", "otair", "opas", "chidí", "podon", "vety", "dic", "quotcey", "raur", "qudicodí"]
-for i in range(1, 117):
-    for lado in ["r", "v"]:
-        key = f"{i}{lado}"
-        if key not in CORPUS_MANUSCRITO:
-            lineas_folio = []
-            num_lineas = 4 + (i % 3)
-            for L in range(num_lineas):
-                idx_v = (i + L) % len(vocablos_base_manuscrito)
-                w1 = vocablos_base_manuscrito[idx_v]
-                w2 = vocablos_base_manuscrito[(idx_v + 3) % len(vocablos_base_manuscrito)]
-                w3 = vocablos_base_manuscrito[(idx_v + 6) % len(vocablos_base_manuscrito)]
-                lineas_folio.append(f"{w1} {w2} {w3} ceon ceey cuta ckaur cedy")
-            CORPUS_MANUSCRITO[key] = lineas_folio
-
 # --- TRANSLITERADOR EXPANDIDO CON TU MATRIZ DE REGLAS ACTUALIZADA ---
 def traducir_a_romance(texto):
-    # Diccionario ordenado estrictamente por longitud decreciente para evitar superposiciones parciales
-    reglas = {
-        'dceorceau': 'dicorcau', 'ceeodaiin': 'ciodain',
-        'pdr': 'pedr', 'pcee': 'pi', 'pce': 'pi', 'pcs': 'pes', 'qok': 'quoqu', 'ceeey': 'cia', 'tceeodal': 'ciodal',
-        'cee': 'ci', 'eee': 'ei', 'eee': 'ie', 'eey': 'ai', 'eey': 'iy',
-        'pc': 'p', 'ps': 'p', 'cp': 'p', 'ce': 'c', 'ey': 'a', 'cs': 's', 'ck': 'qu', 'ee': 'i', 'oe': 'u', 'iu': 'u',
-        'dc': 'c', 'tc': 'c', 'dce': 'dic', 'ct': 'cut', 'oi': 'oy', 'oi': 'oi', 'ii': 'i', 'ae': 'a', 'ae': 'e',
-        'oo': 'u', 'ph': 'f', 'th': 't', 'ch': 'c', 'iii': 'i', 'll': 'y', 'quo': 'cuo', 'quo': 'quo', 'eat': 'it',
-        'p': 'p', 'o': 'o', 'o': 'u', 'a': 'a', 'q': 'qu', 'm': 'm', 'm': 'n', 'l': 'l', 'x': 'sh', 'el': 'l', 'el': 'el', 'tt': 't', 'ts': 's'
-    }
+    dicc_activo = DICCIONARIO_ES if idioma == "Español" else DICCIONARIO_EN
     
-    lineas = texto.split('\n')
-    lineas_romance = []
+    # 1. Pipeline de Limpieza Física y Normalización EVA
+    texto_limpio = texto.lower()
+    texto_limpio = re.sub(r'[^a-z0-9\s]', '', texto_limpio)
+    palabras = texto_limpio.split()
     
-    for linea in lineas:
-        palabras = linea.lower().split()
-        palabras_romance = []
+    fonetica_lista = []
+    traduccion_lista = []
+    
+    for pal in palabras:
+        # 2. Matriz Estricta de Transliteración Fonética Romance
+        fon = pal
+        fon = re.sub(r'^qok', 'qu', fon)
+        fon = re.sub(r'^eeey', 'ey', fon)
+        fon = re.sub(r'ii', 'i', fon)
+        fon = re.sub(r'ck', 'c', fon)
+        fon = re.sub(r'^k', 'qu', fon)
+        fon = re.sub(r'([a-z])\1+', r'\1', fon) # Remueve caracteres duplicados de baja entropía
+        fonetica_lista.append(fon)
         
-        for pal in palabras:
-            pal_limpia = pal.strip(",.!?*;:- ")
-            if not pal_limpia:
-                continue
-                
-            # Procesar el término aplicando la matriz de reglas (Pasada 1)
-            t_modificado = pal_limpia
-            for k in sorted(reglas.keys(), key=len, reverse=True):
-                t_modificado = t_modificado.replace(k, reglas[k])
-                
-            # Evaluar variaciones de inicio/fin de palabra solicitadas para la letra 'y' e 'í'
-            if t_modificado.startswith('y'):
-                t_modificado = 'i' + t_modificado[1:]
-            if t_modificado.endswith('y') or t_modificado.endswith('í'):
-                t_modificado = t_modificado[:-1] + 'i'
-                
-            # Pasada 2 para resolver ligaduras fonéticas secundarias resultantes
-            for k in sorted(reglas.keys(), key=len, reverse=True):
-                t_modificado = t_modificado.replace(k, reglas[k])
-                
-            # --- EVALUACIÓN ACADÉMICA COHERENTE CON EL GLOSARIO ---
-            p_norm = t_modificado.replace("í", "i").replace("ó", "o").replace("y", "i")
-            if p_norm in DICCIONARIO_ES:
-                palabras_romance.append(p_norm)
+        # 3. Mapeo por Distancia de Levenshtein contra el Diccionario Activo
+        if fon in dicc_activo:
+            traduccion_lista.append(dicc_activo[fon])
+        else:
+            mejor_coincidencia = None
+            distancia_minima = float('inf')
+            
+            for clave in dicc_activo.keys():
+                dist = distancia_levenshtein(fon, clave)
+                if dist < distancia_minima:
+                    distancia_minima = dist
+                    mejor_coincidencia = clave
+            
+            # Umbral de tolerancia de mutación de baja entropía
+            if distancia_minima <= 2 and mejor_coincidencia:
+                traduccion_lista.append(dicc_activo[mejor_coincidencia] + "*")
             else:
-                mejor_coincidencia = p_norm
-                menor_distancia = 99
-                for clave_dicc in DICCIONARIO_ES.keys():
-                    dist = distancia_levenshtein(p_norm, clave_dicc)
-                    if dist < menor_distancia:
-                        menor_distancia = dist
-                        mejor_coincidencia = clave_dicc
-                palabras_romance.append(mejor_coincidencia)
+                traduccion_lista.append(f"[{pal}]") # Mantiene el token original si está fuera de rango
                 
-        if palabras_romance:
-            lineas_romance.append(" ".join(palabras_romance))
-            
-    return "\n".join(lineas_romance)
+    return " ".join(fonetica_lista), " ".join(traduccion_lista)
 
-def generar_espanol_sintactico(texto_romance, lang):
-    lineas = texto_romance.split('\n')
-    lineas_traducidas = []
-    dict_activo = DICCIONARIO_ES if lang == "Español" else DICCIONARIO_EN
-    prefix_linea = "Linea" if lang == "Español" else "Line"
-        
-    for idx, linea in enumerate(lineas):
-        palabras = linea.split()
-        linea_espanol = []
-        
-        for palabra in palabras:
-            palabra_norm = palabra.strip(",.!?*;:- ")
-            if palabra_norm in dict_activo:
-                linea_espanol.append(dict_activo[palabra_norm])
-                
-        if linea_espanol:
-            texto_linea = " ".join(linea_espanol).strip()
-            texto_linea = re.sub(r'\s+', ' ', texto_linea)
-            lineas_traducidas.append(f"{prefix_linea} {idx+1}: {texto_linea.capitalize()}.")
-            
-    return "\n\n".join(lineas_traducidas)
-
+# --- INTERFAZ DE USUARIO (TABS) ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
     st.subheader(IFACE[idioma]["lab_sub"])
-    entrada = st.text_area("EVA Input:", "pshoey cttey oaror psoisoda")
+    area_texto = st.text_area("Input EVA Text / Introduce Texto EVA:", value="pshoey cttey oaror psoisoda")
     if st.button(IFACE[idioma]["btn_an"]):
-        romance = traducir_a_romance(entrada)
-        espanol = generar_espanol_sintactico(romance, idioma)
-        c1, c2 = st.columns(2)
-        with c1:
-            st.success(IFACE[idioma]["fon_rom"])
-            st.code(romance)
-        with c2:
-            st.info(IFACE[idioma]["trad_auto"])
-            st.write(espanol)
+        fon, trad = traducir_a_romance(area_texto)
+        st.markdown(f"**{IFACE[idioma]['fon_rom']}** `{fon}`")
+        st.success(f"**{IFACE[idioma]['trad_auto']}** {trad}")
 
 with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
-    if CORPUS_MANUSCRITO:
-        lista_folios = sorted(list(CORPUS_MANUSCRITO.keys()), key=lambda x: (int(''.join(filter(str.isdigit, x))), x[-1]))
-        folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], lista_folios)
-        if st.button(f"{IFACE[idioma]['btn_desc']} {folio_sel}"):
-            lineas_eva = CORPUS_MANUSCRITO[folio_sel]
-            texto_eva_completo = "\n".join(lineas_eva)
-            romance_final = traducir_a_romance(texto_eva_completo)
-            espanol_final = generar_espanol_sintactico(romance_final, idioma)
-            st.write("---")
-            st.markdown(f"### {IFACE[idioma]['res_tit']} {folio_sel}")
-            col_eva, col_rom, col_esp = st.columns(3)
-            with col_eva:
-                st.warning(IFACE[idioma]["col1"])
-                st.text_area("EVA", texto_eva_completo, height=450, disabled=True)
-            with col_rom:
-                st.success(IFACE[idioma]["col2"])
-                st.text_area("Romance", romance_final, height=450)
-            with col_esp:
-                st.info(IFACE[idioma]["col3"])
-                st.text_area("Translation", json_fix := espanol_final, height=450)
-    else:
-        st.warning(IFACE[idioma]["err_corpus"])
+    
+    # Ordenación natural de los folios (1r, 1v, 2r, 2v...)
+    folios_ordenados = sorted(list(CORPUS_MANUSCRITO.keys()), key=lambda x: (int(re.sub(r'\D', '', x)), x[-1]))
+    folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], folios_ordenados)
+    
+    if st.button(IFACE[idioma]["btn_desc"]):
+        st.markdown(f"### {IFACE[idioma]['res_tit']} {folio_sel}")
+        lineas = CORPUS_MANUSCRITO[folio_sel]
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown(f"**{IFACE[idioma]['col1']}**")
+            for l in lineas:
+                st.write(l)
+                
+        with col2:
+            st.markdown(f"**{IFACE[idioma]['col2']}**")
+            for l in lineas:
+                fon, _ = traducir_a_romance(l)
+                st.write(fon)
+                
+        with col3:
+            st.markdown(f"**{IFACE[idioma]['col3']}**")
+            for l in lineas:
+                _, trad = traducir_a_romance(l)
+                st.write(trad)
