@@ -1,12 +1,6 @@
-# voynichapp.py
 import streamlit as st
 import re
-import sys
 import os
-
-# Forzar a Python a encontrar el archivo voynichdatos en la nube
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN, CORPUS_MANUSCRITO
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
@@ -15,42 +9,83 @@ idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Espa
 IFACE = {
     "Español": {
         "titulo": "Traductor Universal del Manuscrito Voynich (Matriz Definitiva)",
-        "sub": "Explora y descifra cada línea real del manuscrito aplicando tu matriz expandida de doble procesamiento estricto.",
+        "sub": "Explora y descifra cada línea REAL de voynich.nu aplicando tu matriz fonética.",
         "tab1": "Laboratorio de Texto Libre",
-        "tab2": "Explorador del Corpus Real del Manuscrito (1r a 116v)",
+        "tab2": "Explorador del Corpus Real (voyn_101.txt)",
         "lab_sub": "Laboratorio de Entrada Libre",
         "btn_an": "Analizar Fragmento",
-        "fon_rom": "Fonética Romance Optimizada (Matriz Actualizada):",
-        "trad_auto": "Traducción Literal Palabra por Palabra:",
-        "nav_sub": "Traductor de Folios Continuo",
-        "nav_sel": "Selecciona un folio del manuscrito entero:",
+        "fon_rom": "Fonética Romance Optimizada:",
+        "trad_auto": "Traducción Literal:",
+        "nav_sub": "Navegador de Folios Reales",
+        "nav_sel": "Selecciona un folio real:",
         "btn_desc": "Descifrar Folio",
-        "res_tit": "Traducción Literal Estricta para el Folio",
-        "col1": "1. Texto EVA Real del Manuscrito:",
-        "col2": "2. Fonética Romance Sincronizada:",
-        "col3": "3. Traducción Real (Orden Medieval Estricto):"
+        "res_tit": "Traducción Real para el Folio",
+        "col1": "1. Texto Real (voynich.nu):",
+        "col2": "2. Fonética Romance:",
+        "col3": "3. Traducción Real:"
     },
     "English": {
-        "titulo": "Universal Automatic Voynich Manuscript Translator (Final Matrix)",
-        "sub": "Explore and translate every single line using your updated double-processing matrix with maximum rigor.",
+        "titulo": "Universal Automatic Voynich Manuscript Translator",
+        "sub": "Explore and translate every SINGLE REAL line from voynich.nu using your matrix.",
         "tab1": "Free Text Laboratory",
-        "tab2": "Real Manuscript Corpus Explorer (1r to 116v)",
+        "tab2": "Real Corpus Explorer (voyn_101.txt)",
         "lab_sub": "Free Entry Laboratory",
         "btn_an": "Analyze Fragment",
-        "fon_rom": "Optimized Romance Phonetics (Updated Matrix):",
-        "trad_auto": "Literal Word-by-Word Translation:",
-        "nav_sub": "Automatic Folios Navigator (All Pages)",
-        "nav_sel": "Select a folio from the entire manuscript:",
+        "fon_rom": "Optimized Romance Phonetics:",
+        "trad_auto": "Literal Translation:",
+        "nav_sub": "Real Folios Navigator",
+        "nav_sel": "Select a real folio:",
         "btn_desc": "Decipher Real Folio",
         "res_tit": "Strict Literal Translation for Folio",
-        "col1": "1. Real EVA Text from Manuscript:",
+        "col1": "1. Real Text (voynich.nu):",
         "col2": "2. Aligned Romance Phonetics:",
-        "col3": "3. Real Translation (Strict Medieval Word Order):"
+        "col3": "3. Real Translation:"
     }
 }
 
+# Traemos tus diccionarios desde tu otro archivo
+try:
+    from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN
+except ImportError:
+    DICCIONARIO_ES = {"pui": "la planta", "cuta": "la corteza"}
+    DICCIONARIO_EN = {"pui": "the plant", "cuta": "the bark"}
+
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
+
+# --- LEER EL ARCHIVO REAL DE VOYNICH.NU ---
+@st.cache_data
+def cargar_corpus_real():
+    corpus = {}
+    archivo = "voyn_101.txt"
+    
+    if not os.path.exists(archivo):
+        return None
+        
+    with open(archivo, "r", encoding="utf-8", errors="ignore") as f:
+        for linea in f:
+            linea = linea.strip()
+            # Salta comentarios de voynich.nu
+            if not linea or linea.startswith("#") or linea.startswith("<%"):
+                continue
+            
+            # Formato típico: <f1r.P1.1;H> pshoey cttey oaror
+            match = re.match(r"^<f(\d+[r|v])\..*?>\s+(.*)\$", linea)
+            if match:
+                folio = match.group(1)
+                texto_linea = match.group(2)
+                # Limpia caracteres raros de transcripción
+                texto_linea = re.sub(r'[-.=,;]', ' ', texto_linea)
+                texto_linea = re.sub(r'[*!{}]', '', texto_linea)
+                texto_linea = " ".join(texto_linea.split())
+                
+                if texto_linea:
+                    if folio not in corpus:
+                        corpus[folio] = []
+                    corpus[folio].append(texto_linea)
+    return corpus
+
+CORPUS_REAL = cargar_corpus_real()
 
 def distancia_levenshtein(s1, s2):
     if len(s1) < len(s2): return distancia_levenshtein(s2, s1)
@@ -76,27 +111,21 @@ def traducir_a_romance(texto):
     traduccion_lista = []
     
     for pal in palabras:
-        # ASIGNACIÓN DE TEXTO BASE (Izquierda original del manuscrito)
         fon = pal
         
-        # 1. Reglas específicas de 3 o 4 caracteres (Izquierda -> Derecha)
+        # TUS REGLAS FONÉTICAS ESTRICTAS
         fon = re.sub(r'qok', 'quoqu', fon)
         fon = re.sub(r'pcee', 'pi', fon)
         fon = re.sub(r'pcs', 'pes', fon)
         fon = re.sub(r'iii', 'í', fon)
         fon = re.sub(r'eee', 'ei', fon)
         fon = re.sub(r'eey', 'ai', fon)
-        
-        # 2. Prefijos compuestos y combinaciones complejas
         fon = re.sub(r'pc|ps|cp', 'p', fon)
         fon = re.sub(r'dce', 'dic', fon)
         fon = re.sub(r'cee', 'ci', fon)
         fon = re.sub(r'pdr', 'pedr', fon)
         fon = re.sub(r'eat', 'it', fon)
-        
-        # 3. Sonidos dobles y dígrafos
-        fon = re.sub(r'dc', 'ch', fon)
-        fon = re.sub(r'tc', 'ch', fon)
+        fon = re.sub(r'dc|tc', 'ch', fon)
         fon = re.sub(r'ct', 'cut', fon)
         fon = re.sub(r'ii', 'i', fon)
         fon = re.sub(r'oo', 'u', fon)
@@ -106,10 +135,7 @@ def traducir_a_romance(texto):
         fon = re.sub(r'ph', 'f', fon)
         fon = re.sub(r'th', 't', fon)
         fon = re.sub(r'ch', 'c', fon)
-        
-        # 4. Digramas vocálicos particulares
-        if 'eey' not in pal:
-            fon = re.sub(r'ey', 'a', fon)
+        if 'eey' not in pal: fon = re.sub(r'ey', 'a', fon)
         fon = re.sub(r'oe', 'ue', fon)
         fon = re.sub(r'iu', 'u', fon)
         fon = re.sub(r'oi', 'oy', fon)
@@ -117,23 +143,15 @@ def traducir_a_romance(texto):
         fon = re.sub(r'ai', 'i', fon)
         fon = re.sub(r'iy', 'í', fon)
         fon = re.sub(r'quo', 'cuo', fon)
-        
-        # 5. Modificaciones de caracteres simples
-        fon = re.sub(r'ck', 'qu', fon)
-        fon = re.sub(r'k', 'qu', fon)
-        fon = re.sub(r'q', 'qu', fon)
+        fon = re.sub(r'ck|k|q', 'qu', fon)
         fon = re.sub(r'x', 'sh', fon)
         fon = re.sub(r'el', 'l', fon)
         
-        # 6. Reglas de Y posicionales estrictas (Izquierda -> Derecha)
-        if fon.startswith('y'):
-            fon = 'i' + fon[1:]
-        if fon.endswith('y'):
-            fon = fon[:-1] + 'í'
+        if fon.startswith('y'): fon = 'i' + fon[1:]
+        if fon.endswith('y'): fon = fon[:-1] + 'í'
             
         fonetica_lista.append(fon)
         
-        # Mapeo directo o por Levenshtein
         if fon in dicc_activo:
             traduccion_lista.append(dicc_activo[fon])
         else:
@@ -155,7 +173,7 @@ tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
     st.subheader(IFACE[idioma]["lab_sub"])
-    area_texto = st.text_area("Input EVA Text:", value="pshoey cttey oaror psoisoda")
+    area_texto = st.text_area("Input EVA:", value="pshoey cttey oaror")
     if st.button(IFACE[idioma]["btn_an"]):
         fon, trad = traducir_a_romance(area_texto)
         st.markdown(f"**{IFACE[idioma]['fon_rom']}** `{fon}`")
@@ -163,24 +181,28 @@ with tab1:
 
 with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
-    folios_ordenados = sorted(list(CORPUS_MANUSCRITO.keys()), key=lambda x: (int(re.sub(r'\D', '', x)), x[-1]))
-    folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], folios_ordenados)
     
-    if st.button(IFACE[idioma]["btn_desc"]):
-        st.markdown(f"### {IFACE[idioma]['res_tit']} {folio_sel}")
-        lineas = CORPUS_MANUSCRITO[folio_sel]
-        col1, col2, col3 = st.columns(3)
+    if CORPUS_REAL is None:
+        st.error("Error: Sube el archivo 'voyn_101.txt' a tu repositorio de GitHub para ver las páginas reales.")
+    else:
+        folios_ordenados = sorted(list(CORPUS_REAL.keys()), key=lambda x: (int(re.sub(r'\D', '', x)), x[-1]))
+        folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], folios_ordenados)
         
-        with col1:
-            st.markdown(f"**{IFACE[idioma]['col1']}**")
-            for l in lineas: st.write(l)
-        with col2:
-            st.markdown(f"**{IFACE[idioma]['col2']}**")
-            for l in lineas:
-                fon, _ = traducir_a_romance(l)
-                st.write(fon)
-        with col3:
-            st.markdown(f"**{IFACE[idioma]['col3']}**")
-            for l in lineas:
-                _, trad = traducir_a_romance(l)
-                st.write(trad)
+        if st.button(IFACE[idioma]["btn_desc"]):
+            st.markdown(f"### {IFACE[idioma]['res_tit']} {folio_sel}")
+            lineas = CORPUS_REAL[folio_sel]
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.markdown(f"**{IFACE[idioma]['col1']}**")
+                for l in lineas: st.write(l)
+            with col2:
+                st.markdown(f"**{IFACE[idioma]['col2']}**")
+                for l in lineas:
+                    fon, _ = traducir_a_romance(l)
+                    st.write(fon)
+            with col3:
+                st.markdown(f"**{IFACE[idioma]['col3']}**")
+                for l in lineas:
+                    _, trad = traducir_a_romance(l)
+                    st.write(trad)
