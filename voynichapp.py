@@ -24,7 +24,7 @@ MODIFICADORES_CONTEXTUALES = {
     'p': {'s': 'f', 'h': 'f'}
 }
 
-# Mapeo fonético estricto que simula abreviaturas latinas del siglo XV (en lugar de rellenar con letras aleatorias)
+# Mapeo fonético estricto que simula abreviaturas latinas del siglo XV
 TRADUCCION_FONEMAS_DEFECTO = {
     'a': 'a', 'b': 'b', 'c': 'c', 'd': 'rum', 'e': 'e', 'f': 'f', 'g': 'g', 
     'h': 'h', 'i': 'i', 'k': 'qu', 'l': 'is', 'm': 'm', 'n': 'n', 'o': 'o', 
@@ -90,9 +90,11 @@ def traducir_palabra_automatica(palabra_eva, diccionario):
                 encontrado = True
                 break
         
+        if not encontrar_encontrado if 'encontrar_encontrado' in locals() else encontrado:
+            pass
         if not encontrado:
             # Extraer rigurosamente el primer carácter y aplicar equivalencia de abreviatura latina
-            letra_actual = palabra_restante
+            letra_actual = palabra_restante[0]
             letra_traducida = TRADUCCION_FONEMAS_DEFECTO.get(letra_actual, letra_actual)
             traducciones_parciales.append(letra_traducida)
             palabra_restante = palabra_restante[1:]  # Reducción estricta de la cadena
