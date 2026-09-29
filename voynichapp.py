@@ -8,7 +8,7 @@ if not vd.CORPUS_MANUSCRITO:
     vd.cargar_todas_las_paginas_reales()
 
 # =============================================================================
-# NUEVA MATRIZ DE TRANSICIÓN FONOLÓGICA (Agrupación de Glifos Compuestos)
+# MOTOR CRIPTOGRÁFICO DE TRANSLITERACIÓN COMPUESTA Y MACRO-GLIFOS
 # =============================================================================
 
 MAPEO_FONEMAS_COMPUESTOS = {
@@ -26,14 +26,11 @@ TRADUCCION_FONEMAS_DEFECTO = {
 }
 
 def agrupar_fonemas_medievales(palabra_eva):
-    """Transforma los glifos anatómicos de EVA en fonemas compuestos integrados."""
     if not palabra_eva:
         return ""
-    
     resultado = []
     i = 0
     longitud = len(palabra_eva)
-    
     while i < longitud:
         glifo_4 = palabra_eva[i:i+4]
         glifo_3 = palabra_eva[i:i+3]
@@ -55,20 +52,26 @@ def agrupar_fonemas_medievales(palabra_eva):
             else:
                 resultado.append(glifo_1)
             i += 1
-            
     palabra_final = "".join(resultado)
     palabra_final = re.sub(r'i+', 'i', palabra_final)
     palabra_final = re.sub(r'c+', 'c', palabra_final)
     return palabra_final
 
 def traducir_palabra_automatica(palabra_eva, diccionario):
-    """Traduce de forma absoluta aplicando primero la agrupación fonológica compuesta."""
-    p_fonetica = agrupar_fonemas_medievales(palabra_eva.lower())
+    """Detecta de forma prioritaria si es una anotación Currier/Macro-glifo alfanumérico."""
+    palabra_clean = palabra_eva.strip()
     
+    # INTERCEPTOR DE LÍNEAS TIPO 'QA PC Fb B2': Si contiene mayúsculas y números puros
+    if re.match(r'^[A-Z0-9a-z]*[A-Z0-9][A-Z0-9a-z]*$', palabra_clean) and len(palabra_clean) <= 5:
+        llave_macro = palabra_clean.upper()
+        if llave_macro in vd.DICCIONARIO_MACRO_GLIFOS:
+            return vd.DICCIONARIO_MACRO_GLIFOS[llave_macro]
+        return f"<{llave_macro}>" # Si es un código no registrado, lo aísla como marcador tipográfico
+        
+    p_fonetica = agrupar_fonemas_medievales(palabra_clean.lower())
     if not p_fonetica:
         return ""
         
-    # CORREGIDO: Enlace exacto con la clave p_fonetica en lugar de p_limpia
     if p_fonetica in diccionario:
         return diccionario[p_fonetica]
         
@@ -77,7 +80,6 @@ def traducir_palabra_automatica(palabra_eva, diccionario):
     
     palabra_restante = p_fonetica
     seguridad = 0
-    
     while len(palabra_restante) > 0 and seguridad < 100:
         seguridad += 1
         encontrado = False
@@ -113,8 +115,8 @@ def traducir_palabra_manual(palabra_eva, mapa_manual):
 
 st.set_page_config(page_title="Archivo Global Voynich", page_icon="📖", layout="wide")
 
-st.title("📖 Intérprete de Consenso Lingüístico del Manuscrito Voynich")
-st.write("Modelo de descifrado total con motor integrado de agrupación fonológica compuesta medieval.")
+st.title("📖 Intérprete Multiformato del Manuscrito Voynich")
+st.write("Modelo integrado capaz de procesar de manera simultánea alfabeto EVA, transcripción Currier y macroglifos.")
 
 st.sidebar.header("📂 Navegación de Páginas")
 
@@ -128,9 +130,9 @@ folios_disponibles = sorted(list(vd.CORPUS_MANUSCRITO.keys()), key=ordenar_folio
 folio_seleccionado = st.sidebar.selectbox("Seleccionar página del manuscrito:", folios_disponibles)
 
 st.sidebar.header("⚙️ Modo de Descifrado")
-tipo_traduccion = st.sidebar.radio("Tipo de Traducción:", ["Traducción Automática (Modelo Fonológico)", "Traducción Manual (Personalizada)"])
+tipo_traduccion = st.sidebar.radio("Tipo de Traducción:", ["Traducción Automática (Modelo Completo)", "Traducción Manual (Personalizada)"])
 
-if tipo_traduccion == "Traducción Automática (Modelo Fonológico)":
+if tipo_traduccion == "Traducción Automática (Modelo Completo)":
     idioma = st.sidebar.selectbox("Idioma del diccionario:", ["Español", "English"])
     diccionario_activo = vd.DICCIONARIO_ES if idioma == "Español" else vd.DICCIONARIO_EN
 else:
@@ -146,25 +148,25 @@ col_izq, col_der = st.columns(2)
 lineas_originales = vd.CORPUS_MANUSCRITO.get(folio_seleccionado, ["Página vacía"])
 
 with col_izq:
-    st.subheader(f"📄 Texto Original Ordenado - Folio {folio_seleccionado}")
+    st.subheader(f"📄 Texto Original Detectado - Folio {folio_seleccionado}")
     texto_bloque_eva = "\n".join([f"Línea {i+1}: {linea}" for i, linea in enumerate(lineas_originales)])
-    st.text_area("Transcripción EVA Limpia:", value=texto_bloque_eva, height=380, disabled=True)
+    st.text_area("Transcripción Multiformato Limpia:", value=texto_bloque_eva, height=380, disabled=True)
 
 with col_der:
     st.subheader(f"🗝️ Resultado de la Traducción Completa")
     lineas_traducidas = []
     for linea in lineas_originales:
         palabras = linea.split()
-        if tipo_traduccion == "Traducción Automática (Modelo Fonológico)":
+        if tipo_traduccion == "Traducción Automática (Modelo Completo)":
             palabras_proc = [traducir_palabra_automatica(p, diccionario_activo) for p in palabras]
         else:
             palabras_proc = [traducir_palabra_manual(p, mapa_usuario) for p in palabras]
         lineas_traducidas.append(" ".join(palabras_proc))
         
     texto_bloque_traducido = "\n".join([f"Línea {i+1}: {linea}" for i, linea in enumerate(lineas_traducidas)])
-    st.text_area("Prosa continua resultante (100% procesada):", value=texto_bloque_traducido, height=380, disabled=True)
+    st.text_area("Prosa analizada con marcadores históricos:", value=texto_bloque_traducido, height=380, disabled=True)
 
-# Módulo de frecuencias estadísticas
+# Módulo estadístico
 st.markdown("---")
 st.subheader(f"📊 Analizador Estadístico de Frecuencia — Folio {folio_seleccionado}")
 texto_completo_folio = "".join(lineas_originales).lower().replace(" ", "")
@@ -179,14 +181,14 @@ if texto_completo_folio:
         col_target = columnas_stats[index % 5]
         porcentaje = (cantidad / total_letras) * 100
         with col_target:
-            st.metric(label=f"Glifo EVA '{letra}'", value=f"{cantidad} veces", delta=f"{porcentaje:.1f}%")
+            st.metric(label=f"Glifo '{letra}'", value=f"{cantidad} veces", delta=f"{porcentaje:.1f}%")
 
 st.markdown("---")
 st.subheader("🧪 Banco de Pruebas de Texto Libre")
-texto_libre = st.text_input("Inserta cualquier palabra o fragmento en EVA para analizarla:")
+texto_libre = st.text_input("Inserta cualquier palabra, fragmento en EVA o línea Currier (ej: QA PC Fb B2):")
 if texto_libre:
     palabras_libres = texto_libre.split()
-    if tipo_traduccion == "Traducción Automática (Modelo Fonológico)":
+    if tipo_traduccion == "Traducción Automática (Modelo Completo)":
         res_libres = [traducir_palabra_automatica(p, diccionario_activo) for p in palabras_libres]
     else:
         res_libres = [traducir_palabra_manual(p, mapa_usuario) for p in palabras_libres]
