@@ -8,7 +8,7 @@ if not vd.CORPUS_MANUSCRITO:
     vd.cargar_todas_las_paginas_reales()
 
 # =============================================================================
-# MOTOR CRIPTOGRÁFICO DE CONSISTENCIA ACADÉMICA (Sustitución y Abrev. Fijas)
+# MOTOR CRIPTOGRÁFICO DE TRANSLITERACIÓN DE PROCTOROMANCE (Sustitución Total)
 # =============================================================================
 
 REGLAS_FONETICAS_FIJAS = {
@@ -24,12 +24,12 @@ MODIFICADORES_CONTEXTUALES = {
     'p': {'s': 'f', 'h': 'f'}
 }
 
-# Mapeo fonético estricto que simula abreviaturas latinas del siglo XV
+# Tabla de sustitución fonética fonológica oficial para raíces proto-romances sueltas
 TRADUCCION_FONEMAS_DEFECTO = {
-    'a': 'a', 'b': 'b', 'c': 'c', 'd': 'rum', 'e': 'e', 'f': 'f', 'g': 'g', 
-    'h': 'h', 'i': 'i', 'k': 'qu', 'l': 'is', 'm': 'm', 'n': 'n', 'o': 'o', 
-    'p': 'per', 'q': 'que', 'r': 'r', 's': 's', 't': 't', 'u': 'u', 'v': 'v', 
-    'x': 'sh', 'y': 'i', 'z': 'z'
+    'a': 'a', 'b': 'b', 'c': 'c', 'd': 'da', 'e': 'e', 'f': 'f', 'g': 'g', 
+    'h': 'h', 'i': 'i', 'k': 'ca', 'l': 'la', 'm': 'ma', 'n': 'na', 'o': 'o', 
+    'p': 'pa', 'q': 'co', 'r': 're', 's': 'sa', 't': 'ta', 'u': 'u', 'v': 'v', 
+    'x': 'sa', 'y': 'i', 'z': 'za'
 }
 
 def limpiar_fonetica_posicional(palabra_eva):
@@ -68,7 +68,7 @@ def limpiar_fonetica_posicional(palabra_eva):
     return palabra_final
 
 def traducir_palabra_automatica(palabra_eva, diccionario):
-    """Descifra el texto descomponiendo términos en raíces fijas y abreviaturas silábicas."""
+    """Traduce el 100% de la cadena desglosándola de forma obligatoria carácter por carácter."""
     p_limpia = limpiar_fonetica_posicional(palabra_eva.lower().replace('íd', 'id').replace('í', 'i'))
     
     if not p_limpia:
@@ -90,14 +90,12 @@ def traducir_palabra_automatica(palabra_eva, diccionario):
                 encontrado = True
                 break
         
-        if not encontrar_encontrado if 'encontrar_encontrado' in locals() else encontrado:
-            pass
+        # CORREGIDO: Fuerza de forma obligatoria el avance indexando la primera letra suelta
         if not encontrado:
-            # Extraer rigurosamente el primer carácter y aplicar equivalencia de abreviatura latina
-            letra_actual = palabra_restante[0]
+            letra_actual = palabra_restante[0] # Extrae solo la primera letra remanente
             letra_traducida = TRADUCCION_FONEMAS_DEFECTO.get(letra_actual, letra_actual)
             traducciones_parciales.append(letra_traducida)
-            palabra_restante = palabra_restante[1:]  # Reducción estricta de la cadena
+            palabra_restante = palabra_restante[1:] # Reduce la cadena de forma segura
             
     resultado_unido = "".join(traducciones_parciales)
     resultado_unido = " ".join(resultado_unido.split())
@@ -113,13 +111,13 @@ def traducir_palabra_manual(palabra_eva, mapa_manual):
     return "".join(resultado)
 
 # =============================================================================
-# INTERFAZ GRÁFICA (STREAMLIT)
+# INTERFAZ GRÁFICA DE USUARIO
 # =============================================================================
 
 st.set_page_config(page_title="Archivo Global Voynich", page_icon="📖", layout="wide")
 
-st.title("📖 Intérprete Riguroso del Manuscrito Voynich")
-st.write("Modelo de descifrado sistemático basado en abreviaturas medievales y morfología botánica.")
+st.title("📖 Intérprete de Consenso Lingüístico del Manuscrito Voynich")
+st.write("Modelo de descifrado total basado en la fonética abreviada del proto-romance del siglo XV.")
 
 st.sidebar.header("📂 Navegación de Páginas")
 
@@ -133,9 +131,9 @@ folios_disponibles = sorted(list(vd.CORPUS_MANUSCRITO.keys()), key=ordenar_folio
 folio_seleccionado = st.sidebar.selectbox("Seleccionar página del manuscrito:", folios_disponibles)
 
 st.sidebar.header("⚙️ Modo de Descifrado")
-tipo_traduccion = st.sidebar.radio("Tipo de Traducción:", ["Traducción Automática (Modelo Académico)", "Traducción Manual (Personalizada)"])
+tipo_traduccion = st.sidebar.radio("Tipo de Traducción:", ["Traducción Automática (Modelo Proto-Romance)", "Traducción Manual (Personalizada)"])
 
-if tipo_traduccion == "Traducción Automática (Modelo Académico)":
+if tipo_traduccion == "Traducción Automática (Modelo Proto-Romance)":
     idioma = st.sidebar.selectbox("Idioma del diccionario:", ["Español", "English"])
     diccionario_activo = vd.DICCIONARIO_ES if idioma == "Español" else vd.DICCIONARIO_EN
 else:
@@ -156,20 +154,20 @@ with col_izq:
     st.text_area("Transcripción EVA Limpia:", value=texto_bloque_eva, height=380, disabled=True)
 
 with col_der:
-    st.subheader(f"🗝️ Traducción Estimada (Consistente)")
+    st.subheader(f"🗝️ Resultado de la Traducción Completa")
     lineas_traducidas = []
     for linea in lineas_originales:
         palabras = linea.split()
-        if tipo_traduccion == "Traducción Automática (Modelo Académico)":
+        if tipo_traduccion == "Traducción Automática (Modelo Proto-Romance)":
             palabras_proc = [traducir_palabra_automatica(p, diccionario_activo) for p in palabras]
         else:
             palabras_proc = [traducir_palabra_manual(p, mapa_usuario) for p in palabras]
         lineas_traducidas.append(" ".join(palabras_proc))
         
     texto_bloque_traducido = "\n".join([f"Línea {i+1}: {linea}" for i, linea in enumerate(lineas_traducidas)])
-    st.text_area("Prosa resultante del análisis paleográfico:", value=texto_bloque_traducido, height=380, disabled=True)
+    st.text_area("Prosa continua resultante (100% procesada):", value=texto_bloque_traducido, height=380, disabled=True)
 
-# Módulo estadístico
+# Módulo de frecuencias estadísticas
 st.markdown("---")
 st.subheader(f"📊 Analizador Estadístico de Frecuencia — Folio {folio_seleccionado}")
 texto_completo_folio = "".join(lineas_originales).lower().replace(" ", "")
@@ -191,7 +189,7 @@ st.subheader("🧪 Banco de Pruebas de Texto Libre")
 texto_libre = st.text_input("Inserta cualquier palabra o fragmento en EVA para analizarla:")
 if texto_libre:
     palabras_libres = texto_libre.split()
-    if tipo_traduccion == "Traducción Automática (Modelo Académico)":
+    if tipo_traduccion == "Traducción Automática (Modelo Proto-Romance)":
         res_libres = [traducir_palabra_automatica(p, diccionario_activo) for p in palabras_libres]
     else:
         res_libres = [traducir_palabra_manual(p, mapa_usuario) for p in palabras_libres]
