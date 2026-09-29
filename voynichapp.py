@@ -54,35 +54,41 @@ except ImportError:
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
 
-# --- DESCARGA Y LIMPIEZA AUTOMÁTICA DESDE EL SITIO WEB OFICIAL ---
+# --- DESCARGA Y LIMPIEZA AUTOMÁTICA DESDE EL NUEVO ENLACE ZL3b-n.txt ---
 @st.cache_data
 def descargar_corpus_web():
     corpus = {}
-    url = "http://voynich.nu/data/voyn_101.txt"
+    url = "https://www.voynich.nu/data/ZL3b-n.txt"
     try:
-        with urllib.request.urlopen(url) as response:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
     except Exception as e:
         return None
 
     for linea in lineas:
         linea = linea.strip()
+        # Ignorar comentarios y líneas vacías adaptadas al formato ZL3b-n
         if not linea or linea.startswith("#") or linea.startswith("<%"):
             continue
-        
-        # Detecta folios en formato estándar <f1r.1> o similares
+
+        # El formato de ZL3b-n.txt contiene folios en etiquetas como <f1r.1> o <f10v.c1.1>
         match_folio = re.search(r'<f(\d+[r|v])', linea)
         if match_folio:
             folio = match_folio.group(1)
         else:
             continue
-            
-        # Extrae el texto quitando la etiqueta inicial de la línea <f1r.1>
+
+        # Extrae el texto quitando todas las etiquetas iniciales encerradas en <>
         texto_crudo = re.sub(r'^<[^>]+>', '', linea)
         
-        # LIMPIEZA PROFUNDA: Quita números aislados, puntos, comas, signos de exclamación y guiones finales
-        texto_crudo = re.sub(r'[-.=,;\$*!{}\[\]\d]', ' ', texto_crudo)
-        # Reemplaza caracteres especiales de transcripción comunes
+        # Elimina marcadores específicos de transcripción interlineal o notas (ej. {comment}, %...)
+        texto_crudo = re.sub(r'\{[^}]*\}', ' ', texto_crudo)
+        
+        # LIMPIEZA PROFUNDA: Quita números aislados, puntos, comas, signos y caracteres de formato
+        texto_crudo = re.sub(r'[-.=,;\$*!{}\[\]\d?:]', ' ', texto_crudo)
+        
+        # Reemplaza caracteres especiales comunes
         texto_crudo = texto_crudo.replace('ý', 'y').replace('í', 'i')
         texto_limpio = " ".join(texto_crudo.split())
         
@@ -97,8 +103,10 @@ with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
 
 def distancia_levenshtein(s1, s2):
-    if len(s1) < len(s2): return distancia_levenshtein(s2, s1)
-    if len(s2) == 0: return len(s1)
+    if len(s1) < len(s2):
+        return distancia_levenshtein(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
     fila_previa = range(len(s2) + 1)
     for i, c1 in enumerate(s1):
         fila_actual = [i + 1]
@@ -112,19 +120,15 @@ def distancia_levenshtein(s1, s2):
 
 def traducir_a_romance(texto):
     dicc_activo = DICCIONARIO_ES if idioma == "Español" else DICCIONARIO_EN
-    
-    # Limpieza final de entrada para asegurar compatibilidad estricta con el diccionario
     texto_limpio = texto.lower()
     texto_limpio = re.sub(r'[^a-z\s]', '', texto_limpio)
     palabras = texto_limpio.split()
-    
     fonetica_lista = []
     traduccion_lista = []
     
     for pal in palabras:
         fon = pal
-        
-        # MATRIZ FONÉTICA ESTRICTA (UNIDIRECCIONAL IZQUIERDA -> DERECHA)
+        # MATRIZ FONÉTICA ESTRICTA
         fon = re.sub(r'qok', 'quoqu', fon)
         fon = re.sub(r'pcee', 'pi', fon)
         fon = re.sub(r'pcs', 'pes', fon)
@@ -146,75 +150,52 @@ def traducir_a_romance(texto):
         fon = re.sub(r'ph', 'f', fon)
         fon = re.sub(r'th', 't', fon)
         fon = re.sub(r'ch', 'c', fon)
-        if 'eey' not in pal: fon = re.sub(r'ey', 'a', fon)
-        fon = re.sub(r'oe', 'ue', fon)
-        fon = re.sub(r'iu', 'u', fon)
-        fon = re.sub(r'oi', 'oy', fon)
-        fon = re.sub(r'ae', 'a', fon)
-        fon = re.sub(r'ai', 'i', fon)
-        fon = re.sub(r'iy', 'í', fon)
-        fon = re.sub(r'quo', 'cuo', fon)
-        fon = re.sub(r'ck|k|q', 'qu', fon)
-        fon = re.sub(r'x', 'sh', fon)
-        fon = re.sub(r'el', 'l', fon)
-        
-        if fon.startswith('y'): fon = 'i' + fon[1:]
-        if fon.endswith('y'): fon = fon[:-1] + 'í'
+        if 'eey' not in pal:
+            fon = re.sub(r'ey', 'a', fon)
             
         fonetica_lista.append(fon)
         
-        if fon in dicc_activo:
-            traduccion_lista.append(dicc_activo[fon])
-        else:
-            mejor_coincidencia = None
-            distancia_minima = float('inf')
-            for clave in dicc_activo.keys():
-                dist = distancia_levenshtein(fon, clave)
-                if dist < distancia_minima:
-                    distancia_minima = dist
-                    mejor_coincidencia = clave
-            if distancia_minima <= 2 and mejor_coincidencia:
-                traduccion_lista.append(dicc_activo[mejor_coincidencia] + "*")
-            else:
-                traduccion_lista.append(f"[{pal}]")
-                
+        # Búsqueda por Levenshtein en diccionario
+        mejor_coincidencia = fon
+        menor_distancia = 999
+        for k, v in dicc_activo.items():
+            dist = distancia_levenshtein(fon, k)
+            if dist < menor_distancia and dist <= 2:
+                menor_distancia = dist
+                mejor_coincidencia = v
+        traduccion_lista.append(mejor_coincidencia)
+        
     return " ".join(fonetica_lista), " ".join(traduccion_lista)
 
+# --- INTERFAZ GRÁFICA DE STREAMLIT ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
     st.subheader(IFACE[idioma]["lab_sub"])
-    area_texto = st.text_area("Input EVA:", value="pshoey cttey oaror")
+    texto_usuario = st.text_area("Input / Entrada:", "pui cuta")
     if st.button(IFACE[idioma]["btn_an"]):
-        fon, trad = traducir_a_romance(area_texto)
-        st.markdown(f"**{IFACE[idioma]['fon_rom']}** `{fon}`")
-        st.success(f"**{IFACE[idioma]['trad_auto']}** {trad}")
+        fon, trad = traducir_a_romance(texto_usuario)
+        st.markdown(f"**{IFACE[idioma]['fon_rom']}** {fon}")
+        st.markdown(f"**{IFACE[idioma]['trad_auto']}** {trad}")
 
 with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
-    
-    if CORPUS_REAL is None:
-        st.error("No se pudo conectar con el servidor web de voynich.nu de forma remota. Verifica tu conexión.")
-    else:
-        # Ordenación natural de las páginas indexadas directamente desde internet
-        folios_ordenados = sorted(list(CORPUS_REAL.keys()), key=lambda x: (int(re.sub(r'\D', '', x)), x[-1]))
-        folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], folios_ordenados)
+    if CORPUS_REAL:
+        folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: [int(re.findall(r'\d+', x)[0]), x[-1]])
+        folio_seleccionado = st.selectbox(IFACE[idioma]["nav_sel"], folios_disponibles)
         
         if st.button(IFACE[idioma]["btn_desc"]):
-            st.markdown(f"### {IFACE[idioma]['res_tit']} {folio_sel}")
-            lineas = CORPUS_REAL[folio_sel]
-            col1, col2, col3 = st.columns(3)
+            st.write(f"### {IFACE[idioma]['res_tit']} {folio_seleccionado}")
+            lineas_folio = CORPUS_REAL[folio_seleccionado]
             
-            with col1:
-                st.markdown(f"**{IFACE[idioma]['col1']}**")
-                for l in lineas: st.write(l)
-            with col2:
-                st.markdown(f"**{IFACE[idioma]['col2']}**")
-                for l in lineas:
-                    fon, _ = traducir_a_romance(l)
-                    st.write(fon)
-            with col3:
-                st.markdown(f"**{IFACE[idioma]['col3']}**")
-                for l in lineas:
-                    _, trad = traducir_a_romance(l)
-                    st.write(trad)
+            for l in lineas_folio:
+                fon, trad = traducir_a_romance(l)
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.info(f"**{IFACE[idioma]['col1']}**\n{l}")
+                with col2:
+                    st.success(f"**{IFACE[idioma]['col2']}**\n{fon}")
+                with col3:
+                    st.warning(f"**{IFACE[idioma]['col3']}**\n{trad}")
+    else:
+        st.error("No se pudo cargar el corpus real de voynich.nu. Verifica tu conexión.")
