@@ -3,7 +3,7 @@ import streamlit as st
 import re
 import voynichdatos as vd
 
-# Inicializar y cargar el corpus de folios automáticamente
+# Forzar la carga limpia de datos al arrancar la app
 if not vd.CORPUS_MANUSCRITO:
     vd.cargar_todas_las_paginas_reales()
 
@@ -68,7 +68,7 @@ def traducir_palabra_automatica(palabra_eva, diccionario):
     return f"[{p_limpia}]"
 
 def traducir_palabra_manual(palabra_eva, mapa_manual):
-    """Traducción carácter por carácter basada en el diccionario del usuario."""
+    """Traducción interactiva por caracteres usando el mapa personalizado del usuario."""
     resultado = []
     for letra in palabra_eva.lower():
         if letra in mapa_manual and mapa_manual[letra].strip():
@@ -113,7 +113,7 @@ else:
         target_col = col1 if idx % 2 == 0 else col2
         mapa_usuario[glifo] = target_col.text_input(f"EVA '{glifo}' ->", value=glifo, key=f"m_{glifo}")
 
-# Bloques de Visualización (Texto Limpio a la Izquierda vs Traducción a la Derecha)
+# Bloques de Visualización (Texto Original Izquierda vs Traducción Derecha)
 col_izq, col_der = st.columns(2)
 
 lineas_originales = vd.CORPUS_MANUSCRITO.get(folio_seleccionado, ["Página vacía"])
@@ -129,7 +129,6 @@ with col_der:
     for linea in lineas_originales:
         palabras = linea.split()
         if tipo_traduccion == "Traducción Automática (Diccionarios)":
-            # CORREGIDO: Vinculación directa con la variable diccionario_activo
             palabras_proc = [traducir_palabra_automatica(p, diccionario_activo) for p in palabras]
         else:
             palabras_proc = [traducir_palabra_manual(p, mapa_usuario) for p in palabras]
