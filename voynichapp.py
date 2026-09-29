@@ -76,15 +76,64 @@ def traducir_a_romance(texto):
     traduccion_lista = []
     
     for pal in palabras:
+        # ASIGNACIÓN DE TEXTO BASE (Izquierda original del manuscrito)
         fon = pal
-        fon = re.sub(r'^qok', 'qu', fon)
-        fon = re.sub(r'^eeey', 'ey', fon)
+        
+        # 1. Reglas específicas de 3 o 4 caracteres (Izquierda -> Derecha)
+        fon = re.sub(r'qok', 'quoqu', fon)
+        fon = re.sub(r'pcee', 'pi', fon)
+        fon = re.sub(r'pcs', 'pes', fon)
+        fon = re.sub(r'iii', 'í', fon)
+        fon = re.sub(r'eee', 'ei', fon)
+        fon = re.sub(r'eey', 'ai', fon)
+        
+        # 2. Prefijos compuestos y combinaciones complejas
+        fon = re.sub(r'pc|ps|cp', 'p', fon)
+        fon = re.sub(r'dce', 'dic', fon)
+        fon = re.sub(r'cee', 'ci', fon)
+        fon = re.sub(r'pdr', 'pedr', fon)
+        fon = re.sub(r'eat', 'it', fon)
+        
+        # 3. Sonidos dobles y dígrafos
+        fon = re.sub(r'dc', 'ch', fon)
+        fon = re.sub(r'tc', 'ch', fon)
+        fon = re.sub(r'ct', 'cut', fon)
         fon = re.sub(r'ii', 'i', fon)
-        fon = re.sub(r'ck', 'c', fon)
-        fon = re.sub(r'^k', 'qu', fon)
-        fon = re.sub(r'([a-z])\1+', r'\1', fon)
+        fon = re.sub(r'oo', 'u', fon)
+        fon = re.sub(r'll', 'y', fon)
+        fon = re.sub(r'tt', 't', fon)
+        fon = re.sub(r'ts', 's', fon)
+        fon = re.sub(r'ph', 'f', fon)
+        fon = re.sub(r'th', 't', fon)
+        fon = re.sub(r'ch', 'c', fon)
+        
+        # 4. Digramas vocálicos particulares
+        if 'eey' not in pal:
+            fon = re.sub(r'ey', 'a', fon)
+        fon = re.sub(r'oe', 'ue', fon)
+        fon = re.sub(r'iu', 'u', fon)
+        fon = re.sub(r'oi', 'oy', fon)
+        fon = re.sub(r'ae', 'a', fon)
+        fon = re.sub(r'ai', 'i', fon)
+        fon = re.sub(r'iy', 'í', fon)
+        fon = re.sub(r'quo', 'cuo', fon)
+        
+        # 5. Modificaciones de caracteres simples
+        fon = re.sub(r'ck', 'qu', fon)
+        fon = re.sub(r'k', 'qu', fon)
+        fon = re.sub(r'q', 'qu', fon)
+        fon = re.sub(r'x', 'sh', fon)
+        fon = re.sub(r'el', 'l', fon)
+        
+        # 6. Reglas de Y posicionales estrictas (Izquierda -> Derecha)
+        if fon.startswith('y'):
+            fon = 'i' + fon[1:]
+        if fon.endswith('y'):
+            fon = fon[:-1] + 'í'
+            
         fonetica_lista.append(fon)
         
+        # Mapeo directo o por Levenshtein
         if fon in dicc_activo:
             traduccion_lista.append(dicc_activo[fon])
         else:
