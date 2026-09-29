@@ -54,41 +54,47 @@ except ImportError:
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
 
-# --- DESCARGA Y LIMPIEZA AUTOMÁTICA DESDE EL NUEVO ENLACE ZL3b-n.txt ---
+# --- DESCARGA Y LIMPIEZA AUTOMÁTICA DESDE EL SITIO WEB OFICIAL (FORMATO ZL3b-n) ---
 @st.cache_data
 def descargar_corpus_web():
     corpus = {}
-    url = "https://www.voynich.nu/data/ZL3b-n.txt"
+    # Se utiliza HTTP ya que el servidor de voynich.nu bloquea peticiones automatizadas HTTPS de Python
+    url = "http://voynich.nu"
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req) as response:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/plain,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=15) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
     except Exception as e:
+        print(f"Error de conexión detallado: {e}")
         return None
 
     for linea in lineas:
         linea = linea.strip()
-        # Ignorar comentarios y líneas vacías adaptadas al formato ZL3b-n
-        if not linea or linea.startswith("#") or linea.startswith("<%"):
+        # Ignorar comentarios y cabeceras estructurales de la transcripción
+        if not linea or linea.startswith("#") or linea.startswith("<%") or linea.startswith("=IVTFF"):
             continue
 
-        # El formato de ZL3b-n.txt contiene folios en etiquetas como <f1r.1> o <f10v.c1.1>
+        # Detecta folios en formato estándar <f1r.1> o variaciones de columna <f10v.c1.1>
         match_folio = re.search(r'<f(\d+[r|v])', linea)
         if match_folio:
             folio = match_folio.group(1)
         else:
             continue
 
-        # Extrae el texto quitando todas las etiquetas iniciales encerradas en <>
+        # Extrae el texto quitando la etiqueta inicial de la línea <f1r.1>
         texto_crudo = re.sub(r'^<[^>]+>', '', linea)
         
-        # Elimina marcadores específicos de transcripción interlineal o notas (ej. {comment}, %...)
+        # Elimina comentarios embebidos entre llaves {} del transcriptor
         texto_crudo = re.sub(r'\{[^}]*\}', ' ', texto_crudo)
         
-        # LIMPIEZA PROFUNDA: Quita números aislados, puntos, comas, signos y caracteres de formato
+        # LIMPIEZA PROFUNDA: Quita números aislados, puntos, comas, signos de exclamación y guiones finales
         texto_crudo = re.sub(r'[-.=,;\$*!{}\[\]\d?:]', ' ', texto_crudo)
         
-        # Reemplaza caracteres especiales comunes
+        # Reemplaza caracteres especiales de transcripción comunes
         texto_crudo = texto_crudo.replace('ý', 'y').replace('í', 'i')
         texto_limpio = " ".join(texto_crudo.split())
         
@@ -128,7 +134,7 @@ def traducir_a_romance(texto):
     
     for pal in palabras:
         fon = pal
-        # MATRIZ FONÉTICA ESTRICTA
+        # MATRIZ FONÉTICA ESTRICTA (UNIDIRECCIONAL IZQUIERDA -> DERECHA)
         fon = re.sub(r'qok', 'quoqu', fon)
         fon = re.sub(r'pcee', 'pi', fon)
         fon = re.sub(r'pcs', 'pes', fon)
@@ -155,7 +161,7 @@ def traducir_a_romance(texto):
             
         fonetica_lista.append(fon)
         
-        # Búsqueda por Levenshtein en diccionario
+        # Búsqueda aproximada mediante Levenshtein
         mejor_coincidencia = fon
         menor_distancia = 999
         for k, v in dicc_activo.items():
@@ -181,6 +187,7 @@ with tab1:
 with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
     if CORPUS_REAL:
+        # Ordenación natural para los identificadores de folio (ej. 1r, 2v, 10r)
         folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: [int(re.findall(r'\d+', x)[0]), x[-1]])
         folio_seleccionado = st.selectbox(IFACE[idioma]["nav_sel"], folios_disponibles)
         
@@ -198,4 +205,4 @@ with tab2:
                 with col3:
                     st.warning(f"**{IFACE[idioma]['col3']}**\n{trad}")
     else:
-        st.error("No se pudo cargar el corpus real de voynich.nu. Verifica tu conexión.")
+        st.error("No se pudo cargar el corpus real de voynich.nu. Verifica tu conexión de red o los permisos de salida del entorno.")
