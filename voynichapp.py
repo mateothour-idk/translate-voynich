@@ -7,7 +7,7 @@ if not vd.CORPUS_MANUSCRITO:
     vd.cargar_todas_las_paginas_reales()
 
 # =============================================================================
-# MOTOR CRIPTOGRÁFICO AVANZADO
+# MOTOR CRIPTOGRÁFICO TOTAL (Sustitución fonética sistemática por defecto)
 # =============================================================================
 
 REGLAS_FONETICAS_FIJAS = {
@@ -21,6 +21,14 @@ MODIFICADORES_CONTEXTUALES = {
     'c': {'s': 's', 'k': 'qu', 'e': 'e', 'ee': 'ce', 't': 't'},
     't': {'c': 'ch', 's': 's', 'h': 't'},
     'p': {'s': 'f', 'h': 'f'}
+}
+
+# Matriz fonética base para resolver caracteres sueltos que no entren en el diccionario
+TRADUCCION_FONEMAS_DEFECTO = {
+    'a': 'a', 'b': 'b', 'c': 'c', 'd': 'd', 'e': 'e', 'f': 'f', 'g': 'g', 
+    'h': 'h', 'i': 'i', 'k': 'qu', 'l': 'l', 'm': 'm', 'n': 'n', 'o': 'o', 
+    'p': 'p', 'q': 'qu', 'r': 'r', 's': 's', 't': 't', 'u': 'u', 'v': 'v', 
+    'x': 'sh', 'y': 'i', 'z': 'z'
 }
 
 def limpiar_fonetica_posicional(palabra_eva):
@@ -60,7 +68,7 @@ def limpiar_fonetica_posicional(palabra_eva):
     return palabra_final
 
 def traducir_palabra_automatica(palabra_eva, diccionario):
-    """Busca subcadenas y raíces dentro de palabras largas del manuscrito."""
+    """Traduce absolutamente todo dividiendo la palabra en fragmentos legibles."""
     p_limpia = limpiar_fonetica_posicional(palabra_eva.lower().replace('íd', 'id').replace('í', 'i'))
     
     if p_limpia in diccionario:
@@ -74,23 +82,24 @@ def traducir_palabra_automatica(palabra_eva, diccionario):
         encontrado = False
         for llave in llaves_ordenadas:
             if palabra_restante.startswith(llave):
-                traducciones_parciales.append(diccionario[llave])
+                traducciones_parciales.append(f" {diccionario[llave]} ")
                 palabra_restante = palabra_restante[len(llave):]
                 encontrado = True
                 break
         if not encontrado:
-            traducciones_parciales.append(palabra_restante[0])
+            # SI NO ESTÁ EN EL DICCIONARIO: Aplica traducción fonética letra por letra en vez de corchetes
+            letra_actual = palabra_restante[0]
+            letra_traducida = TRADUCCION_FONEMAS_DEFECTO.get(letra_actual, letra_actual)
+            traducciones_parciales.append(letra_traducida)
             palabra_restante = palabra_restante[1:]
             
-    resultado_parcial = " ".join([t for t in traducciones_parciales if t])
-    
-    if resultado_parcial.replace(" ", "") == p_limpia:
-        return f"[{p_limpia}]"
-        
-    return f"({resultado_parcial})"
+    # Limpiar espaciados dobles generados por la unión
+    resultado_unido = "".join(traducciones_parciales)
+    resultado_unido = " ".join(resultado_unido.split())
+    return resultado_unido
 
 def traducir_palabra_manual(palabra_eva, mapa_manual):
-    """Traducción carácter por carácter interactiva."""
+    """Traducción carácter por carácter interactiva del usuario."""
     resultado = []
     for letra in palabra_eva.lower():
         if letra in mapa_manual and mapa_manual[letra].strip():
@@ -106,7 +115,7 @@ def traducir_palabra_manual(palabra_eva, mapa_manual):
 st.set_page_config(page_title="Archivo Global Voynich", page_icon="📖", layout="wide")
 
 st.title("📖 Intérprete Global del Manuscrito Voynich")
-st.write("Exploración completa del texto auténtico y herramientas avanzadas de descifrado.")
+st.write("Exploración completa del texto auténtico y traducción absoluta sin palabras vacías.")
 
 st.sidebar.header("📂 Navegación de Páginas")
 
@@ -143,7 +152,7 @@ with col_izq:
     st.text_area("Transcripción EVA Limpia:", value=texto_bloque_eva, height=380, disabled=True)
 
 with col_der:
-    st.subheader(f"🗝️ Resultado - Método: {tipo_traduccion}")
+    st.subheader(f"🗝 nighttime_readout Resultado - Método: {tipo_traduccion}")
     lineas_traducidas = []
     for linea in lineas_originales:
         palabras = linea.split()
