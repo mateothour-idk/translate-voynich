@@ -59,7 +59,7 @@ st.write(IFACE[idioma]["sub"])
 def descargar_corpus_web():
     corpus = {}
     # Se utiliza HTTP ya que el servidor de voynich.nu bloquea peticiones automatizadas HTTPS de Python
-    url = "http://voynich.nu"
+    url = "https://www.voynich.nu/data/ZL3b-n.txt"
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
