@@ -58,7 +58,6 @@ st.write(IFACE[idioma]["sub"])
 @st.cache_data
 def descargar_corpus_web():
     corpus = {}
-    # Se utiliza HTTP ya que el servidor de voynich.nu bloquea peticiones automatizadas HTTPS de Python
     url = "https://www.voynich.nu/data/ZL3b-n.txt"
     try:
         headers = {
@@ -76,6 +75,10 @@ def descargar_corpus_web():
         linea = linea.strip()
         # Ignorar comentarios y cabeceras estructurales de la transcripción
         if not linea or linea.startswith("#") or linea.startswith("<%") or linea.startswith("=IVTFF"):
+            continue
+
+        # FILTRO EXPLICITO: Elimina líneas informativas de alfabetos/mapeos encerrados en < > con espacios intermedios (ej: < Q A P D F ... >)
+        if re.match(r'^<\s*([A-Za-z]\s*)+>$', linea):
             continue
 
         # Detecta folios en formato estándar <f1r.1> o variaciones de columna <f10v.c1.1>
@@ -187,8 +190,7 @@ with tab1:
 with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
     if CORPUS_REAL:
-        # Ordenación natural para los identificadores de folio (ej. 1r, 2v, 10r)
-        folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: [int(re.findall(r'\d+', x)[0]), x[-1]])
+        folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: [int(re.findall(r'\d+', x)), x[-1]])
         folio_seleccionado = st.selectbox(IFACE[idioma]["nav_sel"], folios_disponibles)
         
         if st.button(IFACE[idioma]["btn_desc"]):
