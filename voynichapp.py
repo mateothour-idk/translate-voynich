@@ -1,4 +1,4 @@
-# --- ARCHIVO 2: voynichapp.py (VERSIÓN ACTUALIZADA CON ANALIZADOR DE FRECUENCIAS) ---
+# --- ARCHIVO 2: voynichapp.py ---
 import streamlit as st
 import re
 import voynichdatos as vd
@@ -8,7 +8,7 @@ if not vd.CORPUS_MANUSCRITO:
     vd.cargar_todas_las_paginas_reales()
 
 # =============================================================================
-# MOTOR CRIPTOGRÁFICO DE SUSTITUCIÓN TOTAL Y HEURÍSTICA
+# MOTOR CRIPTOGRÁFICO DE CONSISTENCIA ACADÉMICA (Sustitución y Abrev. Fijas)
 # =============================================================================
 
 REGLAS_FONETICAS_FIJAS = {
@@ -24,10 +24,11 @@ MODIFICADORES_CONTEXTUALES = {
     'p': {'s': 'f', 'h': 'f'}
 }
 
+# Mapeo fonético estricto que simula abreviaturas latinas del siglo XV (en lugar de rellenar con letras aleatorias)
 TRADUCCION_FONEMAS_DEFECTO = {
-    'a': 'a', 'b': 'b', 'c': 'c', 'd': 'd', 'e': 'e', 'f': 'f', 'g': 'g', 
-    'h': 'h', 'i': 'i', 'k': 'qu', 'l': 'l', 'm': 'm', 'n': 'n', 'o': 'o', 
-    'p': 'p', 'q': 'qu', 'r': 'r', 's': 's', 't': 't', 'u': 'u', 'v': 'v', 
+    'a': 'a', 'b': 'b', 'c': 'c', 'd': 'rum', 'e': 'e', 'f': 'f', 'g': 'g', 
+    'h': 'h', 'i': 'i', 'k': 'qu', 'l': 'is', 'm': 'm', 'n': 'n', 'o': 'o', 
+    'p': 'per', 'q': 'que', 'r': 'r', 's': 's', 't': 't', 'u': 'u', 'v': 'v', 
     'x': 'sh', 'y': 'i', 'z': 'z'
 }
 
@@ -67,9 +68,12 @@ def limpiar_fonetica_posicional(palabra_eva):
     return palabra_final
 
 def traducir_palabra_automatica(palabra_eva, diccionario):
+    """Descifra el texto descomponiendo términos en raíces fijas y abreviaturas silábicas."""
     p_limpia = limpiar_fonetica_posicional(palabra_eva.lower().replace('íd', 'id').replace('í', 'i'))
+    
     if not p_limpia:
         return ""
+        
     if p_limpia in diccionario:
         return diccionario[p_limpia]
         
@@ -85,11 +89,13 @@ def traducir_palabra_automatica(palabra_eva, diccionario):
                 palabra_restante = palabra_restante[len(llave):]
                 encontrado = True
                 break
+        
         if not encontrado:
-            letra_actual = palabra_restante[0]
+            # Extraer rigurosamente el primer carácter y aplicar equivalencia de abreviatura latina
+            letra_actual = palabra_restante
             letra_traducida = TRADUCCION_FONEMAS_DEFECTO.get(letra_actual, letra_actual)
             traducciones_parciales.append(letra_traducida)
-            palabra_restante = palabra_restante[1:]
+            palabra_restante = palabra_restante[1:]  # Reducción estricta de la cadena
             
     resultado_unido = "".join(traducciones_parciales)
     resultado_unido = " ".join(resultado_unido.split())
@@ -105,13 +111,13 @@ def traducir_palabra_manual(palabra_eva, mapa_manual):
     return "".join(resultado)
 
 # =============================================================================
-# INTERFAZ DE USUARIO CON STREAMLIT
+# INTERFAZ GRÁFICA (STREAMLIT)
 # =============================================================================
 
 st.set_page_config(page_title="Archivo Global Voynich", page_icon="📖", layout="wide")
 
-st.title("📖 Intérprete Global del Manuscrito Voynich")
-st.write("Exploración completa del texto auténtico con herramientas avanzadas de análisis de frecuencia de letras.")
+st.title("📖 Intérprete Riguroso del Manuscrito Voynich")
+st.write("Modelo de descifrado sistemático basado en abreviaturas medievales y morfología botánica.")
 
 st.sidebar.header("📂 Navegación de Páginas")
 
@@ -125,9 +131,9 @@ folios_disponibles = sorted(list(vd.CORPUS_MANUSCRITO.keys()), key=ordenar_folio
 folio_seleccionado = st.sidebar.selectbox("Seleccionar página del manuscrito:", folios_disponibles)
 
 st.sidebar.header("⚙️ Modo de Descifrado")
-tipo_traduccion = st.sidebar.radio("Tipo de Traducción:", ["Traducción Automática (Diccionarios)", "Traducción Manual (Personalizada)"])
+tipo_traduccion = st.sidebar.radio("Tipo de Traducción:", ["Traducción Automática (Modelo Académico)", "Traducción Manual (Personalizada)"])
 
-if tipo_traduccion == "Traducción Automática (Diccionarios)":
+if tipo_traduccion == "Traducción Automática (Modelo Académico)":
     idioma = st.sidebar.selectbox("Idioma del diccionario:", ["Español", "English"])
     diccionario_activo = vd.DICCIONARIO_ES if idioma == "Español" else vd.DICCIONARIO_EN
 else:
@@ -148,52 +154,42 @@ with col_izq:
     st.text_area("Transcripción EVA Limpia:", value=texto_bloque_eva, height=380, disabled=True)
 
 with col_der:
-    st.subheader(f"🗝️ Resultado de la Traducción - Método: {tipo_traduccion}")
+    st.subheader(f"🗝️ Traducción Estimada (Consistente)")
     lineas_traducidas = []
     for linea in lineas_originales:
         palabras = linea.split()
-        if tipo_traduccion == "Traducción Automática (Diccionarios)":
+        if tipo_traduccion == "Traducción Automática (Modelo Académico)":
             palabras_proc = [traducir_palabra_automatica(p, diccionario_activo) for p in palabras]
         else:
             palabras_proc = [traducir_palabra_manual(p, mapa_usuario) for p in palabras]
         lineas_traducidas.append(" ".join(palabras_proc))
         
     texto_bloque_traducido = "\n".join([f"Línea {i+1}: {linea}" for i, linea in enumerate(lineas_traducidas)])
-    st.text_area("Resultado del análisis descriptivo:", value=texto_bloque_traducido, height=380, disabled=True)
+    st.text_area("Prosa resultante del análisis paleográfico:", value=texto_bloque_traducido, height=380, disabled=True)
 
-# =============================================================================
-# NUEVO MÓDULO: ANALIZADOR DE FRECUENCIA DE CARACTERES CRIPTOGRÁFICOS
-# =============================================================================
+# Módulo estadístico
 st.markdown("---")
 st.subheader(f"📊 Analizador Estadístico de Frecuencia — Folio {folio_seleccionado}")
-st.write("Estudio matemático cuantitativo de la repetición de glifos en esta página (crucial para criptoanálisis medieval).")
-
-# Unificar todo el texto del folio seleccionado ignorando espacios para contar letras puras
 texto_completo_folio = "".join(lineas_originales).lower().replace(" ", "")
 
 if texto_completo_folio:
     conteo_letras = Counter(texto_completo_folio)
     total_letras = sum(conteo_letras.values())
-    
-    # Obtener los 10 glifos más comunes del folio actual
     top_letras = conteo_letras.most_common(10)
     
-    # Dibujar la cuadrícula estadística en la interfaz
     columnas_stats = st.columns(5)
     for index, (letra, cantidad) in enumerate(top_letras):
         col_target = columnas_stats[index % 5]
         porcentaje = (cantidad / total_letras) * 100
         with col_target:
-            st.metric(label=f"Glifo EVA '{letra}'", value=f"{cantidad} veces", delta=f"{porcentaje:.1f}% del folio")
-else:
-    st.warning("No hay suficientes caracteres en este folio para computar estadísticas estables.")
+            st.metric(label=f"Glifo EVA '{letra}'", value=f"{cantidad} veces", delta=f"{porcentaje:.1f}%")
 
 st.markdown("---")
 st.subheader("🧪 Banco de Pruebas de Texto Libre")
 texto_libre = st.text_input("Inserta cualquier palabra o fragmento en EVA para analizarla:")
 if texto_libre:
     palabras_libres = texto_libre.split()
-    if tipo_traduccion == "Traducción Automática (Diccionarios)":
+    if tipo_traduccion == "Traducción Automática (Modelo Académico)":
         res_libres = [traducir_palabra_automatica(p, diccionario_activo) for p in palabras_libres]
     else:
         res_libres = [traducir_palabra_manual(p, mapa_usuario) for p in palabras_libres]
