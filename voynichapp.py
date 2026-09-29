@@ -17,9 +17,9 @@ IFACE = {
         "fon_rom": "Fonética Romance Optimizada:",
         "trad_auto": "Traducción Literal:",
         "nav_sub": "Navegador de Folios Reales",
-        "nav_sel": "Selecciona un folio real:",
+        "nav_sel": "Selecciona un folio real o bloque de texto:",
         "btn_desc": "Descifrar Folio",
-        "res_tit": "Traducción Real para el Folio",
+        "res_tit": "Traducción Real para el Fragmento",
         "col1": "1. Texto Real (voynich.nu):",
         "col2": "2. Fonética Romance:",
         "col3": "3. Traducción Real:"
@@ -34,7 +34,7 @@ IFACE = {
         "fon_rom": "Optimized Romance Phonetics:",
         "trad_auto": "Literal Translation:",
         "nav_sub": "Real Folios Navigator",
-        "nav_sel": "Select a real folio:",
+        "nav_sel": "Select a real folio or text block:",
         "btn_desc": "Decipher Real Folio",
         "res_tit": "Strict Literal Translation for Folio",
         "col1": "1. Real Text (voynich.nu):",
@@ -43,7 +43,6 @@ IFACE = {
     }
 }
 
-# Traemos tus diccionarios desde tu otro archivo
 try:
     from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN
 except ImportError:
@@ -53,7 +52,7 @@ except ImportError:
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
 
-# --- LEER EL ARCHIVO REAL DE VOYNICH.NU ---
+# --- COLECTOR FLEXIBLE Y TOLERANTE PARA EL ARCHIVO REAL DE GLEN CLASTON ---
 @st.cache_data
 def cargar_corpus_real():
     corpus = {}
@@ -62,28 +61,42 @@ def cargar_corpus_real():
     if not os.path.exists(archivo):
         return None
         
+    current_folio = "Bloque 1"
+    line_counter = 0
+    
     with open(archivo, "r", encoding="utf-8", errors="ignore") as f:
         for linea in f:
             linea = linea.strip()
-            # Salta comentarios de voynich.nu
+            
+            # Descarta comentarios puros del archivo
             if not linea or linea.startswith("#") or linea.startswith("<%"):
                 continue
             
-            # Formato típico: <f1r.P1.1;H> pshoey cttey oaror
-            match = re.match(r"^<f(\d+[r|v])\..*?>\s+(.*)\$", linea)
-            if match:
-                folio = match.group(1)
-                texto_linea = match.group(2)
-                # Limpia caracteres raros de transcripción
-                texto_linea = re.sub(r'[-.=,;]', ' ', texto_linea)
-                texto_linea = re.sub(r'[*!{}]', '', texto_linea)
-                texto_linea = " ".join(texto_linea.split())
+            # 1. Intenta capturar marcadores de página estilo Claston (Ej: 58R, 79V, f1r, etc.)
+            folio_match = re.search(r'\b(\d+[rRvV]|f\d+[rRvV])\b', linea)
+            if folio_match:
+                current_folio = folio_match.group(1).upper()
+                line_counter = 0
+            
+            # 2. Extrae las palabras (limpiando marcas de alineación de caracteres \$, -, =, !, etc.)
+            texto_limpio = re.sub(r'<[^>]+>', '', linea)  # Elimina etiquetas XML/HTML si las hay
+            texto_limpio = re.sub(r'[-.=,;\$*!{}\[\]]', ' ', texto_limpio)
+            texto_limpio = " ".join(texto_limpio.split())
+            
+            # Filtra tokens puros que no sean texto real de transcripción
+            if len(texto_limpio) > 3 and not texto_limpio.replace(" ", "").isdigit():
+                # Si un bloque se vuelve muy pesado, subdivide dinámicamente para el selector
+                if line_counter > 25 and current_folio.startswith("Bloque"):
+                    current_folio = f"Bloque {int(current_folio.split()[1]) + 1}"
+                    line_counter = 0
                 
-                if texto_linea:
-                    if folio not in corpus:
-                        corpus[folio] = []
-                    corpus[folio].append(texto_linea)
-    return corpus
+                if current_folio not in corpus:
+                    corpus[current_folio] = []
+                
+                corpus[current_folio].append(texto_limpio)
+                line_counter += 1
+                
+    return corpus if len(corpus) > 0 else None
 
 CORPUS_REAL = cargar_corpus_real()
 
@@ -113,7 +126,7 @@ def traducir_a_romance(texto):
     for pal in palabras:
         fon = pal
         
-        # TUS REGLAS FONÉTICAS ESTRICTAS
+        # MATRIZ FONÉTICA ESTRICTA (UNIDIRECCIONAL IZQUIERDA -> DERECHA)
         fon = re.sub(r'qok', 'quoqu', fon)
         fon = re.sub(r'pcee', 'pi', fon)
         fon = re.sub(r'pcs', 'pes', fon)
@@ -183,9 +196,10 @@ with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
     
     if CORPUS_REAL is None:
-        st.error("Error: Sube el archivo 'voyn_101.txt' a tu repositorio de GitHub para ver las páginas reales.")
+        st.error("Error: Archivo 'voyn_101.txt' vacío o no encontrado en la raíz del repositorio. Por favor, revísalo.")
     else:
-        folios_ordenados = sorted(list(CORPUS_REAL.keys()), key=lambda x: (int(re.sub(r'\D', '', x)), x[-1]))
+        # Ordenación alfa-numérica limpia para evitar fallos de renderizado
+        folios_ordenados = sorted(list(CORPUS_REAL.keys()))
         folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], folios_ordenados)
         
         if st.button(IFACE[idioma]["btn_desc"]):
