@@ -1,6 +1,6 @@
 import streamlit as st
 import re
-import os
+import urllib.request
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
@@ -9,37 +9,39 @@ idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Espa
 IFACE = {
     "Español": {
         "titulo": "Traductor Universal del Manuscrito Voynich (Matriz Definitiva)",
-        "sub": "Explora y descifra cada línea REAL de voynich.nu aplicando tu matriz fonética.",
+        "sub": "Explora y descifra cada línea REAL conectada directamente a voynich.nu.",
         "tab1": "Laboratorio de Texto Libre",
-        "tab2": "Explorador del Corpus Real (voyn_101.txt)",
+        "tab2": "Explorador de Transcripción Real (voynich.nu)",
         "lab_sub": "Laboratorio de Entrada Libre",
         "btn_an": "Analizar Fragmento",
         "fon_rom": "Fonética Romance Optimizada:",
         "trad_auto": "Traducción Literal:",
-        "nav_sub": "Navegador de Folios Reales",
-        "nav_sel": "Selecciona un folio real o bloque de texto:",
+        "nav_sub": "Navegador Conectado a voynich.nu",
+        "nav_sel": "Selecciona una página real (Folio):",
         "btn_desc": "Descifrar Folio",
         "res_tit": "Traducción Real para el Fragmento",
-        "col1": "1. Texto Real (voynich.nu):",
+        "col1": "1. Texto Limpio (voynich.nu):",
         "col2": "2. Fonética Romance:",
-        "col3": "3. Traducción Real:"
+        "col3": "3. Traducción Real:",
+        "cargando": "Conectando con voynich.nu y descargando manuscrito real..."
     },
     "English": {
         "titulo": "Universal Automatic Voynich Manuscript Translator",
-        "sub": "Explore and translate every SINGLE REAL line from voynich.nu using your matrix.",
+        "sub": "Explore and translate every SINGLE REAL line live from voynich.nu.",
         "tab1": "Free Text Laboratory",
-        "tab2": "Real Corpus Explorer (voyn_101.txt)",
+        "tab2": "Real Corpus Explorer (voynich.nu)",
         "lab_sub": "Free Entry Laboratory",
         "btn_an": "Analyze Fragment",
         "fon_rom": "Optimized Romance Phonetics:",
         "trad_auto": "Literal Translation:",
-        "nav_sub": "Real Folios Navigator",
-        "nav_sel": "Select a real folio or text block:",
+        "nav_sub": "Live voynich.nu Navigator",
+        "nav_sel": "Select a real folio:",
         "btn_desc": "Decipher Real Folio",
         "res_tit": "Strict Literal Translation for Folio",
-        "col1": "1. Real Text (voynich.nu):",
+        "col1": "1. Cleaned Text (voynich.nu):",
         "col2": "2. Aligned Romance Phonetics:",
-        "col3": "3. Real Translation:"
+        "col3": "3. Real Translation:",
+        "cargando": "Connecting to voynich.nu and fetching real manuscript..."
     }
 }
 
@@ -52,53 +54,47 @@ except ImportError:
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
 
-# --- COLECTOR FLEXIBLE Y TOLERANTE PARA EL ARCHIVO REAL DE GLEN CLASTON ---
+# --- DESCARGA Y LIMPIEZA AUTOMÁTICA DESDE EL SITIO WEB OFICIAL ---
 @st.cache_data
-def cargar_corpus_real():
+def descargar_corpus_web():
     corpus = {}
-    archivo = "voyn_101.txt"
-    
-    if not os.path.exists(archivo):
+    url = "http://voynich.nu/data/voyn_101.txt"
+    try:
+        with urllib.request.urlopen(url) as response:
+            lineas = response.read().decode('utf-8', errors='ignore').splitlines()
+    except Exception as e:
         return None
+
+    for linea in lineas:
+        linea = linea.strip()
+        if not linea or linea.startswith("#") or linea.startswith("<%"):
+            continue
         
-    current_folio = "Bloque 1"
-    line_counter = 0
-    
-    with open(archivo, "r", encoding="utf-8", errors="ignore") as f:
-        for linea in f:
-            linea = linea.strip()
+        # Detecta folios en formato estándar <f1r.1> o similares
+        match_folio = re.search(r'<f(\d+[r|v])', linea)
+        if match_folio:
+            folio = match_folio.group(1)
+        else:
+            continue
             
-            # Descarta comentarios puros del archivo
-            if not linea or linea.startswith("#") or linea.startswith("<%"):
-                continue
+        # Extrae el texto quitando la etiqueta inicial de la línea <f1r.1>
+        texto_crudo = re.sub(r'^<[^>]+>', '', linea)
+        
+        # LIMPIEZA PROFUNDA: Quita números aislados, puntos, comas, signos de exclamación y guiones finales
+        texto_crudo = re.sub(r'[-.=,;\$*!{}\[\]\d]', ' ', texto_crudo)
+        # Reemplaza caracteres especiales de transcripción comunes
+        texto_crudo = texto_crudo.replace('ý', 'y').replace('í', 'i')
+        texto_limpio = " ".join(texto_crudo.split())
+        
+        if texto_limpio:
+            if folio not in corpus:
+                corpus[folio] = []
+            corpus[folio].append(texto_limpio)
             
-            # 1. Intenta capturar marcadores de página estilo Claston (Ej: 58R, 79V, f1r, etc.)
-            folio_match = re.search(r'\b(\d+[rRvV]|f\d+[rRvV])\b', linea)
-            if folio_match:
-                current_folio = folio_match.group(1).upper()
-                line_counter = 0
-            
-            # 2. Extrae las palabras (limpiando marcas de alineación de caracteres \$, -, =, !, etc.)
-            texto_limpio = re.sub(r'<[^>]+>', '', linea)  # Elimina etiquetas XML/HTML si las hay
-            texto_limpio = re.sub(r'[-.=,;\$*!{}\[\]]', ' ', texto_limpio)
-            texto_limpio = " ".join(texto_limpio.split())
-            
-            # Filtra tokens puros que no sean texto real de transcripción
-            if len(texto_limpio) > 3 and not texto_limpio.replace(" ", "").isdigit():
-                # Si un bloque se vuelve muy pesado, subdivide dinámicamente para el selector
-                if line_counter > 25 and current_folio.startswith("Bloque"):
-                    current_folio = f"Bloque {int(current_folio.split()[1]) + 1}"
-                    line_counter = 0
-                
-                if current_folio not in corpus:
-                    corpus[current_folio] = []
-                
-                corpus[current_folio].append(texto_limpio)
-                line_counter += 1
-                
     return corpus if len(corpus) > 0 else None
 
-CORPUS_REAL = cargar_corpus_real()
+with st.spinner(IFACE[idioma]["cargando"]):
+    CORPUS_REAL = descargar_corpus_web()
 
 def distancia_levenshtein(s1, s2):
     if len(s1) < len(s2): return distancia_levenshtein(s2, s1)
@@ -116,8 +112,10 @@ def distancia_levenshtein(s1, s2):
 
 def traducir_a_romance(texto):
     dicc_activo = DICCIONARIO_ES if idioma == "Español" else DICCIONARIO_EN
+    
+    # Limpieza final de entrada para asegurar compatibilidad estricta con el diccionario
     texto_limpio = texto.lower()
-    texto_limpio = re.sub(r'[^a-z0-9\s]', '', texto_limpio)
+    texto_limpio = re.sub(r'[^a-z\s]', '', texto_limpio)
     palabras = texto_limpio.split()
     
     fonetica_lista = []
@@ -196,10 +194,10 @@ with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
     
     if CORPUS_REAL is None:
-        st.error("Error: Archivo 'voyn_101.txt' vacío o no encontrado en la raíz del repositorio. Por favor, revísalo.")
+        st.error("No se pudo conectar con el servidor web de voynich.nu de forma remota. Verifica tu conexión.")
     else:
-        # Ordenación alfa-numérica limpia para evitar fallos de renderizado
-        folios_ordenados = sorted(list(CORPUS_REAL.keys()))
+        # Ordenación natural de las páginas indexadas directamente desde internet
+        folios_ordenados = sorted(list(CORPUS_REAL.keys()), key=lambda x: (int(re.sub(r'\D', '', x)), x[-1]))
         folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], folios_ordenados)
         
         if st.button(IFACE[idioma]["btn_desc"]):
