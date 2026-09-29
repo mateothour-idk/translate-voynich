@@ -73,38 +73,49 @@ def descargar_corpus_web():
 
     for linea in lineas:
         linea = linea.strip()
-        # Ignorar comentarios y cabeceras estructurales de la transcripción
+        
+        # 1. Ignorar comentarios básicos y cabeceras estructurales
         if not linea or linea.startswith("#") or linea.startswith("<%") or linea.startswith("=IVTFF"):
             continue
 
-        # FILTRO EXPLICITO: Elimina líneas informativas de alfabetos/mapeos encerrados en < > con espacios intermedios (ej: < Q A P D F ... >)
-        if re.match(r'^<\s*([A-Za-z]\s*)+>$', linea):
+        # 2. FILTRO RADICAL: Eliminar cualquier línea que contenga asignaciones de alfabetos o caracteres sueltos (< Q A P ... > o = Alphabet)
+        if "Alphabet" in linea or "=" in linea:
+            continue
+            
+        # Detecta patrones con más de 3 mayúsculas consecutivas separadas por espacios (característico de mapeos e índices de transcripción)
+        if re.search(r'<\s*([A-Z?\]\[!]\s*){3,}>', linea) or re.search(r'([A-Z]\s+){3,}[A-Z]', linea):
             continue
 
-        # Detecta folios en formato estándar <f1r.1> o variaciones de columna <f10v.c1.1>
+        # 3. Detectar folios válidos del manuscrito (formato estándar como <f1r.1> o columnas <f10v.c1.1>)
         match_folio = re.search(r'<f(\d+[r|v])', linea)
         if match_folio:
             folio = match_folio.group(1)
         else:
             continue
 
-        # Extrae el texto quitando la etiqueta inicial de la línea <f1r.1>
+        # Extraer el texto eliminando la etiqueta de folio inicial
         texto_crudo = re.sub(r'^<[^>]+>', '', linea)
         
-        # Elimina comentarios embebidos entre llaves {} del transcriptor
+        # Eliminar cualquier etiqueta interna o residual que contenga letras mayúsculas separadas por espacios
+        texto_crudo = re.sub(r'<\s*([A-Z]\s*)+>', ' ', texto_crudo)
+        
+        # Eliminar comentarios embebidos entre llaves {} agregados por el transcriptor
         texto_crudo = re.sub(r'\{[^}]*\}', ' ', texto_crudo)
         
-        # LIMPIEZA PROFUNDA: Quita números aislados, puntos, comas, signos de exclamación y guiones finales
+        # LIMPIEZA PROFUNDA: Quitar números aislados, puntuación y caracteres especiales del formato
         texto_crudo = re.sub(r'[-.=,;\$*!{}\[\]\d?:]', ' ', texto_crudo)
         
-        # Reemplaza caracteres especiales de transcripción comunes
+        # Reemplazar caracteres especiales de transcripción conocidos
         texto_crudo = texto_crudo.replace('ý', 'y').replace('í', 'i')
         texto_limpio = " ".join(texto_crudo.split())
         
-        if texto_limpio:
-            if folio not in corpus:
-                corpus[folio] = []
-            corpus[folio].append(texto_limpio)
+        # Filtro de validación lingüística: si lo que queda son solo letras mayúsculas aisladas o caracteres vacíos, se descarta
+        if re.match(r'^([A-Z]\s*)+$', texto_limpio) or not texto_limpio or len(texto_limpio) <= 1:
+            continue
+            
+        if folio not in corpus:
+            corpus[folio] = []
+        corpus[folio].append(texto_limpio)
             
     return corpus if len(corpus) > 0 else None
 
@@ -190,8 +201,11 @@ with tab1:
 with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
     if CORPUS_REAL:
-        # CORRECCIÓN DE ORDENACIÓN NATURAL: Extrae el primer elemento coincidente antes de transformar a entero
-        folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: [int(re.findall(r'\d+', x)[0]), x[-1]])
+        def extraer_numero_folio(x):
+            match = re.search(r'\d+', x)
+            return int(match.group(0)) if match else 0
+
+        folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: [extraer_numero_folio(x), x[-1]])
         folio_seleccionado = st.selectbox(IFACE[idioma]["nav_sel"], folios_disponibles)
         
         if st.button(IFACE[idioma]["btn_desc"]):
