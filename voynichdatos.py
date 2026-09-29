@@ -72,7 +72,7 @@ def cargar_todas_las_paginas_reales():
                 else:
                     continue
                 
-                # Quitar llaves, corchetes, porcentajes, arrobas y caracteres raros
+                # Quitar comentarios, anotaciones de daño, ligaduras y caracteres de control
                 texto_eva_limpio = re.sub(r'\{.*?\}|\[.*?\]', '', texto_eva)
                 texto_eva_limpio = re.sub(r'%|\@\d+|;\d*|[:\$\#\-\+=<>\/]', '', texto_eva_limpio)
                 texto_eva_limpio = re.sub(r'[*.,!?]', '', texto_eva_limpio)
@@ -85,7 +85,7 @@ def cargar_todas_las_paginas_reales():
                     CORPUS_MANUSCRITO[folio_key].append(texto_eva_limpio)
                     
     except FileNotFoundError:
-        # Modo simulación por si no detecta el txt en el entorno de desarrollo
+        # Fallback estructurado si no encuentra el txt en local
         vocablos_base_manuscrito = ["pshoey", "cttey", "oaror", "psoisoda", "kedy", "ceon", "ceey", "qokedy", "ckaur", "chedy", "toes", "odor", "ctair", "oas", "tcbaor", "ctaiin", "cseey", "otair", "opas", "chidí", "podon", "vety", "dic", "quotcey", "raur", "qudicodi"]
         for i in range(1, 117):
             for lado in ["r", "v"]:
