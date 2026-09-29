@@ -11,7 +11,6 @@ if not vd.CORPUS_MANUSCRITO:
 # NUEVA MATRIZ DE TRANSICIÓN FONOLÓGICA (Agrupación de Glifos Compuestos)
 # =============================================================================
 
-# Agrupa dígrafos y trígrafos de EVA en fonemas consolidados medievales
 MAPEO_FONEMAS_COMPUESTOS = {
     'aiin': 'an', 'aiin': 'ain', 'ched': 'ched', 'ctey': 'ctey',
     'shor': 'shor', 'dchy': 'chy', 'ct': 'ct', 'ch': 'ch', 
@@ -19,7 +18,6 @@ MAPEO_FONEMAS_COMPUESTOS = {
     'oo': 'u', 'ou': 'ou', 'll': 'y', 'th': 't', 'tt': 't'
 }
 
-# Tabla fonética base para procesar caracteres remanentes aislados
 TRADUCCION_FONEMAS_DEFECTO = {
     'a': 'a', 'b': 'b', 'c': 'c', 'd': 'da', 'e': 'e', 'f': 'f', 'g': 'g', 
     'h': 'h', 'i': 'i', 'k': 'ca', 'l': 'la', 'm': 'ma', 'n': 'na', 'o': 'o', 
@@ -37,7 +35,6 @@ def agrupar_fonemas_medievales(palabra_eva):
     longitud = len(palabra_eva)
     
     while i < longitud:
-        # Evaluar bloques compuestos de mayor a menor tamaño (4, 3 y 2 caracteres)
         glifo_4 = palabra_eva[i:i+4]
         glifo_3 = palabra_eva[i:i+3]
         glifo_2 = palabra_eva[i:i+2]
@@ -60,21 +57,20 @@ def agrupar_fonemas_medievales(palabra_eva):
             i += 1
             
     palabra_final = "".join(resultado)
-    # Limpieza de redundancias de duplicación fonológica
     palabra_final = re.sub(r'i+', 'i', palabra_final)
     palabra_final = re.sub(r'c+', 'c', palabra_final)
     return palabra_final
 
 def traducir_palabra_automatica(palabra_eva, diccionario):
     """Traduce de forma absoluta aplicando primero la agrupación fonológica compuesta."""
-    # Fase 1: Pasar la palabra por el filtro de agrupación molecular medieval
     p_fonetica = agrupar_fonemas_medievales(palabra_eva.lower())
     
     if not p_fonetica:
         return ""
         
+    # CORREGIDO: Enlace exacto con la clave p_fonetica en lugar de p_limpia
     if p_fonetica in diccionario:
-        return diccionario[p_limpia] if 'p_limpia' in locals() else diccionario[p_fonetica]
+        return diccionario[p_fonetica]
         
     traducciones_parciales = []
     llaves_ordenadas = sorted(diccionario.keys(), key=len, reverse=True)
@@ -93,7 +89,6 @@ def traducir_palabra_automatica(palabra_eva, diccionario):
                 break
         
         if not encontrado:
-            # Extrae el primer fonema compuesto o carácter individual para avanzar de forma segura
             letra_actual = palabra_restante[0]
             letra_traducida = TRADUCCION_FONEMAS_DEFECTO.get(letra_actual, letra_actual)
             traducciones_parciales.append(letra_traducida)
