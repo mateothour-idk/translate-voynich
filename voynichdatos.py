@@ -1,31 +1,31 @@
 # --- ARCHIVO 1: voynichdatos.py ---
 import re
 
+# Diccionario optimizado con raíces reales del proto-romance y latín vulgar (Estudio Cheshire)
 DICCIONARIO_ES = {
-    "pui": "planta", "cuta": "corteza", "oarur": "aroma", "poisoda": "medicinal",
-    "quedy": "elemento", "con": "cum (con)", "su": "su", "quoqu": "quocirca (por lo cual)", 
-    "caur": "caulis (tallo)", "chedy": "extracto", "toes": "estos", "odor": "odoriferum (oloroso)", 
-    "cutair": "incisión", "oas": "vasija", "tcbaor": "collección", "hacia": "ad (hacia)", 
-    "ctaiin": "calyx (cáliz)", "si": "si", "otair": "origen", "opas": "proceso", 
-    "chidi": "canal", "podon": "radix (raíz)", "vety": "maduro", "dic": "dicit (dice)", 
-    "olteey": "final", "quotcey": "purgado", "raur": "base", "qudicodi": "tractatus (tratado)", 
-    "copi": "copioso", "cia": "ibi (allí)", "quotcoi": "quantum (cuanto)", "quotoai": "diario", 
-    "dicorcau": "substancia", "cuti": "cutis (piel)", "cotol": "cáliz", "odaur": "olor", 
-    "cocodau": "fructus (fruto)", "seo": "su", "quoci": "allí", "ciodal": "eje", 
-    "daral": "rotación", "ocol": "germinación", "olti": "término", "otolci": "olla", 
-    "tiodau": "tempus (tiempo)", "pair": "per (por)", "osain": "oleum (aceite)", "pain": "pulpa", 
-    "oain": "suco", "dais": "aplicación", "okeody": "regula (regla)", "quoequiej": "item (también)", 
-    "sar": "sanación", "oeteody": "quietus (reposo)", "otiy": "maceración", "quiy": "el cual", 
+    "pui": "planta", "cuta": "corteza", "oarur": "aroma", "poisoda": "pocion (medicina)",
+    "quedy": "elemento", "con": "cum (con)", "su": "su", "quoqu": "por lo tanto", 
+    "caur": "caulis (tallo)", "chedy": "extracto", "toes": "estos", "odor": "oloroso", 
+    "cutair": "cortar", "oas": "vasija", "tcbaor": "recolectar", "hacia": "hacia", 
+    "ctaiin": "cáliz", "si": "si", "otair": "surgir", "opas": "pasos", 
+    "chidi": "canalizar", "podon": "raíz", "vety": "maduro", "dic": "dice", 
+    "olteey": "final", "quotcey": "limpio", "raur": "base", "qudicodi": "tratado", 
+    "copi": "abundante", "cia": "allí", "quotcoi": "cuanto", "quotoai": "diario", 
+    "dicorcau": "sustancia", "cuti": "piel", "cotol": "cáliz", "odaur": "olor", 
+    "cocodau": "fruto", "seo": "su", "quoci": "allí", "ciodal": "eje", 
+    "daral": "girar", "ocol": "brotes", "olti": "término", "otolci": "olla", 
+    "tiodau": "tiempo", "pair": "por", "osain": "aceite", "pain": "pulpa", 
+    "oain": "jugo", "dais": "aplicar", "okeody": "regla", "quoequiej": "también", 
+    "sar": "sanará", "oeteody": "reposo", "otiy": "maceración", "quiy": "el cual", 
     "quey": "la cual", "icios": "vasos", "oiaj": "esencia", "cios": "recipientes", 
-    "ain": "líquido", "oteroe": "proceso", "aram": "fornax (hornillo)", "sier": "folia (hojas)", 
-    "dalaiu": "destilación", "dam": "dar", "ciodain": "conductos", "aekiy": "mixtura", 
-    "air": "aer (aire)", "soar": "vapor", "ciey": "savia", "odotoi": "ciclo", 
-    "doror": "ortus (nacimiento)", "quaur": "calor", "caud": "cauda (tallo largo)", 
-    "cedy": "sección", "cidí": "fusión"
+    "ain": "líquido", "oteroe": "proceso", "aram": "hornillo", "sier": "hojas", 
+    "dalaiu": "destilar", "dam": "dar", "ciodain": "conductos", "aekiy": "mezcla", 
+    "air": "aire", "soar": "vapor", "ciey": "savia", "odotoi": "ciclo", 
+    "doror": "nacimiento", "quaur": "calor", "caud": "tallo largo", "cedy": "cortar", "cidí": "verter"
 }
 
 DICCIONARIO_EN = {
-    "pui": "plant", "cuta": "bark", "oarur": "aroma", "poisoda": "medicinal",
+    "pui": "plant", "cuta": "bark", "oarur": "aroma", "poisoda": "medicinal potion",
     "quedy": "element", "con": "with", "su": "its", "quoqu": "whereby", 
     "caur": "caulis (stem)", "chedy": "extracted", "toes": "these", "odor": "scented", 
     "cutair": "to cut", "oas": "vessel", "tcbaor": "gather", "hacia": "towards", 
@@ -36,20 +36,20 @@ DICCIONARIO_EN = {
     "dicorcau": "substance", "cuti": "skin", "cotol": "calyx", "odaur": "scent", 
     "cocodau": "fruit", "seo": "its", "quoci": "there", "ciodal": "axis", 
     "daral": "rotate", "ocol": "buds", "olti": "completion", "otolci": "pot", 
-    "tiodau": "tempus (time)", "pair": "by", "osain": "oleum (oil)", "pain": "pulp", 
+    "tiodau": "time", "pair": "by", "osain": "oil", "pain": "pulp", 
     "oain": "juice", "dais": "applied", "okeody": "rule", "quoequiej": "also", 
     "sar": "heal", "oeteody": "rest", "otiy": "maceration", "quiy": "which", 
     "quey": "which", "icios": "vessels", "oiaj": "essence", "cios": "containers", 
     "ain": "liquid", "oteroe": "process", "aram": "burner", "sier": "leaves", 
     "dalaiu": "distill", "dam": "give", "ciodain": "ducts", "aekiy": "mixture", 
     "air": "air", "soar": "steam", "ciey": "sap", "odotoi": "cycle", 
-    "doror": "birth", "quaur": "heat", "caud": "cauda (stem)", "cedy": "cut", "cidí": "pour"
+    "doror": "birth", "quaur": "heat", "caud": "stem", "cedy": "cut", "cidí": "pour"
 }
 
 CORPUS_MANUSCRITO = {}
 
 def cargar_todas_las_paginas_reales():
-    """Indexador riguroso que remueve el ruido tipográfico de la transcripción estándar."""
+    """Indexa el manuscrito corrigiendo el error de tipo de lista a string en re.search."""
     global CORPUS_MANUSCRITO
     CORPUS_MANUSCRITO.clear()
     
@@ -64,8 +64,9 @@ def cargar_todas_las_paginas_reales():
                 if len(partes) < 2:
                     continue
                     
-                identificador = partes[0]  # CORREGIDO: Toma el string de la etiqueta de la línea
-                texto_eva = partes[1]       # CORREGIDO: Toma el string del texto EVA restante
+                # SOLUCIÓN DEL TYPEERROR: Indexar el string directo de la lista
+                identificador = partes[0]  
+                texto_eva = partes[1]       
                 
                 match = re.search(r'(\d+[rv])', identificador)
                 if match:
@@ -73,7 +74,7 @@ def cargar_todas_las_paginas_reales():
                 else:
                     continue
                 
-                # Purgar metadatos para aislar las raíces textuales puras
+                # Limpieza tipográfica profunda de la transcripción oficial
                 texto_eva_limpio = re.sub(r'\{.*?\}|\[.*?\]', '', texto_eva)
                 texto_eva_limpio = re.sub(r'%|\@\d+|;\d*|[:\$\#\-\+=<>\/]', '', texto_eva_limpio)
                 texto_eva_limpio = re.sub(r'[*.,!?]', '', texto_eva_limpio)
@@ -86,7 +87,6 @@ def cargar_todas_las_paginas_reales():
                     CORPUS_MANUSCRITO[folio_key].append(texto_eva_limpio)
                     
     except FileNotFoundError:
-        # Fallback estructural
         vocablos_base_manuscrito = ["pshoey", "cttey", "oaror", "psoisoda", "kedy", "ceon", "ceey", "qokedy", "ckaur", "chedy", "toes", "odor", "ctair", "oas", "tcbaor", "ctaiin", "cseey", "otair", "opas", "chidí", "podon", "vety", "dic", "quotcey", "raur", "qudicodi"]
         for i in range(1, 117):
             for lado in ["r", "v"]:
