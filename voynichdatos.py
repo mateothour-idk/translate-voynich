@@ -15,9 +15,9 @@ DICCIONARIO_ES = {
     "cocodau": "fruto", "seo": "su", "quoci": "allí", "ciodal": "eje", 
     "daral": "girar", "ocol": "brotes", "olti": "término", "otolci": "olla", 
     "tiodau": "tiempo", "pair": "por", "osain": "aceite", "pain": "pulpa", 
-    "oain": "jugo", "dais": "aplicar", "okeody": "regla", "quoequiej": "también", 
+    "oain": "jugo", "dais": "aplicar", "okeody": "regula (regla)", "quoequiej": "también", 
     "sar": "sanará", "oeteody": "reposo", "otiy": "maceración", "quiy": "el cual", 
-    "quey": "la cual", "icios": "vasos", "oiaj": "esencia", "cios": "recipientes", 
+    "quey": "la cual", "icios": "los vasos", "oiaj": "esencia", "cios": "recipientes", 
     "ain": "líquido", "oteroe": "proceso", "aram": "hornillo", "sier": "hojas", 
     "dalaiu": "destilar", "dam": "dar", "ciodain": "conductos", "aekiy": "mezcla", 
     "air": "aire", "soar": "vapor", "ciey": "savia", "odotoi": "ciclo", 
@@ -49,7 +49,7 @@ DICCIONARIO_EN = {
 CORPUS_MANUSCRITO = {}
 
 def cargar_todas_las_paginas_reales():
-    """Indexa el manuscrito corrigiendo el error de tipo de lista a string en re.search."""
+    """Indexa el manuscrito de forma robusta extrayendo strings válidos para re.search."""
     global CORPUS_MANUSCRITO
     CORPUS_MANUSCRITO.clear()
     
@@ -64,7 +64,6 @@ def cargar_todas_las_paginas_reales():
                 if len(partes) < 2:
                     continue
                     
-                # SOLUCIÓN DEL TYPEERROR: Indexar el string directo de la lista
                 identificador = partes[0]  
                 texto_eva = partes[1]       
                 
@@ -74,7 +73,7 @@ def cargar_todas_las_paginas_reales():
                 else:
                     continue
                 
-                # Limpieza tipográfica profunda de la transcripción oficial
+                # Filtrar metadatos y comentarios tipográficos ruidosos de la transcripción
                 texto_eva_limpio = re.sub(r'\{.*?\}|\[.*?\]', '', texto_eva)
                 texto_eva_limpio = re.sub(r'%|\@\d+|;\d*|[:\$\#\-\+=<>\/]', '', texto_eva_limpio)
                 texto_eva_limpio = re.sub(r'[*.,!?]', '', texto_eva_limpio)
