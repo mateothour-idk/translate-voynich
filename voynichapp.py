@@ -8,23 +8,18 @@ if not vd.CORPUS_MANUSCRITO:
     vd.cargar_todas_las_paginas_reales()
 
 # =============================================================================
-# MOTOR CRIPTOGRÁFICO DE TRANSLITERACIÓN DE PROTO-ROMANCE (Sustitución Total)
+# NUEVA MATRIZ DE TRANSICIÓN FONOLÓGICA (Agrupación de Glifos Compuestos)
 # =============================================================================
 
-REGLAS_FONETICAS_FIJAS = {
-    'ai': 'ai', 'ax': 'sh', 'ct': 'ct', 'eee': 'ie', 'eey': 'iy', 
-    'el': 'el', 'ey': 'a', 'iu': 'u', 'lf': 'lef', 'll': 'y', 
-    'oe': 'u', 'oi': 'oi', 'oo': 'u', 'pcs': 'pes', 'q': 'qu', 
-    'qok': 'quoqu', 'quo': 'quo', 'tcs': 'tes', 'th': 't', 'tt': 't'
+# Agrupa dígrafos y trígrafos de EVA en fonemas consolidados medievales
+MAPEO_FONEMAS_COMPUESTOS = {
+    'aiin': 'an', 'aiin': 'ain', 'ched': 'ched', 'ctey': 'ctey',
+    'shor': 'shor', 'dchy': 'chy', 'ct': 'ct', 'ch': 'ch', 
+    'sh': 'sh', 'ee': 'i', 'eee': 'ie', 'ey': 'a', 
+    'oo': 'u', 'ou': 'ou', 'll': 'y', 'th': 't', 'tt': 't'
 }
 
-MODIFICADORES_CONTEXTUALES = {
-    'c': {'s': 's', 'k': 'qu', 'e': 'e', 'ee': 'ce', 't': 't'},
-    't': {'c': 'ch', 's': 's', 'h': 't'},
-    'p': {'s': 'f', 'h': 'f'}
-}
-
-# Tabla fonética oficial para desarmar de forma estricta los caracteres sobrantes
+# Tabla fonética base para procesar caracteres remanentes aislados
 TRADUCCION_FONEMAS_DEFECTO = {
     'a': 'a', 'b': 'b', 'c': 'c', 'd': 'da', 'e': 'e', 'f': 'f', 'g': 'g', 
     'h': 'h', 'i': 'i', 'k': 'ca', 'l': 'la', 'm': 'ma', 'n': 'na', 'o': 'o', 
@@ -32,55 +27,59 @@ TRADUCCION_FONEMAS_DEFECTO = {
     'x': 'sa', 'y': 'i', 'z': 'za'
 }
 
-def limpiar_fonetica_posicional(palabra_eva):
+def agrupar_fonemas_medievales(palabra_eva):
+    """Transforma los glifos anatómicos de EVA en fonemas compuestos integrados."""
     if not palabra_eva:
         return ""
+    
     resultado = []
     i = 0
     longitud = len(palabra_eva)
+    
     while i < longitud:
+        # Evaluar bloques compuestos de mayor a menor tamaño (4, 3 y 2 caracteres)
+        glifo_4 = palabra_eva[i:i+4]
         glifo_3 = palabra_eva[i:i+3]
         glifo_2 = palabra_eva[i:i+2]
         glifo_1 = palabra_eva[i]
         
-        if glifo_3 in REGLAS_FONETICAS_FIJAS:
-            resultado.append(REGLAS_FONETICAS_FIJAS[glifo_3])
+        if glifo_4 in MAPEO_FONEMAS_COMPUESTOS:
+            resultado.append(MAPEO_FONEMAS_COMPUESTOS[glifo_4])
+            i += 4
+        elif glifo_3 in MAPEO_FONEMAS_COMPUESTOS:
+            resultado.append(MAPEO_FONEMAS_COMPUESTOS[glifo_3])
             i += 3
-        elif glifo_2 in REGLAS_FONETICAS_FIJAS:
-            resultado.append(REGLAS_FONETICAS_FIJAS[glifo_2])
+        elif glifo_2 in MAPEO_FONEMAS_COMPUESTOS:
+            resultado.append(MAPEO_FONEMAS_COMPUESTOS[glifo_2])
             i += 2
-        elif len(resultado) > 0 and resultado[-1] in MODIFICADORES_CONTEXTUALES:
-            letra_previa = resultado[-1]
-            if glifo_1 in MODIFICADORES_CONTEXTUALES[letra_previa]:
-                resultado[-1] = MODIFICADORES_CONTEXTUALES[letra_previa][glifo_1]
-            else:
-                resultado.append(glifo_1)
-            i += 1
         else:
-            if glifo_1 == 'y':
+            if glifo_1 == 'y' and (i == 0 or i == longitud - 1):
                 resultado.append('i')
             else:
                 resultado.append(glifo_1)
             i += 1
+            
     palabra_final = "".join(resultado)
+    # Limpieza de redundancias de duplicación fonológica
     palabra_final = re.sub(r'i+', 'i', palabra_final)
     palabra_final = re.sub(r'c+', 'c', palabra_final)
     return palabra_final
 
 def traducir_palabra_automatica(palabra_eva, diccionario):
-    """Traduce de forma masiva aislando caracteres sobrantes uno por uno."""
-    p_limpia = limpiar_fonetica_posicional(palabra_eva.lower().replace('íd', 'id').replace('í', 'i'))
+    """Traduce de forma absoluta aplicando primero la agrupación fonológica compuesta."""
+    # Fase 1: Pasar la palabra por el filtro de agrupación molecular medieval
+    p_fonetica = agrupar_fonemas_medievales(palabra_eva.lower())
     
-    if not p_limpia:
+    if not p_fonetica:
         return ""
         
-    if p_limpia in diccionario:
-        return diccionario[p_limpia]
+    if p_fonetica in diccionario:
+        return diccionario[p_limpia] if 'p_limpia' in locals() else diccionario[p_fonetica]
         
     traducciones_parciales = []
     llaves_ordenadas = sorted(diccionario.keys(), key=len, reverse=True)
     
-    palabra_restante = p_limpia
+    palabra_restante = p_fonetica
     seguridad = 0
     
     while len(palabra_restante) > 0 and seguridad < 100:
@@ -93,12 +92,12 @@ def traducir_palabra_automatica(palabra_eva, diccionario):
                 encontrado = True
                 break
         
-        # CORREGIDO: Indexación estricta al primer carácter [0] para forzar el avance seguro
         if not encontrado:
-            letra_actual = palabra_restante[0]  
+            # Extrae el primer fonema compuesto o carácter individual para avanzar de forma segura
+            letra_actual = palabra_restante[0]
             letra_traducida = TRADUCCION_FONEMAS_DEFECTO.get(letra_actual, letra_actual)
             traducciones_parciales.append(letra_traducida)
-            palabra_restante = palabra_restante[1:]  
+            palabra_restante = palabra_restante[1:]
             
     resultado_unido = "".join(traducciones_parciales)
     resultado_unido = " ".join(resultado_unido.split())
@@ -120,7 +119,7 @@ def traducir_palabra_manual(palabra_eva, mapa_manual):
 st.set_page_config(page_title="Archivo Global Voynich", page_icon="📖", layout="wide")
 
 st.title("📖 Intérprete de Consenso Lingüístico del Manuscrito Voynich")
-st.write("Modelo de descifrado total basado en la fonética abreviada del proto-romance del siglo XV.")
+st.write("Modelo de descifrado total con motor integrado de agrupación fonológica compuesta medieval.")
 
 st.sidebar.header("📂 Navegación de Páginas")
 
@@ -134,9 +133,9 @@ folios_disponibles = sorted(list(vd.CORPUS_MANUSCRITO.keys()), key=ordenar_folio
 folio_seleccionado = st.sidebar.selectbox("Seleccionar página del manuscrito:", folios_disponibles)
 
 st.sidebar.header("⚙️ Modo de Descifrado")
-tipo_traduccion = st.sidebar.radio("Tipo de Traducción:", ["Traducción Automática (Modelo Proto-Romance)", "Traducción Manual (Personalizada)"])
+tipo_traduccion = st.sidebar.radio("Tipo de Traducción:", ["Traducción Automática (Modelo Fonológico)", "Traducción Manual (Personalizada)"])
 
-if tipo_traduccion == "Traducción Automática (Modelo Proto-Romance)":
+if tipo_traduccion == "Traducción Automática (Modelo Fonológico)":
     idioma = st.sidebar.selectbox("Idioma del diccionario:", ["Español", "English"])
     diccionario_activo = vd.DICCIONARIO_ES if idioma == "Español" else vd.DICCIONARIO_EN
 else:
@@ -161,7 +160,7 @@ with col_der:
     lineas_traducidas = []
     for linea in lineas_originales:
         palabras = linea.split()
-        if tipo_traduccion == "Traducción Automática (Modelo Proto-Romance)":
+        if tipo_traduccion == "Traducción Automática (Modelo Fonológico)":
             palabras_proc = [traducir_palabra_automatica(p, diccionario_activo) for p in palabras]
         else:
             palabras_proc = [traducir_palabra_manual(p, mapa_usuario) for p in palabras]
@@ -192,7 +191,7 @@ st.subheader("🧪 Banco de Pruebas de Texto Libre")
 texto_libre = st.text_input("Inserta cualquier palabra o fragmento en EVA para analizarla:")
 if texto_libre:
     palabras_libres = texto_libre.split()
-    if tipo_traduccion == "Traducción Automática (Modelo Proto-Romance)":
+    if tipo_traduccion == "Traducción Automática (Modelo Fonológico)":
         res_libres = [traducir_palabra_automatica(p, diccionario_activo) for p in palabras_libres]
     else:
         res_libres = [traducir_palabra_manual(p, mapa_usuario) for p in palabras_libres]
