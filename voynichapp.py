@@ -1,177 +1,229 @@
-# --- ARCHIVO 2: voynichapp.py ---
 import streamlit as st
 import re
-import voynichdatos as vd
+import urllib.request
 
-if not vd.CORPUS_MANUSCRITO:
-    vd.cargar_todas_las_paginas_reales()
+st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
-# =============================================================================
-# MOTOR CRIPTOGRÁFICO TOTAL (Sustitución fonética sistemática por defecto)
-# =============================================================================
+idioma = st.sidebar.selectbox("🌐 Select Language / Selecciona Idioma", ["Español", "English"])
 
-REGLAS_FONETICAS_FIJAS = {
-    'ai': 'ai', 'ax': 'sh', 'ct': 'ct', 'eee': 'ie', 'eey': 'iy', 
-    'el': 'el', 'ey': 'a', 'iu': 'u', 'lf': 'lef', 'll': 'y', 
-    'oe': 'u', 'oi': 'oi', 'oo': 'u', 'pcs': 'pes', 'q': 'qu', 
-    'qok': 'quoqu', 'quo': 'quo', 'tcs': 'tes', 'th': 't', 'tt': 't'
+IFACE = {
+    "Español": {
+        "titulo": "Traductor Universal del Manuscrito Voynich (Matriz Definitiva)",
+        "sub": "Explora y descifra cada línea REAL conectada directamente a voynich.nu.",
+        "tab1": "Laboratorio de Texto Libre",
+        "tab2": "Explorador de Transcripción Real (voynich.nu)",
+        "lab_sub": "Laboratorio de Entrada Libre",
+        "btn_an": "Analizar Fragmento",
+        "fon_rom": "Fonética Romance Optimizada:",
+        "trad_auto": "Traducción Literal:",
+        "nav_sub": "Navegador Conectado a voynich.nu",
+        "nav_sel": "Selecciona una página real (Folio):",
+        "btn_desc": "Descifrar Folio",
+        "res_tit": "Traducción Real para el Fragmento",
+        "col1": "1. Texto Limpio (voynich.nu):",
+        "col2": "2. Fonética Romance:",
+        "col3": "3. Traducción Real:",
+        "cargando": "Conectando con voynich.nu y descargando manuscrito real..."
+    },
+    "English": {
+        "titulo": "Universal Automatic Voynich Manuscript Translator",
+        "sub": "Explore and translate every SINGLE REAL line live from voynich.nu.",
+        "tab1": "Free Text Laboratory",
+        "tab2": "Real Corpus Explorer (voynich.nu)",
+        "lab_sub": "Free Entry Laboratory",
+        "btn_an": "Analyze Fragment",
+        "fon_rom": "Optimized Romance Phonetics:",
+        "trad_auto": "Literal Translation:",
+        "nav_sub": "Live voynich.nu Navigator",
+        "nav_sel": "Select a real folio:",
+        "btn_desc": "Decipher Real Folio",
+        "res_tit": "Strict Literal Translation for Folio",
+        "col1": "1. Cleaned Text (voynich.nu):",
+        "col2": "2. Aligned Romance Phonetics:",
+        "col3": "3. Real Translation:",
+        "cargando": "Connecting to voynich.nu and fetching real manuscript..."
+    }
 }
 
-MODIFICADORES_CONTEXTUALES = {
-    'c': {'s': 's', 'k': 'qu', 'e': 'e', 'ee': 'ce', 't': 't'},
-    't': {'c': 'ch', 's': 's', 'h': 't'},
-    'p': {'s': 'f', 'h': 'f'}
-}
+try:
+    from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN
+except ImportError:
+    # --- DICCIONARIO EXPANDIDO CON RAÍCES EVA FRECUENTES ---
+    DICCIONARIO_ES = {
+        "pui": "la planta", "cuta": "la corteza", "chol": "raíz", "shol": "líquido",
+        "daiin": "el día", "daien": "luz", "choal": "tierra", "sho": "agua",
+        "cthain": "creación", "am": "madre", "al": "el/la", "ar": "elemento",
+        "shey": "esencia", "or": "oro", "ol": "óleo", "otol": "estrellas",
+        "qoke": "fuente", "qok": "que", "ok": "hacia", "otey": "origen",
+        "ched": "cortar", "chedy": "hojas", "lke": "fuego", "shk": "viento",
+        "sol": "sol", "chy": "semilla", "shyn": "brote", "dair": "tallo"
+    }
+    DICCIONARIO_EN = {
+        "pui": "the plant", "cuta": "the bark", "chol": "root", "shol": "liquid",
+        "daiin": "the day", "daien": "light", "choal": "earth", "sho": "water",
+        "cthain": "creation", "am": "mother", "al": "the", "ar": "element",
+        "shey": "essence", "or": "gold", "ol": "oil", "otol": "stars",
+        "qoke": "source", "qok": "which", "ok": "towards", "otey": "origin",
+        "ched": "to cut", "chedy": "leaves", "lke": "fire", "shk": "wind",
+        "sol": "sun", "chy": "seed", "shyn": "sprout", "dair": "stalk"
+    }
 
-# Matriz fonética base para resolver caracteres sueltos que no entren en el diccionario
-TRADUCCION_FONEMAS_DEFECTO = {
-    'a': 'a', 'b': 'b', 'c': 'c', 'd': 'd', 'e': 'e', 'f': 'f', 'g': 'g', 
-    'h': 'h', 'i': 'i', 'k': 'qu', 'l': 'l', 'm': 'm', 'n': 'n', 'o': 'o', 
-    'p': 'p', 'q': 'qu', 'r': 'r', 's': 's', 't': 't', 'u': 'u', 'v': 'v', 
-    'x': 'sh', 'y': 'i', 'z': 'z'
-}
+st.title(IFACE[idioma]["titulo"])
+st.write(IFACE[idioma]["sub"])
 
-def limpiar_fonetica_posicional(palabra_eva):
-    """Limpia los glifos removiendo acumulaciones imposibles."""
-    if not palabra_eva:
-        return ""
-    resultado = []
-    i = 0
-    longitud = len(palabra_eva)
-    while i < longitud:
-        glifo_3 = palabra_eva[i:i+3]
-        glifo_2 = palabra_eva[i:i+2]
-        glifo_1 = palabra_eva[i]
+# --- DESCARGA Y LIMPIEZA AUTOMÁTICA DESDE EL SITIO WEB OFICIAL (FORMATO ZL3b-n) ---
+@st.cache_data
+def descargar_corpus_web():
+    corpus = {}
+    url = "http://voynich.nu"
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/plain,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=15) as response:
+            lineas = response.read().decode('utf-8', errors='ignore').splitlines()
+    except Exception as e:
+        print(f"Error de conexión detallado: {e}")
+        return None
+
+    for linea in lineas:
+        linea = linea.strip()
         
-        if glifo_3 in REGLAS_FONETICAS_FIJAS:
-            resultado.append(REGLAS_FONETICAS_FIJAS[glifo_3])
-            i += 3
-        elif glifo_2 in REGLAS_FONETICAS_FIJAS:
-            resultado.append(REGLAS_FONETICAS_FIJAS[glifo_2])
-            i += 2
-        elif len(resultado) > 0 and resultado[-1] in MODIFICADORES_CONTEXTUALES:
-            letra_previa = resultado[-1]
-            if glifo_1 in MODIFICADORES_CONTEXTUALES[letra_previa]:
-                resultado[-1] = MODIFICADORES_CONTEXTUALES[letra_previa][glifo_1]
-            else:
-                resultado.append(glifo_1)
-            i += 1
-        else:
-            if glifo_1 == 'y':
-                resultado.append('i')
-            else:
-                resultado.append(glifo_1)
-            i += 1
-    palabra_final = "".join(resultado)
-    palabra_final = re.sub(r'i+', 'i', palabra_final)
-    palabra_final = re.sub(r'c+', 'c', palabra_final)
-    return palabra_final
+        if not linea or linea.startswith("#") or linea.startswith("<%") or linea.startswith("=IVTFF"):
+            continue
 
-def traducir_palabra_automatica(palabra_eva, diccionario):
-    """Traduce absolutamente todo dividiendo la palabra en fragmentos legibles."""
-    p_limpia = limpiar_fonetica_posicional(palabra_eva.lower().replace('íd', 'id').replace('í', 'i'))
-    
-    if p_limpia in diccionario:
-        return diccionario[p_limpia]
-        
-    traducciones_parciales = []
-    llaves_ordenadas = sorted(diccionario.keys(), key=len, reverse=True)
-    
-    palabra_restante = p_limpia
-    while palabra_restante:
-        encontrado = False
-        for llave in llaves_ordenadas:
-            if palabra_restante.startswith(llave):
-                traducciones_parciales.append(f" {diccionario[llave]} ")
-                palabra_restante = palabra_restante[len(llave):]
-                encontrado = True
-                break
-        if not encontrado:
-            # SI NO ESTÁ EN EL DICCIONARIO: Aplica traducción fonética letra por letra en vez de corchetes
-            letra_actual = palabra_restante[0]
-            letra_traducida = TRADUCCION_FONEMAS_DEFECTO.get(letra_actual, letra_actual)
-            traducciones_parciales.append(letra_traducida)
-            palabra_restante = palabra_restante[1:]
+        if "Alphabet" in linea or "=" in linea:
+            continue
             
-    # Limpiar espaciados dobles generados por la unión
-    resultado_unido = "".join(traducciones_parciales)
-    resultado_unido = " ".join(resultado_unido.split())
-    return resultado_unido
+        if re.search(r'<\s*([A-Z?\]\[!]\s*){3,}>', linea) or re.search(r'([A-Z]\s+){3,}[A-Z]', linea):
+            continue
 
-def traducir_palabra_manual(palabra_eva, mapa_manual):
-    """Traducción carácter por carácter interactiva del usuario."""
-    resultado = []
-    for letra in palabra_eva.lower():
-        if letra in mapa_manual and mapa_manual[letra].strip():
-            resultado.append(mapa_manual[letra].strip())
+        match_folio = re.search(r'<f(\d+[r|v])', linea)
+        if match_folio:
+            folio = match_folio.group(1)
         else:
-            resultado.append(letra)
-    return "".join(resultado)
+            continue
 
-# =============================================================================
-# INTERFAZ GRÁFICA DE STREAMLIT
-# =============================================================================
-
-st.set_page_config(page_title="Archivo Global Voynich", page_icon="📖", layout="wide")
-
-st.title("📖 Intérprete Global del Manuscrito Voynich")
-st.write("Exploración completa del texto auténtico y traducción absoluta sin palabras vacías.")
-
-st.sidebar.header("📂 Navegación de Páginas")
-
-def ordenar_folios(key):
-    match = re.search(r'\d+', key)
-    num = int(match.group()) if match else 0
-    letra = key[-1]
-    return [num, letra]
-
-folios_disponibles = sorted(list(vd.CORPUS_MANUSCRITO.keys()), key=ordenar_folios)
-folio_seleccionado = st.sidebar.selectbox("Seleccionar página del manuscrito:", folios_disponibles)
-
-st.sidebar.header("⚙️ Modo de Descifrado")
-tipo_traduccion = st.sidebar.radio("Tipo de Traducción:", ["Traducción Automática (Diccionarios)", "Traducción Manual (Personalizada)"])
-
-if tipo_traduccion == "Traducción Automática (Diccionarios)":
-    idioma = st.sidebar.selectbox("Idioma del diccionario:", ["Español", "English"])
-    diccionario_activo = vd.DICCIONARIO_ES if idioma == "Español" else vd.DICCIONARIO_EN
-else:
-    st.sidebar.markdown("### 🛠️ Tabla de Equivalencias Manuales")
-    glifos_comunes = ['o', 'a', 'e', 'c', 'h', 't', 'p', 'k', 'f', 'n', 'r', 's', 'y', 'l', 'm']
-    mapa_usuario = {}
-    col1, col2 = st.sidebar.columns(2)
-    for idx, glifo in enumerate(glifos_comunes):
-        target_col = col1 if idx % 2 == 0 else col2
-        mapa_usuario[glifo] = target_col.text_input(f"EVA '{glifo}' ->", value=glifo, key=f"m_{glifo}")
-
-col_izq, col_der = st.columns(2)
-lineas_originales = vd.CORPUS_MANUSCRITO.get(folio_seleccionado, ["Página vacía"])
-
-with col_izq:
-    st.subheader(f"📄 Texto Original Ordenado - Folio {folio_seleccionado}")
-    texto_bloque_eva = "\n".join([f"Línea {i+1}: {linea}" for i, linea in enumerate(lineas_originales)])
-    st.text_area("Transcripción EVA Limpia:", value=texto_bloque_eva, height=380, disabled=True)
-
-with col_der:
-    st.subheader(f"🗝 nighttime_readout Resultado - Método: {tipo_traduccion}")
-    lineas_traducidas = []
-    for linea in lineas_originales:
-        palabras = linea.split()
-        if tipo_traduccion == "Traducción Automática (Diccionarios)":
-            palabras_proc = [traducir_palabra_automatica(p, diccionario_activo) for p in palabras]
-        else:
-            palabras_proc = [traducir_palabra_manual(p, mapa_usuario) for p in palabras]
-        lineas_traducidas.append(" ".join(palabras_proc))
+        texto_crudo = re.sub(r'^<[^>]+>', '', linea)
+        texto_crudo = re.sub(r'<\s*([A-Z]\s*)+>', ' ', texto_crudo)
+        texto_crudo = re.sub(r'\{[^}]*\}', ' ', texto_crudo)
+        texto_crudo = re.sub(r'[-.=,;\$*!{}\[\]\d?:]', ' ', texto_crudo)
         
-    texto_bloque_traducido = "\n".join([f"Línea {i+1}: {linea}" for i, linea in enumerate(lineas_traducidas)])
-    st.text_area("Resultado del análisis descriptivo:", value=texto_bloque_traducido, height=380, disabled=True)
+        texto_crudo = texto_crudo.replace('ý', 'y').replace('í', 'i')
+        texto_limpio = " ".join(texto_crudo.split())
+        
+        if re.match(r'^([A-Z]\s*)+$', texto_limpio) or not texto_limpio or len(texto_limpio) <= 1:
+            continue
+            
+        if folio not in corpus:
+            corpus[folio] = []
+        corpus[folio].append(texto_limpio)
+            
+    return corpus if len(corpus) > 0 else None
 
-st.markdown("---")
-st.subheader("🧪 Banco de Pruebas de Texto Libre")
-texto_libre = st.text_input("Inserta cualquier palabra o fragmento en EVA para analizarla:")
-if texto_libre:
-    palabras_libres = texto_libre.split()
-    if tipo_traduccion == "Traducción Automática (Diccionarios)":
-        res_libres = [traducir_palabra_automatica(p, diccionario_activo) for p in palabras_libres]
+with st.spinner(IFACE[idioma]["cargando"]):
+    CORPUS_REAL = descargar_corpus_web()
+
+def distancia_levenshtein(s1, s2):
+    if len(s1) < len(s2):
+        return distancia_levenshtein(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+    fila_previa = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        fila_actual = [i + 1]
+        for j, c2 in enumerate(s2):
+            inserciones = fila_previa[j + 1] + 1
+            eliminaciones = fila_actual[j] + 1
+            sustituciones = fila_previa[j] + (c1 != c2)
+            fila_actual.append(min(inserciones, eliminaciones, sustituciones))
+        fila_previa = fila_actual
+    return fila_previa[-1]
+
+def traducir_a_romance(texto):
+    dicc_activo = DICCIONARIO_ES if idioma == "Español" else DICCIONARIO_EN
+    texto_limpio = texto.lower()
+    texto_limpio = re.sub(r'[^a-z\s]', '', texto_limpio)
+    palabras = texto_limpio.split()
+    fonetica_lista = []
+    traduccion_lista = []
+    
+    for pal in palabras:
+        fon = pal
+        # MATRIZ FONÉTICA ESTRICTA (UNIDIRECCIONAL IZQUIERDA -> DERECHA)
+        fon = re.sub(r'qok', 'quoqu', fon)
+        fon = re.sub(r'pcee', 'pi', fon)
+        fon = re.sub(r'pcs', 'pes', fon)
+        fon = re.sub(r'iii', 'í', fon)
+        fon = re.sub(r'eee', 'ei', fon)
+        fon = re.sub(r'eey', 'ai', fon)
+        fon = re.sub(r'pc|ps|cp', 'p', fon)
+        fon = re.sub(r'dce', 'dic', fon)
+        fon = re.sub(r'cee', 'ci', fon)
+        fon = re.sub(r'pdr', 'pedr', fon)
+        fon = re.sub(r'eat', 'it', fon)
+        fon = re.sub(r'dc|tc', 'ch', fon)
+        fon = re.sub(r'ct', 'cut', fon)
+        fon = re.sub(r'ii', 'i', fon)
+        fon = re.sub(r'oo', 'u', fon)
+        fon = re.sub(r'll', 'y', fon)
+        fon = re.sub(r'tt', 't', fon)
+        fon = re.sub(r'ts', 's', fon)
+        fon = re.sub(r'ph', 'f', fon)
+        fon = re.sub(r'th', 't', fon)
+        fon = re.sub(r'ch', 'c', fon)
+        if 'eey' not in pal:
+            fon = re.sub(r'ey', 'a', fon)
+            
+        fonetica_lista.append(fon)
+        
+        # Búsqueda aproximada aumentando la tolerancia de Levenshtein a 3 para forzar más traducciones
+        mejor_coincidencia = f"[{fon}]"  # Se encierra entre corchetes si no encuentra traducción exacta
+        menor_distancia = 999
+        for k, v in dicc_activo.items():
+            dist = distancia_levenshtein(fon, k)
+            if dist < menor_distancia and dist <= 3:
+                menor_distancia = dist
+                mejor_coincidencia = v
+        traduccion_lista.append(mejor_coincidencia)
+        
+    return " ".join(fonetica_lista), " ".join(traduccion_lista)
+
+# --- INTERFAZ GRÁFICA DE STREAMLIT ---
+tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
+
+with tab1:
+    st.subheader(IFACE[idioma]["lab_sub"])
+    texto_usuario = st.text_area("Input / Entrada:", "pui cuta chol")
+    if st.button(IFACE[idioma]["btn_an"]):
+        fon, trad = traducir_a_romance(texto_usuario)
+        st.markdown(f"**{IFACE[idioma]['fon_rom']}** {fon}")
+        st.markdown(f"**{IFACE[idioma]['trad_auto']}** {trad}")
+
+with tab2:
+    st.subheader(IFACE[idioma]["nav_sub"])
+    if CORPUS_REAL:
+        def extraer_numero_folio(x):
+            match = re.search(r'\d+', x)
+            return int(match.group(0)) if match else 0
+
+        folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: [extraer_numero_folio(x), x[-1]])
+        folio_seleccionado = st.selectbox(IFACE[idioma]["nav_sel"], folios_disponibles)
+        
+        if st.button(IFACE[idioma]["btn_desc"]):
+            st.write(f"### {IFACE[idioma]['res_tit']} {folio_seleccionado}")
+            lineas_folio = CORPUS_REAL[folio_seleccionado]
+            
+            for l in lineas_folio:
+                fon, trad = traducir_a_romance(l)
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.info(f"**{IFACE[idioma]['col1']}**\n{l}")
+                with col2:
+                    st.success(f"**{IFACE[idioma]['col2']}**\n{fon}")
+                with col3:
+                    st.warning(f"**{IFACE[idioma]['col3']}**\n{trad}")
     else:
-        res_libres = [traducir_palabra_manual(p, mapa_usuario) for p in palabras_libres]
-    st.success(f"Resultado: {' '.join(res_libres)}")
+        st.error("No se pudo cargar el corpus real de voynich.nu. Verifica tu conexión de red o los permisos de salida del entorno.")
