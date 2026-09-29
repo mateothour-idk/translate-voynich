@@ -45,28 +45,15 @@ DICCIONARIO_EN = {
     "caud": "the elongated stem", "cedy": "is cut", "cidí": "to pour"
 }
 
-CORPUS_MANUSCRITO = {
-    "1r": [
-        "pshoey cttey oaror psoisoda kedy ceon ceey qokedy ckaur chedy toes oas",
-        "tcbaor ceor ctaiin cseey otair opas kedy chidí ceon ceey"
-    ],
-    "20r": ["kdceody ceopy ceeey qotceoy qotoeey dceorceau ceodey cteey ceotol odaur", "teeodau cseey cpair osaiin yteeoey cseey cpaiin oaiin daiis"],
-    "67r": ["daor odotoey doror daor ceody qotcey oaror", "toes odor ctair oas kedy ceon qokedy"],
-    "78r": ["qokedy kedy qokedy ckaur chedy oas raor kedy ceon ceey", "kdceody ceopy ceeey qotceoy qotoeey dceorceau"]
-}
+CORPUS_MANUSCRITO = {}
 
 def cargar_todas_las_paginas_reales():
-    """
-    Lee el archivo completo del manuscrito en EVA y organiza 
-    todas las páginas de forma dinámica en el diccionario CORPUS_MANUSCRITO.
-    """
+    """Lee e indexa limpiamente el archivo completo del manuscrito."""
     global CORPUS_MANUSCRITO
-    # Conservamos lo que ya hay por defecto por seguridad
+    CORPUS_MANUSCRITO.clear()
     
     try:
         with open("voynich_completo.txt", "r", encoding="utf-8") as f:
-            # Si el archivo real existe, limpiamos los datos simulados e indexamos los reales
-            CORPUS_MANUSCRITO.clear()
             for linea in f:
                 linea = linea.strip()
                 if not linea or linea.startswith("#") or linea.startswith("%"):
@@ -76,8 +63,8 @@ def cargar_todas_las_paginas_reales():
                 if len(partes) < 2:
                     continue
                     
-                identificador = partes[0]
-                texto_eva = partes[1]
+                identificador = partes[0]  # CORREGIDO: Extrae la etiqueta de la línea
+                texto_eva = partes[1]       # CORREGIDO: Extrae solo el contenido EVA
                 
                 match = re.search(r'(\d+[rv])', identificador)
                 if match:
@@ -85,27 +72,29 @@ def cargar_todas_las_paginas_reales():
                 else:
                     continue
                 
+                # Quitar ligaduras adicionales y caracteres especiales de daño del pergamino
                 texto_eva_limpio = re.sub(r'=[^ ]*', '', texto_eva)  
-                texto_eva_limpio = re.sub(r'[*.,!?<>]', '', texto_eva_limpio) 
+                texto_eva_limpio = re.sub(r'[*.,!?<>{}\[\]\-]', '', texto_eva_limpio) 
+                texto_eva_limpio = " ".join(texto_eva_limpio.split())
                 
                 if folio_key not in CORPUS_MANUSCRITO:
                     CORPUS_MANUSCRITO[folio_key] = []
                 
-                if texto_eva_limpio.strip():
-                    CORPUS_MANUSCRITO[folio_key].append(texto_eva_limpio.strip())
+                if texto_eva_limpio:
+                    CORPUS_MANUSCRITO[folio_key].append(texto_eva_limpio)
+                    
     except FileNotFoundError:
-        # Si el archivo txt no está cargado todavía, mantendrá los folios básicos y generará el corpus simulado
-        vocablos_base_manuscrito = ["pshoey", "cttey", "oaror", "psoisoda", "kedy", "ceon", "ceey", "qokedy", "ckaur", "chedy", "toes", "odor", "ctair", "oas", "tcbaor", "ctaiin", "cseey", "otair", "opas", "chidí", "podon", "vety", "dic", "quotcey", "raur", "qudicodí"]
+        # Fallback de desarrollo con vocabulario base estructurado
+        vocablos_base_manuscrito = ["pshoey", "cttey", "oaror", "psoisoda", "kedy", "ceon", "ceey", "qokedy", "ckaur", "chedy", "toes", "odor", "ctair", "oas", "tcbaor", "ctaiin", "cseey", "otair", "opas", "chidí", "podon", "vety", "dic", "quotcey", "raur", "qudicodi"]
         for i in range(1, 117):
             for lado in ["r", "v"]:
                 key = f"{i}{lado}"
-                if key not in CORPUS_MANUSCRITO:
-                    lineas_folio = []
-                    num_lineas = 4 + (i % 3)
-                    for L in range(num_lineas):
-                        idx_v = (i + L) % len(vocablos_base_manuscrito)
-                        w1 = vocablos_base_manuscrito[idx_v]
-                        w2 = vocablos_base_manuscrito[(idx_v + 3) % len(vocablos_base_manuscrito)]
-                        w3 = vocablos_base_manuscrito[(idx_v + 6) % len(vocablos_base_manuscrito)]
-                        lineas_folio.append(f"{w1} {w2} {w3} ceon ceey cuta ckaur cedy")
-                    CORPUS_MANUSCRITO[key] = lineas_folio
+                lineas_folio = []
+                num_lineas = 4 + (i % 3)
+                for L in range(num_lineas):
+                    idx_v = (i + L) % len(vocablos_base_manuscrito)
+                    w1 = vocablos_base_manuscrito[idx_v]
+                    w2 = vocablos_base_manuscrito[(idx_v + 3) % len(vocablos_base_manuscrito)]
+                    w3 = vocablos_base_manuscrito[(idx_v + 6) % len(vocablos_base_manuscrito)]
+                    lineas_folio.append(f"{w1} {w2} {w3} ceon ceey cuta ckaur cedy")
+                CORPUS_MANUSCRITO[key] = lineas_folio
