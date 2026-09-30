@@ -1,6 +1,13 @@
 import streamlit as st
 import re
 import urllib.request
+import sys
+import os
+
+# --- CORRECCIÓN DE RUTAS PARA ENCONTRAR MÓDULOS LOCALES EN STREAMLIT CLOUD ---
+ruta_actual = os.path.dirname(os.path.abspath(__file__))
+if ruta_actual not in sys.path:
+    sys.path.append(ruta_actual)
 
 st.set_page_config(page_title="Universal Voynich Translator", page_icon="📜", layout="wide")
 
@@ -49,11 +56,13 @@ IFACE = {
 
 # --- IMPORTACIÓN SEGURO DEL MOTOR MORFOLÓGICO DESDE VOYNIOSDATOS ---
 try:
+    import voynichdatos
     from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN, descomponer_y_traducir_glifo, CORPUS_MANUSCRITO, cargar_todas_las_paginas_reales
-    # Inicializar el corpus local por si se cae la web
+    # Inicializar el corpus local de respaldo
     cargar_todas_las_paginas_reales()
-except ImportError:
-    st.error("Error: Asegúrate de tener el archivo voynichdatos.py en la misma carpeta.")
+except ImportError as e:
+    st.error(f"⚠️ Error de importación: {e}. No se encuentra el archivo 'voynichdatos.py' en el directorio.")
+    st.info(f"Rutas de escaneo de Python: {sys.path}")
     st.stop()
 
 st.title(IFACE[idioma]["titulo"])
@@ -63,7 +72,7 @@ st.write(IFACE[idioma]["sub"])
 @st.cache_data
 def descargar_corpus_web():
     corpus = {}
-    url = "https://voynich.nu/data/ZL3b-n.txt"
+    url = "https://voynich.nu"
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -73,7 +82,7 @@ def descargar_corpus_web():
         with urllib.request.urlopen(req, timeout=15) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
     except Exception as e:
-        # Si falla la descarga, usamos el corpus simulado/local de voynichdatos
+        # Si falla la descarga por red o bloqueo, usa el corpus simulado indexado en voynichdatos
         return CORPUS_MANUSCRITO if CORPUS_MANUSCRITO else None
 
     for linea in lineas:
@@ -127,7 +136,7 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
-# --- NUEVA FUNCIÓN CONECTADA AL MOTOR MORFOLÓGICO MEDIEVAL ---
+# --- PROCESADOR CONECTADO AL MOTOR MORFOLÓGICO DE TU MATRIZ DE TRADUCCIÓN ---
 def traducir_a_romance(texto):
     dicc_activo = DICCIONARIO_ES if idioma == "Español" else DICCIONARIO_EN
     texto_limpio = texto.lower()
@@ -138,7 +147,7 @@ def traducir_a_romance(texto):
     traduccion_lista = []
     
     for pal in palabras:
-        # Ejecuta la descomposición en prefijos, raíces y sufijos definida en voynichdatos
+        # Llama a la función estructurada de tu matriz morfológica
         palabra_fonetica = descomponer_y_traducir_glifo(pal)
         fonetica_lista.append(palabra_fonetica)
         
@@ -155,7 +164,7 @@ def traducir_a_romance(texto):
     return " ".join(fonetica_lista), " ".join(traduccion_lista)
 
 
-# --- INTERFAZ GRÁFICA DE STREAMLIT ---
+# --- INTERFAZ GRÁFICA DE PESTAÑAS (TABS) ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
@@ -181,7 +190,6 @@ with tab2:
             
             st.markdown(f"### Folio Real {folio_seleccionado} - Análisis Estructural")
             
-            # Crear cabeceras de columnas scaneables
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.markdown(f"**{IFACE[idioma]['col1']}**")
@@ -192,7 +200,6 @@ with tab2:
             
             st.markdown("---")
             
-            # Renderizar línea por línea de forma perfectamente alineada
             for linea in lineas_folio:
                 if linea == "[Ilustración o Marcador Vacío]":
                     st.caption(linea)
