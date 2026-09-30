@@ -21,9 +21,10 @@ IFACE = {
         "btn_desc": "Descifrar Folio",
         "res_tit": "Traducción Real para el Fragmento",
         "col1": "1. Texto Limpio (voynich.nu):",
-        "col2": "2. Fonética Romance:",
+        "col2": "2. Fonética Romance Extendida:",
         "col3": "3. Traducción Real:",
-        "cargando": "Conectando con voynich.nu y descargando manuscrito real..."
+        "cargando": "Conectando con voynich.nu y descargando manuscrito real...",
+        "txt_placeholder": "Introduce glifos en EVA (ej: pshoey cttey oaror)..."
     },
     "English": {
         "titulo": "Universal Automatic Voynich Manuscript Translator",
@@ -41,32 +42,19 @@ IFACE = {
         "col1": "1. Cleaned Text (voynich.nu):",
         "col2": "2. Aligned Romance Phonetics:",
         "col3": "3. Real Translation:",
-        "cargando": "Connecting to voynich.nu and fetching real manuscript..."
+        "cargando": "Connecting to voynich.nu and fetching real manuscript...",
+        "txt_placeholder": "Enter EVA glyphs (e.g., pshoey cttey oaror)..."
     }
 }
 
+# --- IMPORTACIÓN SEGURO DEL MOTOR MORFOLÓGICO DESDE VOYNIOSDATOS ---
 try:
-    from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN
+    from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN, descomponer_y_traducir_glifo, CORPUS_MANUSCRITO, cargar_todas_las_paginas_reales
+    # Inicializar el corpus local por si se cae la web
+    cargar_todas_las_paginas_reales()
 except ImportError:
-    # --- DICCIONARIO EXPANDIDO CON RAÍCES EVA FRECUENTES ---
-    DICCIONARIO_ES = {
-        "pui": "la planta", "cuta": "la corteza", "chol": "raíz", "shol": "líquido",
-        "daiin": "el día", "daien": "luz", "choal": "tierra", "sho": "agua",
-        "cthain": "creación", "am": "madre", "al": "el/la", "ar": "elemento",
-        "shey": "esencia", "or": "oro", "ol": "óleo", "otol": "estrellas",
-        "qoke": "fuente", "qok": "que", "ok": "hacia", "otey": "origen",
-        "ched": "cortar", "chedy": "hojas", "lke": "fuego", "shk": "viento",
-        "sol": "sol", "chy": "semilla", "shyn": "brote", "dair": "tallo"
-    }
-    DICCIONARIO_EN = {
-        "pui": "the plant", "cuta": "the bark", "chol": "root", "shol": "liquid",
-        "daiin": "the day", "daien": "light", "choal": "earth", "sho": "water",
-        "cthain": "creation", "am": "mother", "al": "the", "ar": "element",
-        "shey": "essence", "or": "gold", "ol": "oil", "otol": "stars",
-        "qoke": "source", "qok": "which", "ok": "towards", "otey": "origin",
-        "ched": "to cut", "chedy": "leaves", "lke": "fire", "shk": "wind",
-        "sol": "sun", "chy": "seed", "shyn": "sprout", "dair": "stalk"
-    }
+    st.error("Error: Asegúrate de tener el archivo voynichdatos.py en la misma carpeta.")
+    st.stop()
 
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
@@ -75,7 +63,7 @@ st.write(IFACE[idioma]["sub"])
 @st.cache_data
 def descargar_corpus_web():
     corpus = {}
-    url = "https://www.voynich.nu/data/ZL3b-n.txt"
+    url = "https://voynich.nu/data/ZL3b-n.txt"
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -85,18 +73,15 @@ def descargar_corpus_web():
         with urllib.request.urlopen(req, timeout=15) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
     except Exception as e:
-        print(f"Error de conexión detallado: {e}")
-        return None
+        # Si falla la descarga, usamos el corpus simulado/local de voynichdatos
+        return CORPUS_MANUSCRITO if CORPUS_MANUSCRITO else None
 
     for linea in lineas:
         linea = linea.strip()
-        
         if not linea or linea.startswith("#") or linea.startswith("<%") or linea.startswith("=IVTFF"):
             continue
-
         if "Alphabet" in linea or "=" in linea:
             continue
-            
         if re.search(r'<\s*([A-Z?\]\[!]\s*){3,}>', linea) or re.search(r'([A-Z]\s+){3,}[A-Z]', linea):
             continue
 
@@ -121,7 +106,7 @@ def descargar_corpus_web():
             corpus[folio] = []
         corpus[folio].append(texto_limpio)
             
-    return corpus if len(corpus) > 0 else None
+    return corpus if len(corpus) > 0 else CORPUS_MANUSCRITO
 
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
@@ -142,48 +127,26 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
+# --- NUEVA FUNCIÓN CONECTADA AL MOTOR MORFOLÓGICO MEDIEVAL ---
 def traducir_a_romance(texto):
     dicc_activo = DICCIONARIO_ES if idioma == "Español" else DICCIONARIO_EN
     texto_limpio = texto.lower()
     texto_limpio = re.sub(r'[^a-z\s]', '', texto_limpio)
     palabras = texto_limpio.split()
+    
     fonetica_lista = []
     traduccion_lista = []
     
     for pal in palabras:
-        fon = pal
-        # MATRIZ FONÉTICA ESTRICTA (UNIDIRECCIONAL IZQUIERDA -> DERECHA)
-        fon = re.sub(r'qok', 'quoqu', fon)
-        fon = re.sub(r'pcee', 'pi', fon)
-        fon = re.sub(r'pcs', 'pes', fon)
-        fon = re.sub(r'iii', 'í', fon)
-        fon = re.sub(r'eee', 'ei', fon)
-        fon = re.sub(r'eey', 'ai', fon)
-        fon = re.sub(r'pc|ps|cp', 'p', fon)
-        fon = re.sub(r'dce', 'dic', fon)
-        fon = re.sub(r'cee', 'ci', fon)
-        fon = re.sub(r'pdr', 'pedr', fon)
-        fon = re.sub(r'eat', 'it', fon)
-        fon = re.sub(r'dc|tc', 'ch', fon)
-        fon = re.sub(r'ct', 'cut', fon)
-        fon = re.sub(r'ii', 'i', fon)
-        fon = re.sub(r'oo', 'u', fon)
-        fon = re.sub(r'll', 'y', fon)
-        fon = re.sub(r'tt', 't', fon)
-        fon = re.sub(r'ts', 's', fon)
-        fon = re.sub(r'ph', 'f', fon)
-        fon = re.sub(r'th', 't', fon)
-        fon = re.sub(r'ch', 'c', fon)
-        if 'eey' not in pal:
-            fon = re.sub(r'ey', 'a', fon)
-            
-        fonetica_lista.append(fon)
+        # Ejecuta la descomposición en prefijos, raíces y sufijos definida en voynichdatos
+        palabra_fonetica = descomponer_y_traducir_glifo(pal)
+        fonetica_lista.append(palabra_fonetica)
         
-        # Búsqueda aproximada aumentando la tolerancia de Levenshtein a 3 para forzar más traducciones
-        mejor_coincidencia = f"[{fon}]"  # Se encierra entre corchetes si no encuentra traducción exacta
+        # Búsqueda aproximada mediante Levenshtein (Tolerancia 3)
+        mejor_coincidencia = f"[{palabra_fonetica}]"
         menor_distancia = 999
         for k, v in dicc_activo.items():
-            dist = distancia_levenshtein(fon, k)
+            dist = distancia_levenshtein(palabra_fonetica, k)
             if dist < menor_distancia and dist <= 3:
                 menor_distancia = dist
                 mejor_coincidencia = v
@@ -191,39 +154,58 @@ def traducir_a_romance(texto):
         
     return " ".join(fonetica_lista), " ".join(traduccion_lista)
 
+
 # --- INTERFAZ GRÁFICA DE STREAMLIT ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
     st.subheader(IFACE[idioma]["lab_sub"])
-    texto_usuario = st.text_area("Input / Entrada:", "pui cuta chol")
-    if st.button(IFACE[idioma]["btn_an"]):
-        fon, trad = traducir_a_romance(texto_usuario)
-        st.markdown(f"**{IFACE[idioma]['fon_rom']}** {fon}")
-        st.markdown(f"**{IFACE[idioma]['trad_auto']}** {trad}")
+    texto_libre = st.text_area("Input EVA Texto:", placeholder=IFACE[idioma]["txt_placeholder"], height=150)
+    
+    if st.button(IFACE[idioma]["btn_an"], key="btn_libre"):
+        if texto_libre:
+            fon_res, trad_res = traducir_a_romance(texto_libre)
+            st.markdown(f"### {IFACE[idioma]['res_tit']}")
+            st.info(f"**{IFACE[idioma]['fon_rom']}**\n\n {fon_res}")
+            st.success(f"**{IFACE[idioma]['trad_auto']}**\n\n {trad_res}")
 
 with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
+    
     if CORPUS_REAL:
-        def extraer_numero_folio(x):
-            match = re.search(r'\d+', x)
-            return int(match.group(0)) if match else 0
-
-        folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: [extraer_numero_folio(x), x[-1]])
+        folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: (int(re.sub(r'\D', '', x)), x[-1]))
         folio_seleccionado = st.selectbox(IFACE[idioma]["nav_sel"], folios_disponibles)
         
-        if st.button(IFACE[idioma]["btn_desc"]):
-            st.write(f"### {IFACE[idioma]['res_tit']} {folio_seleccionado}")
+        if st.button(IFACE[idioma]["btn_desc"], key="btn_folio"):
             lineas_folio = CORPUS_REAL[folio_seleccionado]
             
-            for l in lineas_folio:
-                fon, trad = traducir_a_romance(l)
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.info(f"**{IFACE[idioma]['col1']}**\n{l}")
-                with col2:
-                    st.success(f"**{IFACE[idioma]['col2']}**\n{fon}")
-                with col3:
-                    st.warning(f"**{IFACE[idioma]['col3']}**\n{trad}")
+            st.markdown(f"### Folio Real {folio_seleccionado} - Análisis Estructural")
+            
+            # Crear cabeceras de columnas scaneables
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.markdown(f"**{IFACE[idioma]['col1']}**")
+            with col2:
+                st.markdown(f"**{IFACE[idioma]['col2']}**")
+            with col3:
+                st.markdown(f"**{IFACE[idioma]['col3']}**")
+            
+            st.markdown("---")
+            
+            # Renderizar línea por línea de forma perfectamente alineada
+            for linea in lineas_folio:
+                if linea == "[Ilustración o Marcador Vacío]":
+                    st.caption(linea)
+                    continue
+                
+                fon_l, trad_l = traducir_a_romance(linea)
+                
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    st.code(linea, language="text")
+                with c2:
+                    st.warning(fon_l)
+                with c3:
+                    st.success(trad_l)
     else:
-        st.error("No se pudo cargar el corpus real de voynich.nu. Verifica tu conexión de red o los permisos de salida del entorno.")
+        st.error("No se pudo cargar el Corpus Real del manuscrito Voynich.")
