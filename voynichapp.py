@@ -67,18 +67,19 @@ except ImportError:
 
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
-# --- DESCARGA AUTOMÁTICA DESDE EL SERVIDOR DE YALE ---
+
+# --- DESCARGA Y LIMPIEZA AUTOMÁTICA DESDE VOYNICH.NU ---
 @st.cache_data
 def descargar_corpus_web():
     corpus = {}
-    url = "https://www.voynich.nu/data/ZL3b-n.txt"
+    url = "https://voynich.nu/data/ZL3b-n.txt"
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'text/plain,text/html'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)',
+            'Accept': 'text/plain,text/html,application/xhtml+xml'
         }
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=12) as response:
+        with urllib.request.urlopen(req, timeout=15) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
     except Exception:
         return CORPUS_MANUSCRITO if CORPUS_MANUSCRITO else None
@@ -88,6 +89,8 @@ def descargar_corpus_web():
         if not linea or linea.startswith("#") or linea.startswith("<%") or linea.startswith("=IVTFF"):
             continue
         if "Alphabet" in linea or "=" in linea:
+            continue
+        if re.search(r'<\s*([A-Z?\]\[!]\s*){3,}>', linea) or re.search(r'([A-Z]\s+){3,}[A-Z]', linea):
             continue
 
         match_folio = re.search(r'<f(\d+[r|v])', linea)
@@ -115,7 +118,6 @@ def descargar_corpus_web():
 
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
-
 def distancia_levenshtein(s1, s2):
     if len(s1) < len(s2):
         return distancia_levenshtein(s2, s1)
@@ -132,8 +134,8 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
-        st.error("No se pudo cargar el Corpus Real.")
-# --- DECLARACIÓN LOCAL DE REGLAS DE EXTRACTOR (EVITA CONFLICTOS DE IMPORTACIÓN) ---
+
+# --- DECLARACIÓN LOCAL DE REGLAS DE EXTRACTOR MORFOLÓGICO ---
 PREFIJOS_LOCAL = {
     r"^tcs": "trans", r"^cs": "sub", r"^pc": "per", r"^ceo": "re", r"^ce": "re",
     r"^ol": "com", r"^cp": "super", r"^y": "in", r"^qok": "com", r"^qo": "con", 
@@ -200,7 +202,7 @@ def traducir_a_romance(texto):
     dicc_activo = DICCIONARIO_ES if idioma == "Español" else DICCIONARIO_EN
     texto_limpio = texto.lower()
     
-    # CORRECCIÓN VITAL: Reemplazar los puntos de separación de palabras por espacios ANTES de borrar caracteres raros
+    # CORRECCIÓN DE FRAGMENTACIÓN: Convertir puntos en espacios antes del filtrado
     texto_limpio = texto_limpio.replace('.', ' ')
     texto_limpio = re.sub(r'<[^>]+>', ' ', texto_limpio)
     texto_limpio = re.sub(r'\d+', ' ', texto_limpio)
@@ -214,11 +216,9 @@ def traducir_a_romance(texto):
         if not pal.strip() or len(pal) <= 1:
             continue
             
-        # Ejecución del nuevo motor local unificado
         palabra_traducida = procesar_palabra_local(pal)
         fonetica_lista.append(palabra_traducida)
         
-        # Cruzar con diccionario base mediante Levenshtein
         mejor_coincidencia = None
         menor_distancia = 999
         for k, v in dicc_activo.items():
@@ -234,7 +234,7 @@ def traducir_a_romance(texto):
         
     return " ".join(fonetica_lista), " ".join(traduccion_lista)
 
-# --- CONFIGURACIÓN DE PESTAÑAS ---
+# --- CONFIGURACIÓN DE PESTAÑAS Y CONTROLADORES GRÁFICOS ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
