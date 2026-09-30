@@ -41,8 +41,6 @@ try:
     import voynichdatos
     DICCIONARIO_ES = voynichdatos.DICCIONARIO_ES
     DICCIONARIO_EN = voynichdatos.DICCIONARIO_EN
-    CORPUS_MANUSCRITO = voynichdatos.CORPUS_MANUSCRITO
-    voynichdatos.cargar_todas_las_paginas_reales()
 except ImportError:
     st.error("⚠️ Error crítico: Verifica que el archivo voynichdatos.py exista en la misma carpeta.")
     st.stop()
@@ -53,14 +51,15 @@ st.write(IFACE[idioma]["sub"])
 @st.cache_data
 def descargar_corpus_web():
     corpus = {}
-    url = "https://voynich.nu"
+    url = "https://voynich.nu/data/ZL3b-n.txt"
     try:
-        headers = {'User-Agent': 'Mozilla/5.0', 'Accept': 'text/plain,text/html'}
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'Accept': 'text/plain,text/html'}
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=15) as response:
+        with urllib.request.urlopen(req, timeout=20) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
-    except Exception:
-        return CORPUS_MANUSCRITO
+    except Exception as e:
+        st.sidebar.error(f"⚠️ Error de red con voynich.nu: {e}")
+        return None
 
     for linea in lineas:
         linea = linea.strip()
@@ -81,11 +80,10 @@ def descargar_corpus_web():
         if folio not in corpus:
             corpus[folio] = []
         corpus[folio].append(texto_limpio)
-    return corpus if len(corpus) > 0 else CORPUS_MANUSCRITO
+    return corpus
 
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
-
 def distancia_levenshtein(s1, s2):
     if len(s1) < len(s2): return distancia_levenshtein(s2, s1)
     if len(s2) == 0: return len(s1)
@@ -136,7 +134,6 @@ def generar_traduccion_emergencia(palabra_original):
             break
     r_final = RAICES_LOCAL.get(r_restante, r_restante)
     
-    # --- ASIGNACIÓN DE SIGNIFICADOS DIVERSOS MEDIANTE HASH CALCULADO ---
     if r_final == r_restante:
         VOCABULARIO_MEDIEVAL = [
             "esencia", "tallo", "infusión", "compuesto", "filamento", 
@@ -157,8 +154,14 @@ def traducir_a_romance(texto):
     fon_l, trad_l = [], []
     for pal in palabras:
         if not pal.strip() or len(pal) <= 1: continue
-        p_fon = voynichdatos.descomponer_y_traducir_glifo(pal)
+        
+        p_fon = pal
+        for glifo, reemp in SUSTITUCION_GLIFOS_LOCAL:
+            if glifo in p_fon:
+                if glifo == "ey" and "eey" in pal: continue
+                p_fon = p_fon.replace(glifo, reemp)
         fon_l.append(p_fon)
+        
         m_coincidencia, m_dist = None, 999
         for k, v in dicc_activo.items():
             dist = distancia_levenshtein(p_fon, k)
@@ -196,4 +199,4 @@ with tab2:
                 col2.warning(f_linea)
                 col3.success(t_linea)
     else:
-        st.error("No se pudo cargar el Corpus Real.")
+        st.error("No se pudo conectar a voynich.nu para descargar el corpus en vivo.")
