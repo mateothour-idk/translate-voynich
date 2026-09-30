@@ -131,6 +131,8 @@ def distancia_levenshtein(s1, s2):
             fila_actual.append(min(inserciones, eliminaciones, sustituciones))
         fila_previa = fila_actual
     return fila_previa[-1]
+
+        st.error("No se pudo cargar el Corpus Real.")
 # --- DECLARACIÓN LOCAL DE REGLAS DE EXTRACTOR (EVITA CONFLICTOS DE IMPORTACIÓN) ---
 PREFIJOS_LOCAL = {
     r"^tcs": "trans", r"^cs": "sub", r"^pc": "per", r"^ceo": "re", r"^ce": "re",
@@ -198,7 +200,8 @@ def traducir_a_romance(texto):
     dicc_activo = DICCIONARIO_ES if idioma == "Español" else DICCIONARIO_EN
     texto_limpio = texto.lower()
     
-    # Limpieza exhaustiva de marcadores tipográficos de voynich.nu
+    # CORRECCIÓN VITAL: Reemplazar los puntos de separación de palabras por espacios ANTES de borrar caracteres raros
+    texto_limpio = texto_limpio.replace('.', ' ')
     texto_limpio = re.sub(r'<[^>]+>', ' ', texto_limpio)
     texto_limpio = re.sub(r'\d+', ' ', texto_limpio)
     texto_limpio = re.sub(r'[^a-z\s]', '', texto_limpio)
@@ -211,7 +214,7 @@ def traducir_a_romance(texto):
         if not pal.strip() or len(pal) <= 1:
             continue
             
-        # Ejecución forzada del nuevo motor local unificado
+        # Ejecución del nuevo motor local unificado
         palabra_traducida = procesar_palabra_local(pal)
         fonetica_lista.append(palabra_traducida)
         
