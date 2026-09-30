@@ -53,7 +53,7 @@ st.write(IFACE[idioma]["sub"])
 @st.cache_data
 def descargar_corpus_web():
     corpus = {}
-    url = "https://voynich.nu/data/ZL3b-n.txt"
+    url = "https://voynich.nu"
     try:
         headers = {'User-Agent': 'Mozilla/5.0', 'Accept': 'text/plain,text/html'}
         req = urllib.request.Request(url, headers=headers)
@@ -135,12 +135,17 @@ def generar_traduccion_emergencia(palabra_original):
             r_restante = r_restante[:-len(pat.replace("$", ""))]
             break
     r_final = RAICES_LOCAL.get(r_restante, r_restante)
+    
+    # --- ASIGNACIÓN DE SIGNIFICADOS DIVERSOS MEDIANTE HASH CALCULADO ---
     if r_final == r_restante:
-        if r_final.endswith(('is', 'us')): r_final = "compuesto"
-        elif r_final.endswith(('let', 'ar', 'al')): r_final = "filamento"
-        elif r_final.startswith(('sho', 'so', 'sa')): r_final = "infusión"
-        elif r_final.startswith(('ch', 'c')): r_final = "tallo"
-        else: r_final = "esencia"
+        VOCABULARIO_MEDIEVAL = [
+            "esencia", "tallo", "infusión", "compuesto", "filamento", 
+            "resina", "brote", "licor", "remedio", "ungüento", 
+            "extracto", "cáliz", "mineral", "savia", "raíz"
+        ]
+        indice_dinamico = sum(ord(char) for char in r_final) % len(VOCABULARIO_MEDIEVAL)
+        r_final = VOCABULARIO_MEDIEVAL[indice_dinamico]
+        
     return f"{p_trad}{r_final}{s_trad}".strip()
 
 def traducir_a_romance(texto):
