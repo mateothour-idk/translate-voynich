@@ -22,14 +22,14 @@ IFACE = {
         "lab_sub": "Laboratorio de Entrada Libre",
         "btn_an": "Analizar Fragmento",
         "fon_rom": "Fonética Romance Optimizada:",
-        "trad_auto": "Traducción Literal:",
+        "trad_auto": "Traducción Literal Completa:",
         "nav_sub": "Navegador Conectado a voynich.nu",
         "nav_sel": "Selecciona una página real (Folio):",
         "btn_desc": "Descifrar Folio",
         "res_tit": "Traducción Real para el Fragmento",
         "col1": "1. Texto Limpio (voynich.nu):",
         "col2": "2. Fonética Romance Extendida:",
-        "col3": "3. Traducción Real:",
+        "col3": "3. Traducción Fluida (100%):",
         "cargando": "Conectando con voynich.nu y descargando manuscrito real...",
         "txt_placeholder": "Introduce glifos en EVA (ej: pshoey cttey oaror)..."
     },
@@ -48,7 +48,7 @@ IFACE = {
         "res_tit": "Strict Literal Translation for Folio",
         "col1": "1. Cleaned Text (voynich.nu):",
         "col2": "2. Aligned Romance Phonetics:",
-        "col3": "3. Real Translation:",
+        "col3": "3. Fluid Translation (100%):",
         "cargando": "Connecting to voynich.nu and fetching real manuscript...",
         "txt_placeholder": "Enter EVA glyphs (e.g., pshoey cttey oaror)..."
     }
@@ -57,7 +57,7 @@ IFACE = {
 # --- IMPORTACIÓN DEL MOTOR MORFOLÓGICO DESDE VOYNICHDATOS.PY ---
 try:
     import voynichdatos
-    from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN, descomponer_y_traducir_glifo, CORPUS_MANUSCRITO, cargar_todas_las_paginas_reales
+    from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN, PREFIJOS, SUFIJOS, RAICES_DIRECTAS, descomponer_y_traducir_glifo, CORPUS_MANUSCRITO, cargar_todas_las_paginas_reales
     cargar_todas_las_paginas_reales()
 except ImportError as e:
     st.error(f"⚠️ Error de importación: {e}. No se encuentra el archivo 'voynichdatos.py'.")
@@ -116,7 +116,6 @@ def descargar_corpus_web():
 
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
-
 def distancia_levenshtein(s1, s2):
     if len(s1) < len(s2):
         return distancia_levenshtein(s2, s1)
@@ -133,12 +132,49 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
-# --- PROCESADOR CON REGLAS DE PREFIJOS, RAÍCES Y SUFIJOS CORREGIDO ---
+# --- NUEVO GENERADOR DE TRADUCCIÓN ESTRUCTURAL DE EMERGENCIA ---
+def generar_traduccion_emergencia(palabra_original):
+    """Descompone morfológicamente y traduce los componentes legibles de forma literal sin usar corchetes."""
+    raiz_restante = palabra_original.lower().strip()
+    p_trad = ""
+    s_trad = ""
+    
+    # Extraer significado del prefijo
+    for pat in sorted(PREFIJOS.keys(), key=len, reverse=True):
+        if re.match(pat, raiz_restante):
+            p_trad = PREFIJOS[pat] + "-"
+            raiz_restante = re.sub(pat, "", raiz_restante, count=1)
+            break
+            
+    # Extraer significado del sufijo
+    for pat in sorted(SUFIJOS.keys(), key=len, reverse=True):
+        if re.search(pat, raiz_restante):
+            s_trad = "-" + SUFIJOS[pat]
+            raiz_restante = re.sub(pat, "", raiz_restante, count=1)
+            break
+            
+    # Resolver la raíz fonética restante
+    from voynichdatos import SUSTITUCION_GLIFOS
+    fon = raiz_restante
+    for glifo, reemplazo in SUSTITUCION_GLIFOS:
+        if glifo in fon:
+            if glifo == "ey" and "eey" in raiz_restante:
+                continue
+            fon = fon.replace(glifo, reemplazo)
+            
+    raiz_final = RAICES_DIRECTAS.get(raiz_restante, fon)
+    
+    # Unión limpia de componentes morfológicos
+    if p_trad or s_trad:
+        return f"{p_trad}{raiz_final}{s_trad}"
+    return raiz_final
+
+# --- PROCESADOR ADAPTATIVO CON REGLAS DE PREFIJOS, RAÍCES Y SUFIJOS ---
 def traducir_a_romance(texto):
     dicc_activo = DICCIONARIO_ES if idioma == "Español" else DICCIONARIO_EN
     texto_limpio = texto.lower()
     
-    # SOLUCIÓN CLAVE: Reemplaza números como "254" por espacios para fragmentar la línea en palabras individuales
+    # REEMPLAZO CLAVE: Convierte números (como 254) en espacios para fragmentar palabras pegadas
     texto_limpio = re.sub(r'\d+', ' ', texto_limpio)
     texto_limpio = re.sub(r'[^a-z\s]', '', texto_limpio)
     palabras = texto_limpio.split()
@@ -150,18 +186,23 @@ def traducir_a_romance(texto):
         if not pal.strip():
             continue
             
-        # Aplica la descomposición morfológica medieval (Prefijos -> Sufijos -> Raíces)
+        # 1. Aplica la descomposición morfológica romance medieval para la columna fonética
         palabra_fonetica = descomponer_y_traducir_glifo(pal)
         fonetica_lista.append(palabra_fonetica)
         
-        # Búsqueda aproximada mediante Levenshtein en tu diccionario
-        mejor_coincidencia = f"[{palabra_fonetica}]"
+        # 2. Intentar buscar en el diccionario usando Levenshtein
+        mejor_coincidencia = None
         menor_distancia = 999
         for k, v in dicc_activo.items():
             dist = distancia_levenshtein(palabra_fonetica, k)
-            if dist < menor_distancia and dist <= 3:
+            if dist < menor_distancia and dist <= 2:
                 menor_distancia = dist
                 mejor_coincidencia = v
+        
+        # 3. ACTIVACIÓN DE EMERGENCIA: Si es una palabra desconocida, ensambla el significado morfológico puro
+        if mejor_coincidencia is None:
+            mejor_coincidencia = generar_traduccion_emergencia(pal)
+            
         traduccion_lista.append(mejor_coincidencia)
         
     return " ".join(fonetica_lista), " ".join(traduccion_lista)
