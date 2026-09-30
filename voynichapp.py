@@ -4,7 +4,7 @@ import urllib.request
 import sys
 import os
 
-# --- CORRECCIÓN DE RUTAS PARA ENCONTRAR MÓDULOS LOCALES EN STREAMLIT CLOUD ---
+# --- CORRECCIÓN DE RUTAS PARA ENCONTRAR MÓDULOS LOCALES ---
 ruta_actual = os.path.dirname(os.path.abspath(__file__))
 if ruta_actual not in sys.path:
     sys.path.append(ruta_actual)
@@ -54,35 +54,32 @@ IFACE = {
     }
 }
 
-# --- IMPORTACIÓN SEGURO DEL MOTOR MORFOLÓGICO DESDE VOYNIOSDATOS ---
+# --- IMPORTACIÓN DEL MOTOR MORFOLÓGICO DESDE VOYNICHDATOS.PY ---
 try:
     import voynichdatos
     from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN, descomponer_y_traducir_glifo, CORPUS_MANUSCRITO, cargar_todas_las_paginas_reales
-    # Inicializar el corpus local de respaldo
     cargar_todas_las_paginas_reales()
 except ImportError as e:
-    st.error(f"⚠️ Error de importación: {e}. No se encuentra el archivo 'voynichdatos.py' en el directorio.")
-    st.info(f"Rutas de escaneo de Python: {sys.path}")
+    st.error(f"⚠️ Error de importación: {e}. No se encuentra el archivo 'voynichdatos.py'.")
     st.stop()
 
 st.title(IFACE[idioma]["titulo"])
 st.write(IFACE[idioma]["sub"])
 
-# --- DESCARGA Y LIMPIEZA AUTOMÁTICA DESDE EL SITIO WEB OFICIAL (FORMATO ZL3b-n) ---
+# --- DESCARGA Y LIMPIEZA AUTOMÁTICA DESDE VOYNICH.NU ---
 @st.cache_data
 def descargar_corpus_web():
     corpus = {}
-    url = "https://voynich.nu"
+    url = "https://voynich.nu/data/ZL3b-n.txt
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/plain,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)',
+            'Accept': 'text/plain,text/html,application/xhtml+xml'
         }
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=15) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
-    except Exception as e:
-        # Si falla la descarga por red o bloqueo, usa el corpus simulado indexado en voynichdatos
+    except Exception:
         return CORPUS_MANUSCRITO if CORPUS_MANUSCRITO else None
 
     for linea in lineas:
@@ -103,7 +100,7 @@ def descargar_corpus_web():
         texto_crudo = re.sub(r'^<[^>]+>', '', linea)
         texto_crudo = re.sub(r'<\s*([A-Z]\s*)+>', ' ', texto_crudo)
         texto_crudo = re.sub(r'\{[^}]*\}', ' ', texto_crudo)
-        texto_crudo = re.sub(r'[-.=,;\$*!{}\[\]\d?:]', ' ', texto_crudo)
+        texto_crudo = re.sub(r'[-.=,;\$*!{}\[\]?:]', ' ', texto_crudo)
         
         texto_crudo = texto_crudo.replace('ý', 'y').replace('í', 'i')
         texto_limpio = " ".join(texto_crudo.split())
@@ -136,10 +133,13 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
-# --- PROCESADOR CONECTADO AL MOTOR MORFOLÓGICO DE TU MATRIZ DE TRADUCCIÓN ---
+# --- PROCESADOR CON REGLAS DE PREFIJOS, RAÍCES Y SUFIJOS CORREGIDO ---
 def traducir_a_romance(texto):
     dicc_activo = DICCIONARIO_ES if idioma == "Español" else DICCIONARIO_EN
     texto_limpio = texto.lower()
+    
+    # SOLUCIÓN CLAVE: Reemplaza números como "254" por espacios para fragmentar la línea en palabras individuales
+    texto_limpio = re.sub(r'\d+', ' ', texto_limpio)
     texto_limpio = re.sub(r'[^a-z\s]', '', texto_limpio)
     palabras = texto_limpio.split()
     
@@ -147,11 +147,14 @@ def traducir_a_romance(texto):
     traduccion_lista = []
     
     for pal in palabras:
-        # Llama a la función estructurada de tu matriz morfológica
+        if not pal.strip():
+            continue
+            
+        # Aplica la descomposición morfológica medieval (Prefijos -> Sufijos -> Raíces)
         palabra_fonetica = descomponer_y_traducir_glifo(pal)
         fonetica_lista.append(palabra_fonetica)
         
-        # Búsqueda aproximada mediante Levenshtein (Tolerancia 3)
+        # Búsqueda aproximada mediante Levenshtein en tu diccionario
         mejor_coincidencia = f"[{palabra_fonetica}]"
         menor_distancia = 999
         for k, v in dicc_activo.items():
@@ -164,7 +167,7 @@ def traducir_a_romance(texto):
     return " ".join(fonetica_lista), " ".join(traduccion_lista)
 
 
-# --- INTERFAZ GRÁFICA DE PESTAÑAS (TABS) ---
+# --- INTERFAZ GRÁFICA ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
@@ -215,4 +218,4 @@ with tab2:
                 with c3:
                     st.success(trad_l)
     else:
-        st.error("No se pudo cargar el Corpus Real del manuscrito Voynich.")
+        st.error("No se pudo cargar el Corpus Real.")
