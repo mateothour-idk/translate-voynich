@@ -45,18 +45,16 @@ DICCIONARIO_EN = {
     "doror": "birth", "quaur": "heat", "caud": "stem", "cedy": "cut", "cidí": "pour"
 }
 
-# NUEVO: Diccionario para identificar códigos Currier, marcadores de párrafo y macroglifos
 DICCIONARIO_MACRO_GLIFOS = {
     "QA": "[Sección Astral]", "PC": "[Párrafo Central]", "FB": "[Folio Botánico]", 
     "B2": "[Grupo Biológico 2]", "IH": "[Ilustración de Herboristería]", "LA": "[Línea Alta]", 
-    "H1": "[Encabezado Principal]", "C1": "[Cifrado Primario]", "QA": "[Sección Astral]", 
-    "PC": "[Párrafo Central]", "IH": "[Ilustración Central]", "LA": "[Línea Superior]"
+    "H1": "[Encabezado Principal]", "C1": "[Cifrado Primario]"
 }
 
 CORPUS_MANUSCRITO = {}
 
 def cargar_todas_las_paginas_reales():
-    """Indexa las páginas conservando las estructuras de mayúsculas macro-glíficas sin corromperlas."""
+    """Indexa de forma segura el manuscrito extrayendo texto puro para evitar fallos de renderizado."""
     global CORPUS_MANUSCRITO
     CORPUS_MANUSCRITO.clear()
     
@@ -68,11 +66,16 @@ def cargar_todas_las_paginas_reales():
                     continue
                 
                 partes = linea.split(maxsplit=1)
-                if len(partes) < 2:
+                
+                # CORRECCIÓN CLAVE: Extraer strings específicos en lugar de la lista completa
+                if len(partes) == 1:
+                    identificador = partes[0]
+                    texto_eva = " "
+                elif len(partes) >= 2:
+                    identificador = partes[0]
+                    texto_eva = partes[1]
+                else:
                     continue
-                    
-                identificador = partes[0]
-                texto_eva = partes[1]
                 
                 match = re.search(r'(\d+[rv])', identificador)
                 if match:
@@ -80,7 +83,7 @@ def cargar_todas_las_paginas_reales():
                 else:
                     continue
                 
-                # Quitar llaves y corchetes de comentarios pero conservar combinaciones alfanuméricas
+                # Limpieza exhaustiva de metadatos tipográficos ruidosos
                 texto_eva_limpio = re.sub(r'\{.*?\}|\[.*?\]', '', texto_eva)
                 texto_eva_limpio = re.sub(r'%|\@|;\d*|[:\$\-\+=<>\/]', '', texto_eva_limpio)
                 texto_eva_limpio = re.sub(r'[*.,!?]', '', texto_eva_limpio)
@@ -91,8 +94,11 @@ def cargar_todas_las_paginas_reales():
                 
                 if texto_eva_limpio:
                     CORPUS_MANUSCRITO[folio_key].append(texto_eva_limpio)
+                else:
+                    CORPUS_MANUSCRITO[folio_key].append("[Ilustración o Marcador Vacío]")
                     
     except FileNotFoundError:
+        # Copia de seguridad simulada estructurada
         vocablos_base_manuscrito = ["pshoey", "cttey", "oaror", "psoisoda", "kedy", "ceon", "ceey", "qokedy", "ckaur", "chedy", "toes", "odor", "ctair", "oas", "tcbaor", "ctaiin", "cseey", "otair", "opas", "chidí", "podon", "vety", "dic", "quotcey", "raur", "qudicodi"]
         for i in range(1, 117):
             for lado in ["r", "v"]:
