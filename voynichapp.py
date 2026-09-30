@@ -75,7 +75,7 @@ st.write(IFACE[idioma]["sub"])
 @st.cache_data
 def descargar_corpus_web():
     corpus = {}
-    url = "http://voynich.nu"
+    url = "https://www.voynich.nu/data/ZL3b-n.txt"
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
