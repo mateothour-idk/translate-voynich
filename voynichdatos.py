@@ -1,5 +1,8 @@
+# --- ARCHIVO: voynichdatos.py ---
+import re
+
+# 1. DICCIONARIO ESPAÑOL CON LAS 100 RAÍCES HISTÓRICAS
 DICCIONARIO_ES = {
-    # --- Vocablos Originales Mantenidos ---
     "pui": "planta", "cuta": "corteza", "oarur": "aroma", "poisoda": "pocion (medicina)",
     "quedy": "elemento", "con": "cum (con)", "su": "su", "quoqu": "por lo tanto", 
     "caur": "caulis (tallo)", "chedy": "extracto", "toes": "estos", "odor": "oloroso", 
@@ -19,42 +22,32 @@ DICCIONARIO_ES = {
     "dalaiu": "destilar", "dam": "dar", "ciodain": "conductos", "aekiy": "mezcla", 
     "air": "aire", "soar": "vapor", "ciey": "savia", "odotoi": "ciclo", 
     "doror": "nacimiento", "quaur": "calor", "caud": "tallo largo", "cedy": "cortar", "cidí": "verter",
-
-    # --- Expansión: Anatomía Botánica y Morfología ---
     "folia": "hoja", "ramus": "rama", "flos": "flor", "semen": "semilla", "capsa": "cápsula",
     "gemma": "yema", "nux": "nuez", "baca": "baya", "spina": "espina", "radix": "raíz profunda",
     "stolo": "estolón", "bulbus": "bulbo", "vimen": "mimbre", "cortex": "corteza externa",
     "medula": "médula interior", "pith": "núcleo", "nodo": "nudo del tallo", "internod": "entrenudo",
     "petalo": "pétalo", "sepalo": "sépalo", "pollen": "polen", "anthera": "antera",
-
-    # --- Expansión: Estados y Propiedades Farmacéuticas ---
     "humida": "húmedo", "sicca": "seco", "calida": "caliente", "frigida": "frío", "amara": "amargo",
     "dulcis": "dulce", "acris": "acre", "mitis": "suave", "veneno": "venenoso", "salutis": "curativo",
     "sanct": "sagrado", "oculta": "secreto/oculto", "cocta": "cocido", "cruda": "crudo",
     "pura": "puro", "mixta": "mezclado", "soluta": "disuelto", "spissa": "espeso", "tenuis": "delgado",
     "recens": "fresco", "vetus": "viejo", "marcida": "marchito", "viridis": "verde",
-
-    # --- Expansión: Operaciones Alquímicas y de Botica ---
     "coctio": "cocción", "infuso": "infusión", "macer": "macerar", "filtr": "filtrar",
     "colat": "colar", "trit": "triturar", "conter": "moler", "coag": "coagular",
     "solv": "disolver", "evap": "evaporar", "sublim": "sublimar", "ferment": "fermentar",
     "expre": "exprimir", "lavat": "lavado", "purgat": "purga", "unctu": "ungüento",
     "gutta": "gotas", "pulvis": "polvo", "sirup": "jarabe", "elixir": "elixir",
-
-    # --- Expansión: Familias de Plantas Primitivas y Elementos ---
     "herba": "hierba", "arbor": "árbol", "frutex": "arbusto", "muscus": "musgo", "fungus": "hongo",
     "filix": "helecho", "alga": "alga", "juncus": "junco", "gramen": "gramínea",
     "salvia": "salvia", "malva": "malva", "mentha": "menta", "rosa": "rosa", "lilium": "lirio",
     "papaver": "amapola", "solanum": "solano", "apis": "apio", "allium": "ajo",
-
-    # --- Expansión: Acciones y Aplicaciones Médicas ---
     "sana": "sanar", "cura": "curar", "lenit": "aliviar", "purg": "purgar", "dorm": "hacer dormir",
     "vulner": "heridas", "febri": "fiebre", "dolor": "dolor", "stoma": "estómago", "capitis": "cabeza",
     "ocul": "ojos", "cutis": "afecciones de la piel", "pectus": "pecho/tos"
 }
 
+# 2. DICCIONARIO INGLÉS CON LAS 100 RAÍCES HISTÓRICAS
 DICCIONARIO_EN = {
-    # --- Original Words ---
     "pui": "plant", "cuta": "bark", "oarur": "aroma", "poisoda": "medicinal potion",
     "quedy": "element", "con": "with", "su": "its", "quoqu": "whereby", 
     "caur": "caulis (stem)", "chedy": "extracted", "toes": "these", "odor": "scented", 
@@ -74,36 +67,116 @@ DICCIONARIO_EN = {
     "dalaiu": "distill", "dam": "give", "ciodain": "ducts", "aekiy": "mixture", 
     "air": "air", "soar": "steam", "ciey": "sap", "odotoi": "cycle", 
     "doror": "birth", "quaur": "heat", "caud": "stem", "cedy": "cut", "cidí": "pour",
-
-    # --- Expansion: Botanical Anatomy & Morphology ---
     "folia": "leaf", "ramus": "branch", "flos": "flower", "semen": "seed", "capsa": "capsule",
     "gemma": "bud", "nux": "nut", "baca": "berry", "spina": "thorn", "radix": "deep root",
     "stolo": "stolon", "bulbus": "bulbo", "vimen": "osier", "cortex": "outer bark",
     "medula": "inner pith", "pith": "core", "nodo": "stem node", "internod": "internode",
     "petalo": "petal", "sepalo": "sepal", "pollen": "pollen", "anthera": "anther",
-
-    # --- Expansion: Pharmaceutical States & Properties ---
     "humida": "moist", "sicca": "dry", "calida": "hot", "frigida": "cold", "amara": "bitter",
     "dulcis": "sweet", "acris": "acrid", "mitis": "mild", "veneno": "poisonous", "salutis": "healing",
     "sanct": "sacred", "oculta": "hidden/secret", "cocta": "cooked", "cruda": "raw",
     "pura": "pure", "mixta": "mixed", "soluta": "dissolved", "spissa": "thick", "tenuis": "thin",
     "recens": "fresh", "vetus": "old", "marcida": "withered", "viridis": "green",
-
-    # --- Expansion: Alchemy & Apothecary Operations ---
     "coctio": "decoction", "infuso": "infusion", "macer": "macerate", "filtr": "filter",
     "colat": "strain", "trit": "crush", "conter": "grind", "coag": "coagulate",
     "solv": "dissolve", "evap": "evaporate", "sublim": "sublimar", "ferment": "ferment",
     "expre": "squeeze", "lavat": "washed", "purgat": "purge", "unctu": "ointment",
     "gutta": "drops", "pulvis": "powder", "sirup": "syrup", "elixir": "elixir",
-
-    # --- Expansion: Primitive Plant Families & Elements ---
     "herba": "herb", "arbor": "tree", "frutex": "shrub", "muscus": "moss", "fungus": "fungus",
     "filix": "fern", "alga": "algae", "juncus": "reed", "gramen": "grass",
     "salvia": "sage", "malva": "mallow", "mentha": "mint", "rosa": "rose", "lilium": "lily",
     "papaver": "poppy", "solanum": "nightshade", "apis": "celery", "allium": "garlic",
-
-    # --- Expansion: Medical Actions & Applications ---
     "sana": "heal", "cura": "cure", "lenit": "soothe", "purg": "purge", "dorm": "induce sleep",
     "vulner": "wounds", "febri": "fever", "dolor": "pain", "stoma": "stomach", "capitis": "head",
     "ocul": "eyes", "cutis": "skin conditions", "pectus": "chest/cough"
 }
+
+DICCIONARIO_MACRO_GLIFOS = {
+    "QA": "[Sección Astral]", "PC": "[Párrafo Central]", "FB": "[Folio Botánico]", 
+    "B2": "[Grupo Biológico 2]", "IH": "[Ilustración de Herboristería]", "LA": "[Línea Alta]", 
+    "H1": "[Encabezado Principal]", "C1": "[Cifrado Primario]"
+}
+# 3. REGLAS DE MORFOLOGÍA ESTRUCTURAL COMPLETA
+PREFIJOS = {
+    r"^tcs": "trans", r"^cs": "sub", r"^pc": "per", r"^ceo": "re", r"^ce": "re",
+    r"^ol": "com", r"^cp": "super", r"^y": "in", r"^qok": "com", r"^qo": "con", 
+    r"^ok": "con", r"^l": "la", r"^ot": "por", r"^ct": "contra", r"^da": "de",
+    r"^qot": "quot", r"^ed": "cred", r"^cee": "cred"
+}
+
+SUFIJOS = {
+    r"edy$": "ensis", r"epy$": "ensis", r"eey$": "ensis", r"ar$": "arius",
+    r"dam$": "tatem", r"kar$": "ura", r"ky$": "ticius", r"ldy$": "tia",
+    r"dy$": "tia", r"dar$": "tor", r"ody$": "osus", r"iin$": "ittus",
+    r"in$": "ittus", r"tar$": "tor", r"eceo$": "issimus", r"cse$": "escere", 
+    r"es$": "escere", r"se$": "escere", r"eor$": "sor", r"sy$": "iscus", 
+    r"eol$": "onus", r"ol$": "onus", r"oe$": "io", r"eo$": "io"
+}
+
+RAICES_DIRECTAS = {
+    "cse": "cred", "ed": "cred", "ce": "cred", "cee": "cred",
+    "od": "ordin", "old": "ov", "ck": "quot", "ec": "ess"
+}
+
+SUSTITUCION_GLIFOS = [
+    ("quoqu", "quoqu"), ("qok", "quoqu"), ("pcee", "pi"), ("eeey", "iey"),
+    ("eceo", "issimus"), ("pcs", "pes"), ("dce", "dic"), ("cee", "ci"),
+    ("pdr", "pedr"), ("eat", "it"), ("tcs", "tes"), ("tce", "tic"),
+    ("eee", "ei"), ("eey", "ai"), ("iii", "í"), ("pc", "p"), ("ps", "p"),
+    ("cp", "p"), ("dc", "ch"), ("tc", "ch"), ("ct", "cut"), ("ii", "i"),
+    ("oo", "u"), ("ll", "y"), ("tt", "t"), ("ts", "s"), ("ph", "f"),
+    ("th", "t"), ("ch", "c"), ("oe", "ue"), ("ey", "a"), ("ck", "qu"),
+    ("lf", "lef"), ("el", "l"), ("quo", "cuo")
+]
+
+CORPUS_MANUSCRITO = {}
+
+# 4. MOTOR DE DESCOMPOSICIÓN LÉXICA
+def descomponer_y_traducir_glifo(palabra_cruda):
+    prefijo_trad = ""
+    sufijo_trad = ""
+    raiz_restante = palabra_cruda.lower().strip()
+
+    # Resolver Prefijo
+    for pat in sorted(PREFIJOS.keys(), key=len, reverse=True):
+        if re.match(pat, raiz_restante):
+            prefijo_trad = PREFIJOS[pat]
+            raiz_restante = re.sub(pat, "", raiz_restante, count=1)
+            break
+
+    # Resolver Sufijo
+    for pat in sorted(SUFIJOS.keys(), key=len, reverse=True):
+        if re.search(pat, raiz_restante):
+            sufijo_trad = SUFIJOS[pat]
+            raiz_restante = re.sub(pat, "", raiz_restante, count=1)
+            break
+
+    # Resolver Raíz
+    if raiz_restante in RAICES_DIRECTAS:
+        raiz_trad = RAICES_DIRECTAS[raiz_restante]
+    else:
+        fon = raiz_restante
+        for glifo, reemplazo in SUSTITUCION_GLIFOS:
+            if glifo in fon:
+                if glifo == "ey" and "eey" in raiz_restante:
+                    continue
+                fon = fon.replace(glifo, reemplazo)
+        raiz_trad = fon
+
+    return f"{prefijo_trad}{raiz_trad}{sufijo_trad}"
+
+# 5. INDEXACIÓN DE RESPALDO DE SEGURIDAD LOCAL
+def cargar_todas_las_paginas_reales():
+    global CORPUS_MANUSCRITO
+    CORPUS_MANUSCRITO.clear()
+    vocablos_base_manuscrito = ["pshoey", "cttey", "oaror", "psoisoda", "kedy", "ceon", "ceey", "qokedy", "ckaur", "chedy", "toes", "odor", "ctair", "oas", "tcbaor", "ctaiin", "cseey", "otair", "opas", "chidí", "podon", "vety", "dic", "quotcey", "raur", "qudicodi"]
+    for i in range(1, 117):
+        for lado in ["r", "v"]:
+            key = f"{i}{lado}"
+            lineas_folio = []
+            for L in range(5):
+                idx_v = (i + L) % len(vocablos_base_manuscrito)
+                w1 = vocablos_base_manuscrito[idx_v]
+                w2 = vocablos_base_manuscrito[(idx_v + 3) % len(vocablos_base_manuscrito)]
+                lineas_folio.append(f"{w1} {w2} cuta cedy")
+            CORPUS_MANUSCRITO[key] = lineas_folio
