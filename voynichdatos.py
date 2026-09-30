@@ -1,4 +1,4 @@
-# --- ARCHIVO 1: voynichdatos.py ---
+# --- ARCHIVO: voynichdatos.py ---
 import re
 
 DICCIONARIO_ES = {
@@ -51,7 +51,84 @@ DICCIONARIO_MACRO_GLIFOS = {
     "H1": "[Encabezado Principal]", "C1": "[Cifrado Primario]"
 }
 
+# --- NUEVAS ESTRUCTURAS DE COMPOSICIÓN LINGÜÍSTICA ROMANCE ---
+PREFIJOS = {
+    r"^tcs": "trans", r"^cs": "sub", r"^pc": "per", r"^ceo": "re", r"^ce": "re",
+    r"^ol": "com", r"^cp": "super", r"^y": "in", r"^qok": "com", r"^qo": "con", 
+    r"^ok": "con", r"^l": "la", r"^ot": "por", r"^ct": "contra", r"^da": "de",
+    r"^qot": "quot", r"^ed": "cred", r"^cee": "cred"
+}
+
+SUFIJOS = {
+    r"edy$": "ensis", r"epy$": "ensis", r"eey$": "ensis", r"ar$": "arius",
+    r"dam$": "tatem", r"kar$": "ura", r"ky$": "ticius", r"ldy$": "tia",
+    r"dy$": "tia", r"dar$": "tor", r"ody$": "osus", r"iin$": "ittus",
+    r"in$": "ittus", r"tar$": "tor", r"eceo$": "issimus", r"cse$": "escere", 
+    r"es$": "escere", r"se$": "escere", r"eor$": "sor", r"sy$": "iscus", 
+    r"eol$": "onus", r"ol$": "onus", r"oe$": "io", r"eo$": "io"
+}
+
+RAICES_DIRECTAS = {
+    "cse": "cred", "ed": "cred", "ce": "cred", "cee": "cred",
+    "od": "ordin", "old": "ov", "ck": "quot", "ec": "ess"
+}
+
+# Matriz básica mapeada por orden estricto de longitud de glifos para evitar colisiones
+SUSTITUCION_GLIFOS = [
+    ("quoqu", "quoqu"), ("qok", "quoqu"), ("pcee", "pi"), ("eeey", "iey"),
+    ("eceo", "issimus"), ("pcs", "pes"), ("dce", "dic"), ("cee", "ci"),
+    ("pdr", "pedr"), ("eat", "it"), ("tcs", "tes"), ("tce", "tic"),
+    ("eee", "ei"), ("eey", "ai"), ("iii", "í"), ("pc", "p"), ("ps", "p"),
+    ("cp", "p"), ("dc", "ch"), ("tc", "ch"), ("ct", "cut"), ("ii", "i"),
+    ("oo", "u"), ("ll", "y"), ("tt", "t"), ("ts", "s"), ("ph", "f"),
+    ("th", "t"), ("ch", "c"), ("oe", "ue"), ("ey", "a"), ("ck", "qu"),
+    ("lf", "lef"), ("el", "l"), ("quo", "cuo")
+]
+
 CORPUS_MANUSCRITO = {}
+
+def descomponer_y_traducir_glifo(palabra_cruda):
+    """
+    Descompone estructuralmente una palabra bajo criterios morfológicos romances:
+    1. Extrae y traduce Prefijos.
+    2. Extrae y traduce Sufijos flexivos.
+    3. Resuelve la Raíz (vía tabla directa o sustitución adaptativa de caracteres).
+    """
+    prefijo_trad = ""
+    sufijo_trad = ""
+    raiz_restante = palabra_cruda.lower().strip()
+
+    # 1. Resolver Prefijos (Ordenados por longitud decreciente)
+    for pat in sorted(PREFIJOS.keys(), key=len, reverse=True):
+        if re.match(pat, raiz_restante):
+            prefijo_trad = PREFIJOS[pat]
+            raiz_restante = re.sub(pat, "", raiz_restante, count=1)
+            break
+
+    # 2. Resolver Sufijos (Ordenados por longitud decreciente)
+    for pat in sorted(SUFIJOS.keys(), key=len, reverse=True):
+        if re.search(pat, raiz_restante):
+            sufijo_trad = SUFIJOS[pat]
+            raiz_restante = re.sub(pat, "", raiz_restante, count=1)
+            break
+
+    # 3. Resolver la estructura de la Raíz
+    if raiz_restante in RAICES_DIRECTAS:
+        raiz_trad = RAICES_DIRECTAS[raiz_restante]
+    else:
+        # Algoritmo de barrido fonético secuencial basado en tu alfabeto
+        fon = raiz_restante
+        for glifo, reemplazo in SUSTITUCION_GLIFOS:
+            if glifo in fon:
+                # Caso especial de contingencia para 'ey' preservando cadenas complejas
+                if glifo == "ey" and "eey" in raiz_restante:
+                    continue
+                fon = fon.replace(glifo, reemplazo)
+        raiz_trad = fon
+
+    # Combinación morfológica final reconstruida en fonética romance pura
+    return f"{prefijo_trad}{raiz_trad}{sufijo_trad}"
+
 
 def cargar_todas_las_paginas_reales():
     """Indexa de forma segura el manuscrito extrayendo texto puro para evitar fallos de renderizado."""
@@ -67,7 +144,6 @@ def cargar_todas_las_paginas_reales():
                 
                 partes = linea.split(maxsplit=1)
                 
-                # CORRECCIÓN CLAVE: Extraer strings específicos en lugar de la lista completa
                 if len(partes) == 1:
                     identificador = partes[0]
                     texto_eva = " "
@@ -83,7 +159,6 @@ def cargar_todas_las_paginas_reales():
                 else:
                     continue
                 
-                # Limpieza exhaustiva de metadatos tipográficos ruidosos
                 texto_eva_limpio = re.sub(r'\{.*?\}|\[.*?\]', '', texto_eva)
                 texto_eva_limpio = re.sub(r'%|\@|;\d*|[:\$\-\+=<>\/]', '', texto_eva_limpio)
                 texto_eva_limpio = re.sub(r'[*.,!?]', '', texto_eva_limpio)
@@ -98,7 +173,6 @@ def cargar_todas_las_paginas_reales():
                     CORPUS_MANUSCRITO[folio_key].append("[Ilustración o Marcador Vacío]")
                     
     except FileNotFoundError:
-        # Copia de seguridad simulada estructurada
         vocablos_base_manuscrito = ["pshoey", "cttey", "oaror", "psoisoda", "kedy", "ceon", "ceey", "qokedy", "ckaur", "chedy", "toes", "odor", "ctair", "oas", "tcbaor", "ctaiin", "cseey", "otair", "opas", "chidí", "podon", "vety", "dic", "quotcey", "raur", "qudicodi"]
         for i in range(1, 117):
             for lado in ["r", "v"]:
