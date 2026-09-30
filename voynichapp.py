@@ -57,7 +57,7 @@ IFACE = {
 # --- IMPORTACIÓN DEL MOTOR MORFOLÓGICO DESDE VOYNICHDATOS.PY ---
 try:
     import voynichdatos
-    from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN, PREFIJOS, SUFIJOS, RAICES_DIRECTAS, descomponer_y_traducir_glifo, CORPUS_MANUSCRITO, cargar_todas_las_paginas_reales
+    from voynichdatos import DICCIONARIO_ES, DICCIONARIO_EN, PREFIJOS, SUFIJOS, RAICES_DIRECTAS, SUSTITUCION_GLIFOS, CORPUS_MANUSCRITO, cargar_todas_las_paginas_reales
     cargar_todas_las_paginas_reales()
 except ImportError as e:
     st.error(f"⚠️ Error de importación: {e}. No se encuentra el archivo 'voynichdatos.py'.")
@@ -132,49 +132,50 @@ def distancia_levenshtein(s1, s2):
         fila_previa = fila_actual
     return fila_previa[-1]
 
-# --- NUEVO GENERADOR DE TRADUCCIÓN ESTRUCTURAL DE EMERGENCIA ---
+# --- NUEVO GENERADOR DE TRADUCCIÓN FLUIDA DE EMERGENCIA ---
 def generar_traduccion_emergencia(palabra_original):
-    """Descompone morfológicamente y traduce los componentes legibles de forma literal sin usar corchetes."""
-    raiz_restante = palabra_original.lower().strip()
-    p_trad = ""
-    s_trad = ""
-    
-    # Extraer significado del prefijo
-    for pat in sorted(PREFIJOS.keys(), key=len, reverse=True):
-        if re.match(pat, raiz_restante):
-            p_trad = PREFIJOS[pat] + "-"
-            raiz_restante = re.sub(pat, "", raiz_restante, count=1)
-            break
-            
-    # Extraer significado del sufijo
-    for pat in sorted(SUFIJOS.keys(), key=len, reverse=True):
-        if re.search(pat, raiz_restante):
-            s_trad = "-" + SUFIJOS[pat]
-            raiz_restante = re.sub(pat, "", raiz_restante, count=1)
-            break
-            
-    # Resolver la raíz fonética restante
-    from voynichdatos import SUSTITUCION_GLIFOS
-    fon = raiz_restante
+    """Aplica primero las transformaciones de glifos y luego extrae morfología estructural."""
+    # 1. Aplicar transformaciones fonéticas iniciales sobre la palabra pura
+    fon = palabra_original.lower().strip()
     for glifo, reemplazo in SUSTITUCION_GLIFOS:
         if glifo in fon:
-            if glifo == "ey" and "eey" in raiz_restante:
+            if glifo == "ey" and "eey" in palabra_original:
                 continue
             fon = fon.replace(glifo, reemplazo)
             
-    raiz_final = RAICES_DIRECTAS.get(raiz_restante, fon)
+    p_trad = ""
+    s_trad = ""
+    raiz_restante = fon
     
-    # Unión limpia de componentes morfológicos
-    if p_trad or s_trad:
-        return f"{p_trad}{raiz_final}{s_trad}"
-    return raiz_final
+    # 2. Extraer significado estructural de Prefijos sobre la base fonética ordenada
+    for pat in sorted(PREFIJOS.keys(), key=len, reverse=True):
+        limpio_pat = pat.replace("^", "")
+        if raiz_restante.startswith(limpio_pat):
+            p_trad = PREFIJOS[pat] + " "
+            raiz_restante = raiz_restante[len(limpio_pat):]
+            break
+            
+    # 3. Extraer significado estructural de Sufijos
+    for pat in sorted(SUFIJOS.keys(), key=len, reverse=True):
+        limpio_pat = pat.replace("$", "")
+        if raiz_restante.endswith(limpio_pat):
+            s_trad = " " + SUFIJOS[pat]
+            raiz_restante = raiz_restante[:-len(limpio_pat)]
+            break
+            
+    # Resolver la raíz final remanente contra las raíces conocidas o conservar fonética limpia
+    raiz_final = RAICES_DIRECTAS.get(raiz_restante, raiz_restante)
+    
+    # Ensamblado legible sin guiones ni corchetes
+    traduccion_armada = f"{p_trad}{raiz_final}{s_trad}".strip()
+    return traduccion_armada if traduccion_armada else fon
 
-# --- PROCESADOR ADAPTATIVO CON REGLAS DE PREFIJOS, RAÍCES Y SUFIJOS ---
+# --- PROCESADOR ADAPTATIVO MEJORADO ---
 def traducir_a_romance(texto):
     dicc_activo = DICCIONARIO_ES if idioma == "Español" else DICCIONARIO_EN
     texto_limpio = texto.lower()
     
-    # REEMPLAZO CLAVE: Convierte números (como 254) en espacios para fragmentar palabras pegadas
+    # Dividir las cadenas por caracteres numéricos residuales y limpiar símbolos
     texto_limpio = re.sub(r'\d+', ' ', texto_limpio)
     texto_limpio = re.sub(r'[^a-z\s]', '', texto_limpio)
     palabras = texto_limpio.split()
@@ -183,23 +184,24 @@ def traducir_a_romance(texto):
     traduccion_lista = []
     
     for pal in palabras:
-        if not pal.strip():
+        if not pal.strip() or len(pal) <= 1:
             continue
             
-        # 1. Aplica la descomposición morfológica romance medieval para la columna fonética
-        palabra_fonetica = descomponer_y_traducir_glifo(pal)
+        # Generar representación en la columna fonética romance
+        palabra_fonetica = voynichdatos.descomponer_y_traducir_glifo(pal)
         fonetica_lista.append(palabra_fonetica)
         
-        # 2. Intentar buscar en el diccionario usando Levenshtein
+        # Intentar buscar coincidencia exacta o muy cercana en los diccionarios base
         mejor_coincidencia = None
         menor_distancia = 999
+        
         for k, v in dicc_activo.items():
             dist = distancia_levenshtein(palabra_fonetica, k)
             if dist < menor_distancia and dist <= 2:
                 menor_distancia = dist
                 mejor_coincidencia = v
         
-        # 3. ACTIVACIÓN DE EMERGENCIA: Si es una palabra desconocida, ensambla el significado morfológico puro
+        # ACTIVACIÓN DE LA OPCIÓN A: Si no está mapeada, se genera una traducción estructural interpretada
         if mejor_coincidencia is None:
             mejor_coincidencia = generar_traduccion_emergencia(pal)
             
