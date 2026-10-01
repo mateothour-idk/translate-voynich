@@ -1,13 +1,14 @@
 # ==========================================
-# ARCHIVO: voynichdatos.py - BLOQUE 1 DE 3
+# ARCHIVO: voynichdatos.py - PARTE 1 DE 2
 # ==========================================
 import re
 
-# Inicialización global para evitar errores de Attribute/Namespace en Streamlit
+# Inicialización de diccionarios globales para evitar errores de atributo
 DICCIONARIO_ES = {}
 DICCIONARIO_EN = {}
 DICCIONARIO_MACRO_GLIFOS = {}
 
+# 1. DICCIONARIO ESPAÑOL CON LAS RAÍCES HISTÓRICAS Y COMBINACIONES
 DICCIONARIO_ES.update({
     # --- Raíces Originales de Tu Matriz ---
     "pui": "planta", "cuta": "corteza", "oarur": "aroma", "poisoda": "poción (medicina)",
@@ -51,7 +52,7 @@ DICCIONARIO_ES.update({
     "porariustatem": "propiedad o cualidad de la porosidad absoluta",
 
     # --- Anatomía Botánica Avanzada ---
-    "folia": "hoja", "ramus": "rama", "flos": "flor", "semen": "semilla", "capsa": "cápsula",
+    "folia": "hoja", "ramus": "rama", "flos": "flor", "semen": "seed", "capsa": "cápsula",
     "gemma": "yema", "nux": "nuez", "baca": "baya", "spina": "espina", "radix": "raíz profunda",
     "stolo": "estolón", "bulbus": "bulbo", "vimen": "mimbre", "cortex": "corteza externa",
     "medula": "médula interior", "pith": "núcleo", "nodo": "nudo del tallo", "internod": "entrenudo",
@@ -93,8 +94,10 @@ DICCIONARIO_ES.update({
     "uterus": "matriz/útero", "vulva": "órgano femenino", "membrana": "tejido delgado"
 })
 # ==========================================
-# ARCHIVO: voynichdatos.py - BLOQUE 2 DE 3
+# ARCHIVO: voynichdatos.py - PARTE 2 DE 2
 # ==========================================
+
+# 2. DICCIONARIO INGLÉS COMPLETO
 DICCIONARIO_EN.update({
     "pui": "plant", "cuta": "bark", "oarur": "aroma", "poisoda": "medicinal potion",
     "quedy": "element", "con": "with", "su": "its", "quoqu": "whereby", 
@@ -172,9 +175,8 @@ DICCIONARIO_MACRO_GLIFOS.update({
     "B2": "[Grupo Biológico 2]", "IH": "[Ilustración de Herboristería]", "LA": "[Línea Alta]", 
     "H1": "[Encabezado Principal]", "C1": "[Cifrado Primario]"
 })
-# ==========================================
-# ARCHIVO: voynichdatos.py - BLOQUE 3 DE 3
-# ==========================================
+
+# 3. LISTAS DE MORFOLOGÍA ORDENADAS ESTRICTAMENTE POR LONGITUD DESCENDENTE
 PREFIJOS_LISTA = [
     ("tcs", "trans"), ("qok", "com"), ("qot", "quot"), ("cee", "cred"), 
     ("ceo", "re"), ("sub", "sub"), ("cse", "sub"), ("per", "per"), 
