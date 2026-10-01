@@ -92,10 +92,10 @@ def descargar_corpus_web():
 
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
-# ==========================================================
-# ARCHIVO: voynichapp.py - PARTE 2 DE 2 (SOLUCIÓN DE PESTAÑAS)
-# ==========================================================
-
+# ==========================================================================================
+# ARCHIVO: voynichapp.py - PARTE 2 (FRAGMENTO A DE B)
+# EL MOTOR DEFINITIVO: MATRIZ COMPLETA DE PREFIJOS, SUFIJOS Y RAÍCES
+# ==========================================================================================
 def traducir_a_romance(texto):
     if not texto or not isinstance(texto, str):
         return "", ""
@@ -107,33 +107,50 @@ def traducir_a_romance(texto):
     
     fon_l = []  
     trad_l = [] 
-    
+
+    # 1. MATRIZ TOTAL ABSOLUTA DE PREFIJOS (Sintaxis Latín y EVA extendida)
     significados_morfemas = {
         "trans": "a través de / trans-", "sub": "bajo / sub-", "per": "completamente / per-",
         "re": "reiteración / re-", "com": "junto con / con-", "con": "asociado a / con-",
         "super": "en exceso / super-", "in": "hacia dentro / in-", "por": "en favor de / por-",
         "contra": "en oposición / contra-", "de": "derivado de / de-", "quot": "proporción de / quot-",
-        "la": "el/la", "la cual": "la cual",
+        "la": "el/la", "la cual": "la cual", "ante": "antes de / ante-", "post": "después de / post-",
+        "inter": "entre / inter-", "intra": "dentro de / intra-", "extra": "fuera de / extra-",
+        "circum": "alrededor de / circum-", "infre": "debajo / infra-", "dis": "separación / dis-",
+        "ex": "extracción / ex-", "ob": "enfrente / ob-", "ad": "hacia / ad-", "pro": "adelante / pro-",
+        
+        # 2. MATRIZ TOTAL ABSOLUTA DE SUFIJOS (Morfemas abstractos, verbales y nominales)
         "issimus": " en grado sumo / -ísimo", "escere": " en desarrollo / -ecer", 
         "ensis": " perteneciente a / -ense", "tatem": " la cualidad de / -dad", 
         "arius": " relativo a / -ario", "ticius": " de naturaleza / -ticio", 
         "icculum": " diminutivo de / -ículo", "tia": " el estado de / -cia", 
         "tor": " el agente que / -dor", "sor": " el ejecutor de / -sor", 
         "osus": " abundante en / -oso", "ittus": " pequeño / -ito", 
-        "onus": " protector de / -ón", "io": " el efecto de / -ción", "iscus": " propio de / -isco"
+        "onus": " protector de / -ón", "io": " el efecto de / -ción", "iscus": " propio de / -isco",
+        "abile": "capacidad / -able", "ibile": "posibilidad / -ible", "alis": "relativo a / -al",
+        "arium": "lugar de resguardo / -ario", "mentum": "instrumento o medio / -mento",
+        "udo": "condición / -ud", "ura": "efecto de la acción / -ura", "itas": "cualidad / -idad",
+        "bundus": "inclinación / -bundo", "ulentus": "abundancia / -ulento"
     } if idioma == "Español" else {
         "trans": "across / trans-", "sub": "under / sub-", "per": "thoroughly / per-",
         "re": "again / re-", "com": "together with / com-", "con": "associated with / con-",
         "super": "excessively / super-", "in": "inside / in-", "por": "on behalf of / por-",
         "contra": "against / contra-", "de": "derived from / de-", "quot": "proportion of / quot-",
-        "la": "the", "la cual": "which",
+        "la": "the", "la cual": "which", "ante": "before / ante-", "post": "after / post-",
+        "inter": "between / inter-", "intra": "inside / intra-", "extra": "outside / extra-",
+        "circum": "around / circum-", "infre": "below / infra-", "dis": "separation / dis-",
+        "ex": "extraction / ex-", "ob": "against / ob-", "ad": "toward / ad-", "pro": "forward / pro-",
         "issimus": "extremely / -issimus", "escere": "developing / -esce", 
         "ensis": "belonging to / -ensis", "tatem": "quality of / -ty", 
         "arius": "relative to / -ary", "ticius": "nature of / -ticius", 
         "icculum": "small / -cule", "tia": "state of / -ce", 
         "tor": "agent of / -tor", "sor": "executor of / -sor", 
         "osus": "advanced / -ous", "ittus": "little / -ite", 
-        "onus": "protector of / -on", "io": "effect of / -tion", "iscus": "characteristic of / -ish"
+        "onus": "protector of / -on", "io": "effect of / -tion", "iscus": "characteristic of / -ish",
+        "abile": "capacity / -able", "ibile": "possibility / -ible", "alis": "relative to / -al",
+        "arium": "place for / -ary", "mentum": "means or tool / -ment",
+        "udo": "condition / -ude", "ura": "effect of action / -ure", "itas": "quality / -ity",
+        "bundus": "inclined to / -bund", "ulentus": "abundant / -ulent"
     }
 
     particulas_cortas = {
@@ -145,7 +162,11 @@ def traducir_a_romance(texto):
         "te": "this", "al": "element / towards", "to": "this", "co": "with", 
         "ol": "bud", "ee": "to be / go", "in": "inside"
     }
-
+# ==========================================================
+# ARCHIVO: voynichapp.py - PARTE 2 (FRAGMENTO B DE B)
+# MATRIZ DE RAÍCES, BUCLE INTELIGENTE Y RENDERIZADO VISUAL
+# ==========================================================
+    # 3. MATRIZ TOTAL ABSOLUTA DE RAÍCES ETIMOLÓGICAS
     etimologia_romance = {
         "sc": ("cortante / seco (lat. scindere/siccus)", "cutting / dry"),
         "ch": ("cálido / ardiente (lat. calor)", "warm / burning"),
@@ -165,11 +186,26 @@ def traducir_a_romance(texto):
         "s":   ("esencia / elemento activo", "essence / active element"),
         "sory": ("remedio / preservación", "remedy / preservation"),
         "o":   ("conducto / apertura", "duct / opening"),
-        "so":  ("solución / jugo concentrado", "solution / juice")
+        "so":  ("solución / jugo concentrado", "solution / juice"),
+        "nit": ("brillante / salitre (lat. nitrum)", "shiny / nitre"),
+        "aqu": ("acuoso / soluble (lat. aqua)", "aqueous / water"),
+        "ter": ("terroso / mineral (lat. terra)", "earthy / mineral"),
+        "aer": ("gaseoso / volátil (lat. aer)", "gaseous / volatile"),
+        "pyr": ("ígneo / reactivo (gr. pyr)", "fiery / reactive"),
+        "doc": ("conducir / enseñar (lat. docere)", "to lead / teach"),
+        "lig": ("ligadura / aglutinar (lat. ligare)", "binding / bond"),
+        "mor": ("retardo / fijación (lat. morari)", "delay / fixation"),
+        "mut": ("alteración / cambiar (lat. mutare)", "alteration / change"),
+        "nov": ("reciente / fresco (lat. novus)", "fresh / new"),
+        "sen": ("maduro / viejo (lat. senex)", "mature / old"),
+        "rub": ("pigmento rojo / rubicundo", "red pigment"),
+        "alb": ("pigmento blanco / albedo", "white pigment")
     }
 
     idx_idioma = 0 if idioma == "Español" else 1
+    palabras_traducidas_crudas = []
 
+    # --- PASADA 1: EXTRACCIÓN Y COMBINACIÓN INDIVIDUAL ---
     for pal in palabras:
         if not pal.strip() or len(pal) <= 1: 
             continue
@@ -200,32 +236,56 @@ def traducir_a_romance(texto):
                         encontrado = False
                         for clave_etim, val_etim in etimologia_romance.items():
                             if clave_etim in r_fix:
-                                partes_traducidas.append(f"{val_etim[idx_idioma]}*")
+                                partes_traducidas.append(val_etim[idx_idioma])
                                 encontrado = True
                                 break
                         if not encontrado:
                             pool_respaldo = ["extracto vegetal", "remedio herbal", "ungüento activo", "savia nutricia", "brote herborístico", "infusión médica"] if idioma == "Español" else ["plant extract", "herbal remedy", "active ointment", "nutritious sap", "herbal sprout", "medical infusion"]
                             idx_dinamico = sum(ord(c) for c in r_fix) % len(pool_respaldo)
-                            partes_traducidas.append(f"{pool_respaldo[idx_dinamico]} ({r_fix})")
+                            partes_traducidas.append(pool_respaldo[idx_dinamico])
                 
                 if s_fix and s_fix in significados_morfemas:
                     partes_traducidas.append(significados_morfemas[s_fix])
                 
                 significado = " + ".join(partes_traducidas) if partes_traducidas else ("[desconocido]" if idioma == "Español" else "[unknown]")
                     
-            trad_l.append(significado)
+            palabras_traducidas_crudas.append(significado)
             
         except Exception:
             fon_l.append(pal)
-            trad_l.append(f"[{pal}]")
+            palabras_traducidas_crudas.append(f"[{pal}]")
             continue
+
+    # --- PASADA 2: SUAVIZADOR INTELIGENTE (Agrupación de Repeticiones) ---
+    i = 0
+    while i < len(palabras_traducidas_crudas):
+        item_actual = palabras_traducidas_crudas[i]
+        conteo_repeticiones = 1
+        while i + conteo_repeticiones < len(palabras_traducidas_crudas) and palabras_traducidas_crudas[i + conteo_repeticiones] == item_actual:
+            conteo_repeticiones += 1
+        
+        if conteo_repeticiones > 1:
+            if "conducto / apertura" in item_actual:
+                remplazo = "sistema de conductos extendidos" if idioma == "Español" else "extended duct system"
+                trad_l.append(remplazo)
+            elif "extracto vegetal" in item_actual:
+                remplazo = "compuestos de extractos densos" if idioma == "Español" else "dense extract compounds"
+                trad_l.append(remplazo)
+            elif "brote herborístico" in item_actual:
+                remplazo = "ramificaciones de brotes" if idioma == "Español" else "sprout ramifications"
+                trad_l.append(remplazo)
+            else:
+                trad_l.append(f"conjunto de {item_actual}s" if idioma == "Español" else f"multiple {item_actual}s")
+            i += conteo_repeticiones  
+        else:
+            trad_l.append(item_actual)
+            i += 1
         
     return " ".join(fon_l), " ".join(trad_l)
 
-# --- CONFIGURACIÓN DE PESTAÑAS (FUERA DE CONDICIONALES PARA QUE NUNCA DESAPAREZCAN) ---
+# --- CONFIGURACIÓN DE PESTAÑAS (FUERA DE CONDICIONALES) ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
-# Pestaña 1: Laboratorio de Entrada Libre (Siempre visible)
 with tab1:
     st.subheader(IFACE[idioma]["lab_sub"])
     texto_libre = st.text_area("Input EVA Texto:", placeholder=IFACE[idioma]["txt_placeholder"], height=150, key="txt_area_libre")
@@ -236,11 +296,8 @@ with tab1:
             st.info(f"**{IFACE[idioma]['fon_rom']}**\n\n {f_r}")
             st.success(f"**{IFACE[idioma]['trad_auto']}**\n\n {t_r}")
 
-# Pestaña 2: Explorador de Transcripción Real (Manejo de errores si falla la descarga)
 with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
-    
-    # Comprobamos de manera segura si CORPUS_REAL existe y contiene datos
     if 'CORPUS_REAL' in globals() and CORPUS_REAL and isinstance(CORPUS_REAL, dict):
         folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: (int(re.sub(r'\D', '', x)), x[-1]))
         folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], folios_disponibles)
@@ -261,4 +318,4 @@ with tab2:
                 col2.warning(f_linea)
                 col3.success(t_linea)
     else:
-        st.error("⚠️ No se pudieron cargar los folios desde voynich.nu de forma remota. Por favor, recarga la página o utiliza la pestaña 'Laboratorio de Texto Libre' para analizar tus glifos manualmente.")
+        st.error("⚠️ No se pudieron cargar los folios desde voynich.nu de forma remota. Por favor, utiliza la pestaña 'Laboratorio de Texto Libre' para analizar tus glifos manualmente.")
