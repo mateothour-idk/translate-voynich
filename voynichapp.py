@@ -93,9 +93,13 @@ def descargar_corpus_web():
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
 # ==========================================================
-# REEMPLAZO EN VOYNICHAPP.PY - PARTE 2 DE 2 (CORRECCIÓN TOTAL)
+# ARCHIVO: voynichapp.py - PARTE 2 DE 2 (ULTRA BLINDADA)
 # ==========================================================
 def traducir_a_romance(texto):
+    # Verificación de seguridad por si el texto llega nulo o vacío
+    if not texto or not isinstance(texto, str):
+        return "", ""
+
     dicc_activo = voynichdatos.DICCIONARIO_ES if idioma == "Español" else voynichdatos.DICCIONARIO_EN
     texto_limpio = texto.lower().replace('.', ' ')
     texto_limpio = re.sub(r'[^a-z\s]', '', texto_limpio)
@@ -142,7 +146,6 @@ def traducir_a_romance(texto):
         "ol": "bud", "ee": "to be / go", "in": "inside"
     }
 
-    # MATRIZ ETiMOLÓGICA REAL INDICE: [0] Español, [1] Inglés
     etimologia_romance = {
         "sc": ("cortante / seco (lat. scindere/siccus)", "cutting / dry"),
         "ch": ("cálido / ardiente (lat. calor)", "warm / burning"),
@@ -160,7 +163,7 @@ def traducir_a_romance(texto):
         "fac": ("propiedades / hacer (lat. facies/facere)", "properties / to make"),
         "cal": ("tallo / calor (lat. caulis/calor)", "stem / heat"),
         "s":   ("esencia / elemento activo", "essence / active element"),
-        "sory":("remedio / preservación", "remedy / preservation"),
+        "sory": ("remedio / preservación", "remedy / preservation"),
         "o":   ("conducto / apertura", "duct / opening"),
         "so":  ("solución / jugo concentrado", "solution / juice")
     }
@@ -171,7 +174,12 @@ def traducir_a_romance(texto):
         if not pal.strip() or len(pal) <= 1: 
             continue
         
-        p_fix, r_fix, s_fix = voynichdatos.descomponer_y_traducir_glifo(pal)
+        try:
+            # Descomposición segura
+            p_fix, r_fix, s_fix = voynichdatos.descomponer_y_traducir_glifo(pal)
+        except Exception:
+            p_fix, r_fix, s_fix = "", pal, ""
+            
         forma_romance_completa = f"{p_fix}{r_fix}{s_fix}"
         fon_l.append(forma_romance_completa)
         
@@ -188,7 +196,7 @@ def traducir_a_romance(texto):
             if p_fix and p_fix in significados_morfemas:
                 partes_traducidas.append(significados_morfemas[p_fix])
             
-            # Raíz con extractor seguro indexado por idioma
+            # Raíz
             if r_fix:
                 if r_fix in dicc_activo:
                     partes_traducidas.append(dicc_activo[r_fix])
