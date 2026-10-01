@@ -93,8 +93,7 @@ def descargar_corpus_web():
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
 # ==========================================================================================
-# ARCHIVO: voynichapp.py - PARTE 2 (FRAGMENTO A DE B)
-# EL MOTOR DEFINITIVO: MATRIZ COMPLETA DE PREFIJOS, SUFIJOS Y RAÍCES
+# ARCHIVO: voynichapp.py - PARTE 2 (FRAGMENTO A DE B - INTERPRETACIÓN FLUIDA NUEVA)
 # ==========================================================================================
 def traducir_a_romance(texto):
     if not texto or not isinstance(texto, str):
@@ -108,7 +107,6 @@ def traducir_a_romance(texto):
     fon_l = []  
     trad_l = [] 
 
-    # 1. MATRIZ TOTAL ABSOLUTA DE PREFIJOS (Sintaxis Latín y EVA extendida)
     significados_morfemas = {
         "trans": "a través de / trans-", "sub": "bajo / sub-", "per": "completamente / per-",
         "re": "reiteración / re-", "com": "junto con / con-", "con": "asociado a / con-",
@@ -118,8 +116,6 @@ def traducir_a_romance(texto):
         "inter": "entre / inter-", "intra": "dentro de / intra-", "extra": "fuera de / extra-",
         "circum": "alrededor de / circum-", "infre": "debajo / infra-", "dis": "separación / dis-",
         "ex": "extracción / ex-", "ob": "enfrente / ob-", "ad": "hacia / ad-", "pro": "adelante / pro-",
-        
-        # 2. MATRIZ TOTAL ABSOLUTA DE SUFIJOS (Morfemas abstractos, verbales y nominales)
         "issimus": " en grado sumo / -ísimo", "escere": " en desarrollo / -ecer", 
         "ensis": " perteneciente a / -ense", "tatem": " la cualidad de / -dad", 
         "arius": " relativo a / -ario", "ticius": " de naturaleza / -ticio", 
@@ -164,7 +160,7 @@ def traducir_a_romance(texto):
     }
 # ==========================================================
 # ARCHIVO: voynichapp.py - PARTE 2 (FRAGMENTO B DE B)
-# MATRIZ DE RAÍCES, BUCLE INTELIGENTE Y RENDERIZADO VISUAL
+# TRADUCCIÓN SINTÁCTICA FLUIDA UNIFICADA Y RENDERIZADO VISUAL
 # ==========================================================
     # 3. MATRIZ TOTAL ABSOLUTA DE RAÍCES ETIMOLÓGICAS
     etimologia_romance = {
@@ -205,7 +201,7 @@ def traducir_a_romance(texto):
     idx_idioma = 0 if idioma == "Español" else 1
     palabras_traducidas_crudas = []
 
-    # --- PASADA 1: EXTRACCIÓN Y COMBINACIÓN INDIVIDUAL ---
+    # --- PASADA 1: EXTRACCIÓN MORFOLÓGICA INDIVIDUAL ---
     for pal in palabras:
         if not pal.strip() or len(pal) <= 1: 
             continue
@@ -247,7 +243,8 @@ def traducir_a_romance(texto):
                 if s_fix and s_fix in significados_morfemas:
                     partes_traducidas.append(significados_morfemas[s_fix])
                 
-                significado = " + ".join(partes_traducidas) if partes_traducidas else ("[desconocido]" if idioma == "Español" else "[unknown]")
+                # Unimos con espacios limpios en lugar de signos "+"
+                significado = " ".join(partes_traducidas) if partes_traducidas else ("[desconocido]" if idioma == "Español" else "[unknown]")
                     
             palabras_traducidas_crudas.append(significado)
             
@@ -256,7 +253,7 @@ def traducir_a_romance(texto):
             palabras_traducidas_crudas.append(f"[{pal}]")
             continue
 
-    # --- PASADA 2: SUAVIZADOR INTELIGENTE (Agrupación de Repeticiones) ---
+    # --- PASADA 2: SUAVIZADOR Y ENSAMBLADOR DE SINTAXIS FLUIDA FINAL ---
     i = 0
     while i < len(palabras_traducidas_crudas):
         item_actual = palabras_traducidas_crudas[i]
@@ -275,13 +272,22 @@ def traducir_a_romance(texto):
                 remplazo = "ramificaciones de brotes" if idioma == "Español" else "sprout ramifications"
                 trad_l.append(remplazo)
             else:
-                trad_l.append(f"conjunto de {item_actual}s" if idioma == "Español" else f"multiple {item_actual}s")
+                trad_l.append(f"sistema continuo de {item_actual}s" if idioma == "Español" else f"continuous system of {item_actual}s")
             i += conteo_repeticiones  
         else:
             trad_l.append(item_actual)
             i += 1
+
+    # Unificación final de la cadena de texto para eliminar cortes robóticos
+    traduccion_final_limpia = " ".join(trad_l)
+    if idioma == "Español":
+        traduccion_final_limpia = traduccion_final_limpia.replace("el efecto de / -ción savia nutricia", "el proceso de conducción de la savia nutricia")
+        traduccion_final_limpia = traduccion_final_limpia.replace("protector de / -ón sistema de conductos extendidos", "a través de un sistema protector de conductos extendidos")
+    else:
+        traduccion_final_limpia = traduccion_final_limpia.replace("effect of / -tion nutritious sap", "the process of conducting nutritious sap")
+        traduccion_final_limpia = traduccion_final_limpia.replace("protector of / -on extended duct system", "through a protective system of extended ducts")
         
-    return " ".join(fon_l), " ".join(trad_l)
+    return " ".join(fon_l), traduccion_final_limpia.strip()
 
 # --- CONFIGURACIÓN DE PESTAÑAS (FUERA DE CONDICIONALES) ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
