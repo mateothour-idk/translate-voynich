@@ -93,8 +93,7 @@ def descargar_corpus_web():
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
 # ==========================================================
-# REEMPLAZO EN VOYNICHAPP.PY - PARTE 2 DE 2
-# MOTOR ULTRA-FILOLÓGICO: TRADUCCIÓN CONTINUA SIN HUECOS
+# REEMPLAZO EN VOYNICHAPP.PY - PARTE 2 DE 2 (CORRECCIÓN TOTAL)
 # ==========================================================
 def traducir_a_romance(texto):
     dicc_activo = voynichdatos.DICCIONARIO_ES if idioma == "Español" else voynichdatos.DICCIONARIO_EN
@@ -143,7 +142,7 @@ def traducir_a_romance(texto):
         "ol": "bud", "ee": "to be / go", "in": "inside"
     }
 
-    # MATRIZ ETIMOLÓGICA AMPLIADA: Evita los vacíos semánticos en raíces comunes de folios reales
+    # MATRIZ ETiMOLÓGICA REAL INDICE: [0] Español, [1] Inglés
     etimologia_romance = {
         "sc": ("cortante / seco (lat. scindere/siccus)", "cutting / dry"),
         "ch": ("cálido / ardiente (lat. calor)", "warm / burning"),
@@ -158,7 +157,6 @@ def traducir_a_romance(texto):
         "fl": ("florecer / brotar (lat. florere)", "to bloom / sprout"),
         "rd": ("raíz / base (lat. radix)", "root / base"),
         "v":  ("vivo / verde (lat. viridis)", "alive / green"),
-        # --- Solución para glifos huérfanos que viste en Folio 1r ---
         "fac": ("propiedades / hacer (lat. facies/facere)", "properties / to make"),
         "cal": ("tallo / calor (lat. caulis/calor)", "stem / heat"),
         "s":   ("esencia / elemento activo", "essence / active element"),
@@ -166,6 +164,8 @@ def traducir_a_romance(texto):
         "o":   ("conducto / apertura", "duct / opening"),
         "so":  ("solución / jugo concentrado", "solution / juice")
     }
+
+    idx_idioma = 0 if idioma == "Español" else 1
 
     for pal in palabras:
         if not pal.strip() or len(pal) <= 1: 
@@ -188,23 +188,20 @@ def traducir_a_romance(texto):
             if p_fix and p_fix in significados_morfemas:
                 partes_traducidas.append(significados_morfemas[p_fix])
             
-            # Raíz Etimológica Corregida
+            # Raíz con extractor seguro indexado por idioma
             if r_fix:
                 if r_fix in dicc_activo:
                     partes_traducidas.append(dicc_activo[r_fix])
                 elif r_fix in etimologia_romance:
-                    idx_idioma = 0 if idioma == "Español" else 1
                     partes_traducidas.append(etimologia_romance[r_fix][idx_idioma])
                 else:
                     encontrado = False
                     for clave_etim, val_etim in etimologia_romance.items():
                         if clave_etim in r_fix:
-                            idx_idioma = 0 if idioma == "Español" else 1
                             partes_traducidas.append(f"{val_etim[idx_idioma]}*")
                             encontrado = True
                             break
                     if not encontrado:
-                        # Respaldo léxico gramatical herborístico dinámico basado en herbario medieval
                         pool_respaldo = ["extracto vegetal", "remedio herbal", "ungüento activo", "savia nutricia", "brote herborístico", "infusión médica"] if idioma == "Español" else ["plant extract", "herbal remedy", "active ointment", "nutritious sap", "herbal sprout", "medical infusion"]
                         idx_dinamico = sum(ord(c) for c in r_fix) % len(pool_respaldo)
                         partes_traducidas.append(f"{pool_respaldo[idx_dinamico]} ({r_fix})")
