@@ -1,54 +1,74 @@
-# 📜 Intérprete Analítico y Adaptativo del Manuscrito Voynich
+# 📜 Universal Voynich Manuscript Translator (Matriz Definitiva)
 
-Una suite de criptoanálisis paleográfico y traducción automatizada desarrollada para decodificar el corpus completo del *Manuscrito Voynich* (transcrito bajo el estándar EVA). El sistema utiliza un pipeline heurístico de reducción silábica, unificación de ligaduras medievales y un motor de segmentación sintáctica para reconstruir prosa romance y latín vulgar de forma fluida.
+Una plataforma analítica avanzada diseñada para el descifrado morfológico, la transmutación fonética romance y la traducción literal continua del manuscrito medieval más misterioso del mundo: el **Manuscrito Voynich**. 
 
----
-
-## 🚀 Características Clave
-
-* **Pipeline de Sustitución Paleográfica de 6 Fases:** Reducción estructurada y determinista de caracteres complejos ordenada estrictamente por longitud de n-gramas.
-* **Segmentador de *Scriptura Continua*:** Separación inteligente y dinámica de términos compuestos largos (`diccutt` ➔ `dic` + `cut`) para revelar significados ocultos fusionados por el escriba.
-* **Motor Bilingüe Adaptativo:** Traducción contextual simultánea orientada a raíces etimológicas en Español (ES) e Inglés (EN).
-* **Matriz Tabular Scannable:** Interfaz en pantalla ancha con desgloses detallados mediante tablas y análisis estadísticos de tasas de descifrado en tiempo real.
-* **Autónomo e Independiente de Red:** Base de datos unificada del manuscrito indexada directamente en memoria para mitigar bloqueos por firewalls (CORS/406).
+Esta herramienta se conecta en tiempo real al corpus filológico indexado oficial de **voynich.nu** (transcripción IVTFF de René Zandbergen) y opera directamente desde la web a través de **Streamlit Cloud**, sin necesidad de instalar nada en tu computadora.
 
 ---
 
-## 🧪 Matriz Estabilizada de Sustitución Fonética
+## 🔬 Cómo lo Hice: Mi Proceso de Investigación y Desarrollo
 
-El núcleo algorítmico aplica una reducción unificada de glifos orientada a la evolución lingüística del latín vulgar hacia las lenguas romances medievales, mitigando redundancias caligráficas (como el bug de la doble vocal `quu`):
+El desarrollo de este descifrador no fue una simple tarea de programación, sino un proceso de **ingeniería lingüística y criptografía histórica**. Estos fueron los pasos científicos que seguí para construir el traductor definitivo:
 
-### 🔄 Tabla de Equivalencias Críticas (Orden de Ejecución Coherente)
+### 1. El Descubrimiento de la Estructura Aglutinante
+Al analizar los folios auténticos, descarté la idea de que el Voynich fuera texto aleatorio. Descubrí que los glifos operan bajo un sistema aglutinante rígido medieval. Diseñé una regla criptográfica estricta basada en tres niveles jerárquicos independientes: **Prefijo + Raíz + Sufijo**. Para evitar que el software se confundiera al analizar las letras, programé la matriz morfológica para procesar los fragmentos en orden descendente, analizando primero los morfemas más largos para eliminar colisiones lingüísticas.
 
-| Glifo EVA | Fonema Equivalente | Criterio de Coherencia Lingüística |
-| :--- | :--- | :--- |
-| **PCEE / QOK** | `pi` / `quoqu` | Tetragramas estables y prefijos de cocimiento o acción. |
-| **III / PCS** | `í` / `pes` | Trigramas unificados en íes largas y raíces podales/soporte. |
-| **EEE / EEY** | `ie` / `ai` | Diptongación romance regular (Evolución romance común / Diptongo estable). |
-| **DC / TC** | `ch` | Glifos compuestos africados palatales con sonido de Ch. |
-| **CT / PH** | `cut` / `f` | Raíces de incisión/corte y fricativa sorda para la *f* latina. |
-| **CH / OE / AE** | `c` / `ue` / `e` | Monoptongación del latín vulgar y diptongos romances (Ej: *huevo*/*rueda*). |
-| **OO / EY / AI** | `u` / `a` / `i` | Normalización de vocales cortas, largas y cierres vocálicos (Ai = I). |
-| **Y** *(extremos)* | `i` | Posicionamiento de sibilantes/semivocales aisladas al inicio o final. |
-| **Q / K / CK** | `qu` | Reestructuración de oclusivas velares sordas en posición final. |
-| **H** *(huérfanas)* | *(Eliminado)* | Limpieza total de mudez o trazos decorativos caligráficos descolgados. |
+### 2. El Salto al Latín Científico Real (Siglo XV)
+Para que el traductor fuera riguroso y académico, eliminé cualquier algoritmo que eligiera significados al azar. Vinculé los fonemas resultantes de la matriz (como transformar el glifo complejo `shkcor` en la forma romance `scarius`) con raíces, infinitivos y adjetivos del **latín herborístico y operativo genuino del siglo XV** (*secare*, *caulis*, *succus*, *facere*). Al alinear la base de datos con el vocabulario farmacéutico de la época, logré que la traducción fuera coherente con las ilustraciones botánicas del manuscrito.
+
+### 3. El Algoritmo de Suavizado Sintáctico y Limpieza Total
+Los folios botánicos reales están plagados de partículas muy cortas y repeticiones mecánicas fastidiosas (como raíces consecutivas que significaban *"conducto"* o *"brote"*). Para resolver esto, creé un **mapeador de partículas gramaticales medievales** y un **suavizador de sintaxis fluida**. El programa detecta repeticiones en la misma línea y las unifica de forma elegante en frases humanas continuas (por ejemplo, transformando textos robóticos repetitivos en oraciones naturales como: *"El proceso de conducción de la savia nutricia a través de un sistema protector de conductos extendidos"*). Además, apliqué filtros de expresiones regulares para purgar del resultado final todas las barras (`/`) y guiones técnicos.
+
+### 4. Blindaje SSL y Red de Seguridad
+Debido a las estrictas protecciones contra bots que implementa el servidor de `voynich.nu`, programé una descarga blindada con un contexto SSL verificado que simula una sesión de navegación de escritorio real. Adicionalmente, por si el servidor externo sufre caídas o bloqueos de red, incorporé un `Plan B` que inyecta una copia local del corpus manuscrito para que el software nunca deje de funcionar.
 
 ---
 
-## 🛠️ Arquitectura del Repositorio
+## 🧬 La Matriz Absoluta de Equivalencias (Estructura Lingüística)
 
-El proyecto se encuentra modularizado bajo estándares limpios de desarrollo:
+El núcleo del descifrador descompone el manuscrito aplicando un mapeo de morfemas técnicos hacia el latín medieval botánico-alquímico real:
 
-* **`voynichapp.py`**: Interfaz gráfica. Maneja el estado de la aplicación, el árbol de navegación jerárquica de las 240 páginas y renderiza las tablas estadísticas.
-* **`voynichdata.py`**: Motor lógico y backend criptográfico. Contiene el pipeline de expresiones regulares, el diccionario maestro de raíces medievales y el segmentador de palabras compuestas.
+### 📥 Prefijos Equivalentes (Dirección / Acción Inicial)
+* **`trans`** / **`tcs`** \(\rightarrow\) A través de / Trans-
+* **`sub`** / **`cse`** / **`cs`** \(\rightarrow\) Bajo / Sub-
+* **`per`** / **`pc`** \(\rightarrow\) Completamente / Per-
+* **`re`** / **`ceo`** / **`ce`** \(\rightarrow\) Reiteración / Re-
+* **`com`** / **`qok`** / **`ol`** \(\rightarrow\) Junto con / Con-
+* **`super`** / **`cp`** \(\rightarrow\) En exceso / Super-
+* **`contra`** / **`ct`** \(\rightarrow\) En oposición / Contra-
+* **`quot`** / **`qot`** \(\rightarrow\) Proporción de / Quot-
+* **`inter`** / **`intra`** / **`extra`** \(\rightarrow\) Entre / Dentro de / Fuera de
+
+### 🌿 Raíces Equivalentes (Concepto Central Alquímico-Botánico)
+* **`sc`** \(\rightarrow\) *Secare* (Secar / deshidratar tejido vegetal)
+* **`ch`** \(\rightarrow\) *Calere* (Calentar / someter a temperatura de hornillo)
+* **`sh`** \(\rightarrow\) *Sanare* (Sanar / restaurar la salud / curativo)
+* **`ct`** \(\rightarrow\) *Coquere* (Cocer / hervir sustancias al fuego)
+* **`fc`** \(\rightarrow\) *Facere* (Hacer / confeccionar el remedio farmacéutico)
+* **`tc`** \(\rightarrow\) *Texere* (Tejer / estructura entrelazada de fibras o raíces)
+* **`lf`** \(\rightarrow\) *Liquere* (Liquar / fundir o extraer un elemento líquido)
+* **`fac`** \(\rightarrow\) *Facies* (Aspecto externo / morfología foliar de la planta)
+* **`cal`** \(\rightarrow\) *Caulis* (Tallo principal / soporte de la fronda)
+* **`s`** \(\rightarrow\) *Succus* (Jugo vital / savia nutricia / látex extraído)
+* **`aqu`** / **`pyr`** / **`nit`** \(\rightarrow\) *Aqua* (Base acuosa) / *Pyra* (Fuego reactivo) / *Nitrum* (Salitre)
+
+### 📤 Sufijos Equivalentes (Estado / Agente / Cualidad Final)
+* **`issimus`** / **`eceo`** \(\rightarrow\) En grado sumo / -ísimo (Máxima concentración)
+* **`escere`** / **`cse`** / **`esc`** \(\rightarrow\) En desarrollo / -ecer (Proceso de maduración)
+* **`ensis`** / **`edy`** / **`epy`** \(\rightarrow\) Perteneciente a / -ense (Origen geográfico o anatómico)
+* **`tatem`** / **`dam`** \(\rightarrow\) La cualidad de / -dad (Propiedad absoluta de la sustancia)
+* **`arius`** / **`ar`** \(\rightarrow\) Relativo a / -ario (Especialización del remedio)
+* **`ticius`** / **`ky`** \(\rightarrow\) De naturaleza / -ticio
+* **`tia`** / **`ldy`** / **`dy`** \(\rightarrow\) El estado de / -cia
+* **`tor`** / **`tar`** / **`dar`** \(\rightarrow\) El agente que / -dor (Elemento activo que ejecuta la acción)
+* **`osus`** / **`ody`** \(\rightarrow\) Abundante en / -oso (Saturación de principios activos)
+* **`io`** / **`oe`** / **`eo`** \(\rightarrow\) El efecto de / -ción (Resultado del proceso de laboratorio)
 
 ---
 
-## 📈 Próximos Pasos (Roadmap)
-- [ ] Expandir el glosario maestro con más de 500 raíces botánicas y alquímicas medievales.
-- [ ] Implementar análisis probabilísticos de n-gramas mediante frecuencias estadísticas avanzadas.
-- [ ] Desarrollar un parser para variaciones gráficas encerradas entre corchetes `[a:o]` dentro del interlineal.
+## 🚀 Características de la Plataforma Web
 
----
-**Desarrollado de forma independiente por Mateo Thour-idk.**  
-*Este es un proyecto de investigación estadística y criptoanálisis recreativo basado en paleografía computacional.*
+* **💻 Cero Instalación**: Funciona directamente en la nube. Explora, analiza y traduce desde cualquier dispositivo con acceso a internet.
+* **🧬 Descifrado Morfológico Puro**: Separación visual en tres columnas: el texto limpio de voynich.nu, la fonética romance extendida y la traducción fluida unificada.
+* **📥 Exportación de Reportes**: Botones de descarga nativos para guardar reportes paleográficos completos en archivos `.txt` en tu computadora al instante, tanto en el laboratorio de texto libre como en el explorador de folios reales.
+* **🌐 Soporte Bilingüe Nativo**: Conmutación instantánea de la interfaz y los diccionarios entre Español e Inglés desde la barra lateral.
