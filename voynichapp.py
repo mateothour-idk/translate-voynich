@@ -55,7 +55,7 @@ st.write(IFACE[idioma]["sub"])
 @st.cache_data
 def descargar_corpus_web():
     corpus = {}
-    url = "https://voynich.nu"
+    url = "https://voynich.nu/data/ZL3b-n.txt"
     try:
         ctx = ssl.create_default_context()
         ctx.set_ciphers('DEFAULT@SECLEVEL=1')
