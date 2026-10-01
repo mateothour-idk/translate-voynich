@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-# ==========================================
-# ARCHIVO: voynichapp.py - PARTE 1 DE 2
-# INTERFAZ BILINGÜE Y SISTEMA DE RED SSL INDEPENDIENTE
-# ==========================================
+# ==========================================================
+# ARCHIVO: voynichapp.py - PARTE 1 DE 3
+# INICIALIZACIÓN, INTERFAZ BILINGÜE Y CONFIGURACIÓN SSL
+# ==========================================================
 import streamlit as st
 import re
 import urllib.request
@@ -10,7 +10,7 @@ import ssl
 import sys
 import os
 
-# Ajuste y control de rutas del sistema
+# Ajuste estricto de rutas para despliegues locales y Streamlit Cloud
 ruta_actual = os.path.dirname(os.path.abspath(__file__))
 if ruta_actual not in sys.path:
     sys.path.append(ruta_actual)
@@ -94,10 +94,82 @@ def descargar_corpus_web():
 
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
-# ==========================================================
-# ARCHIVO: voynichapp.py - PARTE 2 (FRAGMENTO 2B-1 DE 2)
-# MATRIZ DE RAÍCES ALQUÍMICAS Y EXTRACCIÓN MORFOLÓGICA
-# ==========================================================
+# ==========================================================================================
+# ARCHIVO: voynichapp.py - PARTE 2 DE 3
+# MOTOR TRADUCTOR SINTÁCTICO: MATRICES COMPLETAS DE MORFEMAS Y ADAPTACIONES
+# ==========================================================================================
+
+def traducir_a_romance(texto):
+    if not texto or not isinstance(texto, str):
+        return "", ""
+
+    dicc_activo = voynichdatos.DICCIONARIO_ES if idioma == "Español" else voynichdatos.DICCIONARIO_EN
+    texto_limpio = texto.lower().replace('.', ' ')
+    texto_limpio = re.sub(r'[^a-z\s]', '', texto_limpio)
+    palabras = texto_limpio.split()
+    
+    fon_l = []  
+    trad_l = [] 
+
+    # 1. MATRIZ TOTAL ABSOLUTA DE PREFIJOS
+    significados_morfemas = {
+        "trans": "a través de / trans-", "sub": "bajo / sub-", "per": "completamente / per-",
+        "re": "reiteración / re-", "com": "junto con / con-", "con": "asociado a / con-",
+        "super": "en exceso / super-", "in": "hacia dentro / in-", "por": "en favor de / por-",
+        "contra": "en oposición / contra-", "de": "derivado de / de-", "quot": "proporción de / quot-",
+        "la": "el/la", "la cual": "la cual", "ante": "antes de / ante-", "post": "después de / post-",
+        "inter": "entre / inter-", "intra": "dentro de / intra-", "extra": "fuera de / extra-",
+        "circum": "alrededor de / circum-", "infre": "debajo / infra-", "dis": "separación / dis-",
+        "ex": "extracción / ex-", "ob": "enfrente / ob-", "ad": "hacia / ad-", "pro": "adelante / pro-",
+        
+        # 2. MATRIZ TOTAL ABSOLUTA DE SUFIJOS
+        "issimus": " en grado sumo / -ísimo", "escere": " en desarrollo / -ecer", 
+        "ensis": " perteneciente a / -ense", "tatem": " la cualidad de / -dad", 
+        "arius": " relativo a / -ario", "ticius": " de naturaleza / -ticio", 
+        "icculum": " diminutivo de / -ículo", "tia": " el estado de / -cia", 
+        "tor": " el agente que / -dor", "sor": " el ejecutor de / -sor", 
+        "osus": " abundante en / -oso", "ittus": " pequeño / -ito", 
+        "onus": " protector de / -ón", "io": " el efecto de / -ción", "iscus": " propio de / -isco",
+        "abile": "capacidad / -able", "ibile": "posibilidad / -ible", "alis": "relativo a / -al",
+        "arium": "lugar de resguardo / -ario", "mentum": "instrumento o medio / -mento",
+        "udo": "condición / -ud", "ura": "efecto de la acción / -ura", "itas": "cualidad / -idad",
+        "bundus": "inclinación / -bundo", "ulentus": "abundancia / -ulento"
+    } if idioma == "Español" else {
+        "trans": "across / trans-", "sub": "under / sub-", "per": "thoroughly / per-",
+        "re": "again / re-", "com": "together with / com-", "con": "associated with / con-",
+        "super": "excessively / super-", "in": "inside / in-", "por": "on behalf of / por-",
+        "contra": "against / contra-", "de": "derived from / de-", "quot": "proportion of / quot-",
+        "la": "the", "la cual": "which", "ante": "before / ante-", "post": "after / post-",
+        "inter": "between / inter-", "intra": "inside / intra-", "extra": "outside / extra-",
+        "circum": "around / circum-", "infre": "below / infra-", "dis": "separation / dis-",
+        "ex": "extraction / ex-", "ob": "against / ob-", "ad": "toward / ad-", "pro": "forward / pro-",
+        "issimus": "extremely / -issimus", "escere": "developing / -esce", 
+        "ensis": "belonging to / -ensis", "tatem": "quality of / -ty", 
+        "arius": "relative to / -ary", "ticius": "nature of / -ticius", 
+        "icculum": "small / -cule", "tia": "state of / -ce", 
+        "tor": "agent of / -tor", "sor": "executor of / -sor", 
+        "osus": "advanced / -ous", "ittus": "little / -ite", 
+        "onus": "protector of / -on", "io": "effect of / -tion", "iscus": "characteristic of / -ish",
+        "abile": "capacity / -able", "ibile": "possibility / -ible", "alis": "relative to / -al",
+        "arium": "place for / -ary", "mentum": "means or tool / -ment",
+        "udo": "condition / -ude", "ude": "condition / -ude", "ura": "effect of action / -ure", "itas": "quality / -ity",
+        "bundus": "inclined to / -bund", "ulentus": "abundant / -ulent"
+    }
+
+    particulas_cortas = {
+        "ar": "del herbario / relativo a", "or": "origen / conector", "dy": "esencia / estado", 
+        "te": "este / conector", "al": "elemento / hacia", "to": "este", "co": "con", 
+        "ol": "brote", "ee": "ser / ir", "in": "dentro de"
+    } if idioma == "Español" else {
+        "ar": "of the herbary", "or": "origin / connector", "dy": "essence / state", 
+        "te": "this", "al": "element / towards", "to": "this", "co": "with", 
+        "ol": "bud", "ee": "to be / go", "in": "inside"
+    }
+
+# ==========================================================================================
+# ARCHIVO: voynichapp.py - PARTE 3 DE 3
+# MATRIZ DE RAÍCES, AGREGADOR FLUIDO, LIMPIEZA TOTAL Y PESTAÑAS VISUALES
+# ==========================================================================================
     # 3. MATRIZ TOTAL ABSOLUTA DE RAÍCES ETIMOLÓGICAS
     etimologia_romance = {
         "sc": ("cortante o seco", "cutting or dry"),
@@ -131,7 +203,7 @@ with st.spinner(IFACE[idioma]["cargando"]):
         "nov": ("reciente o fresco", "fresh or new"),
         "sen": ("maduro o viejo", "mature or old"),
         "rub": ("pigmento rojo o rubicundo", "red pigment"),
-        "alb": ("pigmento blanco / albedo", "white pigment")
+        "alb": ("pigmento blanco o albedo", "white pigment")
     }
 
     idx_idioma = 0 if idioma == "Español" else 1
@@ -187,10 +259,7 @@ with st.spinner(IFACE[idioma]["cargando"]):
             fon_l.append(pal)
             palabras_traducidas_crudas.append(f"[{pal}]")
             continue
-# ==========================================================
-# ARCHIVO: voynichapp.py - PARTE 2 (FRAGMENTO 2B-2 DE 2)
-# FILTRO LIMPIADOR ABSOLUTO Y RENDERIZADO VISUAL DE PESTAÑAS
-# ==========================================================
+
     # --- PASADA 2: SUAVIZADOR Y ENSAMBLADOR DE SINTAXIS FLUIDA FINAL ---
     i = 0
     while i < len(palabras_traducidas_crudas):
@@ -230,11 +299,8 @@ with st.spinner(IFACE[idioma]["cargando"]):
         traduccion_final_limpia = re.sub(r'protector de\s*/\s*-ón', 'como protector de', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'en grado sumo\s*/\s*-ísimo', 'en grado sumo', traduccion_final_limpia)
         
-        # Unificaciones sintácticas fluidas directas
         traduccion_final_limpia = traduccion_final_limpia.replace("el proceso de savia nutricia", "el proceso de conducción de la savia nutricia")
         traduccion_final_limpia = traduccion_final_limpia.replace("como protector de sistema de conductos extendidos", "a través de un sistema protector de conductos extendidos")
-        
-        # Limpieza por residuo de caracteres de control
         traduccion_final_limpia = traduccion_final_limpia.replace(" / ", " o ").replace(" -", " ")
     else:
         traduccion_final_limpia = re.sub(r'belonging to\s*/\s*-ensis', 'belonging to', traduccion_final_limpia)
@@ -245,15 +311,11 @@ with st.spinner(IFACE[idioma]["cargando"]):
         
         traduccion_final_limpia = traduccion_final_limpia.replace("the process of nutritious sap", "the process of conducting nutritious sap")
         traduccion_final_limpia = traduccion_final_limpia.replace("acting as a protector of extended duct system", "through a protective system of extended ducts")
-        
         traduccion_final_limpia = traduccion_final_limpia.replace(" / ", " or ").replace(" -", " ")
 
     return " ".join(fon_l), traduccion_final_limpia.strip()
 
-# ==========================================
-# SECCIÓN FINAL DE PESTAÑAS (VOYNICHAPP.PY)
-# COLOCAR ABAJO DEL TODO EN TU ARCHIVO
-# ==========================================
+# --- CONFIGURACIÓN DE PESTAÑAS (BLOQUE DE CIERRE DEFINTIVO) ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
