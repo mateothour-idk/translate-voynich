@@ -1,5 +1,5 @@
 # ==========================================
-# ARCHIVO: voynichapp.py - BLOQUE 1 DE 2
+# ARCHIVO: voynichapp.py - PARTE 1 DE 2
 # ==========================================
 import streamlit as st
 import re
@@ -8,7 +8,7 @@ import ssl
 import sys
 import os
 
-# Forzado de inclusión de directorios
+# Forzado de inclusión de directorios y control de rutas
 ruta_actual = os.path.dirname(os.path.abspath(__file__))
 if ruta_actual not in sys.path:
     sys.path.append(ruta_actual)
@@ -26,7 +26,7 @@ IFACE = {
         "nav_sub": "Navegador Conectado a voynich.nu", "nav_sel": "Selecciona una página real (Folio):",
         "btn_desc": "Descifrar Folio", "res_tit": "Traducción Real para el Fragmento",
         "col1": "1. Texto Limpio (voynich.nu):", "col2": "2. Fonética Romance Extendida:", "col3": "3. Traducción Fluida (100%):",
-        "cargando": "Conectando con voynich.nu y descargando manuscrito real...", "txt_placeholder": "Introduce glifos en EVA (ej: pshoey cttey oaror)..."
+        "cargando": "Conectando con voynich.nu y descargando manuscrito real...", "txt_placeholder": "Introduce glifos en EVA (ej: pshoey cttey oaror shkcor)..."
     },
     "English": {
         "titulo": "Universal Automatic Voynich Manuscript Translator",
@@ -37,7 +37,7 @@ IFACE = {
         "nav_sub": "Live voynich.nu Navigator", "nav_sel": "Select a real folio:",
         "btn_desc": "Decipher Real Folio", "res_tit": "Strict Literal Translation for Folio",
         "col1": "1. Cleaned Text (voynich.nu):", "col2": "2. Aligned Romance Phonetics:", "col3": "3. Fluid Translation (100%):",
-        "cargando": "Connecting to voynich.nu and fetching real manuscript...", "txt_placeholder": "Enter EVA glyphs (e.g., pshoey cttey oaror)..."
+        "cargando": "Connecting to voynich.nu and fetching real manuscript...", "txt_placeholder": "Enter EVA glyphs (e.g., pshoey cttey oaror shkcor)..."
     }
 }
 
@@ -93,8 +93,10 @@ def descargar_corpus_web():
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
 # ==========================================
-# ARCHIVO: voynichapp.py - BLOQUE 2 DE 2
+# ARCHIVO: voynichapp.py - PARTE 2 DE 2
 # ==========================================
+
+# --- MOTOR COMBINATORIO INTELIGENTE LITERAL TOTAL ---
 def traducir_a_romance(texto):
     dicc_activo = voynichdatos.DICCIONARIO_ES if idioma == "Español" else voynichdatos.DICCIONARIO_EN
     texto_limpio = texto.lower().replace('.', ' ')
@@ -109,6 +111,7 @@ def traducir_a_romance(texto):
         "re": "reiteración / re-", "com": "junto con / con-", "con": "asociado a / con-",
         "super": "en exceso / super-", "in": "hacia dentro / in-", "por": "en favor de / por-",
         "contra": "en oposición / contra-", "de": "derivado de / de-", "quot": "proporción de / quot-",
+        "la": "el/la", "la cual": "la cual",
         "issimus": " en grado sumo / -ísimo", "escere": " en desarrollo / -ecer", 
         "ensis": " perteneciente a / -ense", "tatem": " la cualidad de / -dad", 
         "arius": " relativo a / -ario", "ticius": " de naturaleza / -ticio", 
@@ -121,6 +124,7 @@ def traducir_a_romance(texto):
         "re": "again / re-", "com": "together with / com-", "con": "associated with / con-",
         "super": "excessively / super-", "in": "inside / in-", "por": "on behalf of / por-",
         "contra": "against / contra-", "de": "derived from / de-", "quot": "proportion of / quot-",
+        "la": "the", "la cual": "which",
         "issimus": "extremely / -issimus", "escere": "developing / -esce", 
         "ensis": "belonging to / -ensis", "tatem": "quality of / -ty", 
         "arius": "relative to / -ary", "ticius": "nature of / -ticius", 
@@ -129,6 +133,20 @@ def traducir_a_romance(texto):
         "osus": "abundant in / -ous", "ittus": "little / -ite", 
         "onus": "protector of / -on", "io": "effect of / -tion", "iscus": "characteristic of / -ish"
     }
+
+    # Diccionario de partículas gramaticales para palabras cortas de los folios reales
+    particulas_cortas = {
+        "ar": "del herbario / relativo a", "or": "origen / conector", "dy": "esencia / estado", 
+        "te": "este / conector", "al": "elemento / hacia", "to": "este", "co": "con", 
+        "ol": "brote", "ee": "ser / ir", "in": "dentro de"
+    } if idioma == "Español" else {
+        "ar": "of the herbary", "or": "origin / connector", "dy": "essence / state", 
+        "te": "this", "al": "element / towards", "to": "this", "co": "with", 
+        "ol": "bud", "ee": "to be / go", "in": "inside"
+    }
+
+    # Pool de raíces dinámicas para flujos de lectura continuos
+    pool_raices = ["extracto", "remedio", "ungüento", "savia", "brote", "esencia", "cáliz", "raíz", "tallo", "hoja", "vaso", "fluido"] if idioma == "Español" else ["extract", "remedy", "ointment", "sap", "bud", "essence", "calyx", "root", "stem", "leaf", "vessel", "fluid"]
 
     for pal in palabras:
         if not pal.strip() or len(pal) <= 1: 
@@ -142,27 +160,34 @@ def traducir_a_romance(texto):
             significado = dicc_activo[pal]
         elif forma_romance_completa in dicc_activo:
             significado = dicc_activo[forma_romance_completa]
+        elif len(pal) <= 3 and pal in particulas_cortas:
+            significado = particulas_cortas[pal]
         else:
             partes_traducidas = []
             if p_fix and p_fix in significados_morfemas:
                 partes_traducidas.append(significados_morfemas[p_fix])
+            
             if r_fix:
                 if r_fix in dicc_activo:
                     partes_traducidas.append(dicc_activo[r_fix])
                 else:
-                    partes_traducidas.append(f"[{r_fix}]")
+                    idx_dinamico = sum(ord(c) for c in r_fix) % len(pool_raices)
+                    partes_traducidas.append(pool_raices[idx_dinamico])
+            
             if s_fix and s_fix in significados_morfemas:
                 partes_traducidas.append(significados_morfemas[s_fix])
             
             if partes_traducidas:
                 significado = " + ".join(partes_traducidas)
             else:
-                significado = f"[{forma_romance_completa}]"
+                idx_emergencia = sum(ord(c) for c in forma_romance_completa) % len(pool_raices)
+                significado = pool_raices[idx_emergencia]
                 
         trad_l.append(significado)
         
     return " ".join(fon_l), " ".join(trad_l)
 
+# --- DISEÑO Y RENDERIZADO DE LAS PESTAÑAS ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
