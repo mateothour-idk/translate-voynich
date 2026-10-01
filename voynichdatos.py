@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
 # ==========================================
 # ARCHIVO: voynichdatos.py - PARTE 1 DE 2
 # ==========================================
-import re
+import re  # <--- ¡AQUÍ ESTÁ! Indispensable para los motores morfológicos de abajo
 
 # Inicialización de diccionarios globales para evitar errores de atributo
 DICCIONARIO_ES = {}
@@ -10,7 +11,7 @@ DICCIONARIO_MACRO_GLIFOS = {}
 
 # 1. DICCIONARIO ESPAÑOL CON LAS RAÍCES HISTÓRICAS Y COMBINACIONES
 DICCIONARIO_ES.update({
-    # --- Raíces Originales de Tu Matriz ---
+    # ... Resto de tus raíces originales, combinaciones y anatomía botánica avanzada ...
     "pui": "planta", "cuta": "corteza", "oarur": "aroma", "poisoda": "poción (medicina)",
     "quedy": "elemento", "con": "cum (con)", "su": "su", "quoqu": "por lo tanto", 
     "caur": "caulis (tallo)", "chedy": "extracto", "toes": "estos", "odor": "oloroso", 
