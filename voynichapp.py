@@ -93,10 +93,10 @@ def descargar_corpus_web():
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
 # ==========================================================
-# ARCHIVO: voynichapp.py - PARTE 2 DE 2 (ULTRA BLINDADA)
+# ARCHIVO: voynichapp.py - PARTE 2 DE 2 (SOLUCIÓN DE PESTAÑAS)
 # ==========================================================
+
 def traducir_a_romance(texto):
-    # Verificación de seguridad por si el texto llega nulo o vacío
     if not texto or not isinstance(texto, str):
         return "", ""
 
@@ -132,7 +132,7 @@ def traducir_a_romance(texto):
         "arius": "relative to / -ary", "ticius": "nature of / -ticius", 
         "icculum": "small / -cule", "tia": "state of / -ce", 
         "tor": "agent of / -tor", "sor": "executor of / -sor", 
-        "osus": "abundant in / -ous", "ittus": "little / -ite", 
+        "osus": "advanced / -ous", "ittus": "little / -ite", 
         "onus": "protector of / -on", "io": "effect of / -tion", "iscus": "characteristic of / -ish"
     }
 
@@ -175,51 +175,90 @@ def traducir_a_romance(texto):
             continue
         
         try:
-            # Descomposición segura
             p_fix, r_fix, s_fix = voynichdatos.descomponer_y_traducir_glifo(pal)
-        except Exception:
-            p_fix, r_fix, s_fix = "", pal, ""
+            forma_romance_completa = f"{p_fix}{r_fix}{s_fix}"
+            fon_l.append(forma_romance_completa)
             
-        forma_romance_completa = f"{p_fix}{r_fix}{s_fix}"
-        fon_l.append(forma_romance_completa)
-        
-        if pal in dicc_activo:
-            significado = dicc_activo[pal]
-        elif forma_romance_completa in dicc_activo:
-            significado = dicc_activo[forma_romance_completa]
-        elif len(pal) <= 3 and pal in particulas_cortas:
-            significado = particulas_cortas[pal]
-        else:
-            partes_traducidas = []
-            
-            # Prefijo
-            if p_fix and p_fix in significados_morfemas:
-                partes_traducidas.append(significados_morfemas[p_fix])
-            
-            # Raíz
-            if r_fix:
-                if r_fix in dicc_activo:
-                    partes_traducidas.append(dicc_activo[r_fix])
-                elif r_fix in etimologia_romance:
-                    partes_traducidas.append(etimologia_romance[r_fix][idx_idioma])
-                else:
-                    encontrado = False
-                    for clave_etim, val_etim in etimologia_romance.items():
-                        if clave_etim in r_fix:
-                            partes_traducidas.append(f"{val_etim[idx_idioma]}*")
-                            encontrado = True
-                            break
-                    if not encontrado:
-                        pool_respaldo = ["extracto vegetal", "remedio herbal", "ungüento activo", "savia nutricia", "brote herborístico", "infusión médica"] if idioma == "Español" else ["plant extract", "herbal remedy", "active ointment", "nutritious sap", "herbal sprout", "medical infusion"]
-                        idx_dinamico = sum(ord(c) for c in r_fix) % len(pool_respaldo)
-                        partes_traducidas.append(f"{pool_respaldo[idx_dinamico]} ({r_fix})")
-            
-            # Sufijo
-            if s_fix and s_fix in significados_morfemas:
-                partes_traducidas.append(significados_morfemas[s_fix])
-            
-            significado = " + ".join(partes_traducidas) if partes_traducidas else ("[desconocido]" if idioma == "Español" else "[unknown]")
+            if pal in dicc_activo:
+                significado = dicc_activo[pal]
+            elif forma_romance_completa in dicc_activo:
+                significado = dicc_activo[forma_romance_completa]
+            elif len(pal) <= 3 and pal in particulas_cortas:
+                significado = particulas_cortas[pal]
+            else:
+                partes_traducidas = []
                 
-        trad_l.append(significado)
+                if p_fix and p_fix in significados_morfemas:
+                    partes_traducidas.append(significados_morfemas[p_fix])
+                
+                if r_fix:
+                    if r_fix in dicc_activo:
+                        partes_traducidas.append(dicc_activo[r_fix])
+                    elif r_fix in etimologia_romance:
+                        partes_traducidas.append(etimologia_romance[r_fix][idx_idioma])
+                    else:
+                        encontrado = False
+                        for clave_etim, val_etim in etimologia_romance.items():
+                            if clave_etim in r_fix:
+                                partes_traducidas.append(f"{val_etim[idx_idioma]}*")
+                                encontrado = True
+                                break
+                        if not encontrado:
+                            pool_respaldo = ["extracto vegetal", "remedio herbal", "ungüento activo", "savia nutricia", "brote herborístico", "infusión médica"] if idioma == "Español" else ["plant extract", "herbal remedy", "active ointment", "nutritious sap", "herbal sprout", "medical infusion"]
+                            idx_dinamico = sum(ord(c) for c in r_fix) % len(pool_respaldo)
+                            partes_traducidas.append(f"{pool_respaldo[idx_dinamico]} ({r_fix})")
+                
+                if s_fix and s_fix in significados_morfemas:
+                    partes_traducidas.append(significados_morfemas[s_fix])
+                
+                significado = " + ".join(partes_traducidas) if partes_traducidas else ("[desconocido]" if idioma == "Español" else "[unknown]")
+                    
+            trad_l.append(significado)
+            
+        except Exception:
+            fon_l.append(pal)
+            trad_l.append(f"[{pal}]")
+            continue
         
     return " ".join(fon_l), " ".join(trad_l)
+
+# --- CONFIGURACIÓN DE PESTAÑAS (FUERA DE CONDICIONALES PARA QUE NUNCA DESAPAREZCAN) ---
+tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
+
+# Pestaña 1: Laboratorio de Entrada Libre (Siempre visible)
+with tab1:
+    st.subheader(IFACE[idioma]["lab_sub"])
+    texto_libre = st.text_area("Input EVA Texto:", placeholder=IFACE[idioma]["txt_placeholder"], height=150, key="txt_area_libre")
+    if st.button(IFACE[idioma]["btn_an"], key="btn_libre"):
+        if texto_libre:
+            f_r, t_r = traducir_a_romance(texto_libre)
+            st.markdown(f"### {IFACE[idioma]['res_tit']}")
+            st.info(f"**{IFACE[idioma]['fon_rom']}**\n\n {f_r}")
+            st.success(f"**{IFACE[idioma]['trad_auto']}**\n\n {t_r}")
+
+# Pestaña 2: Explorador de Transcripción Real (Manejo de errores si falla la descarga)
+with tab2:
+    st.subheader(IFACE[idioma]["nav_sub"])
+    
+    # Comprobamos de manera segura si CORPUS_REAL existe y contiene datos
+    if 'CORPUS_REAL' in globals() and CORPUS_REAL and isinstance(CORPUS_REAL, dict):
+        folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: (int(re.sub(r'\D', '', x)), x[-1]))
+        folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], folios_disponibles)
+        
+        if st.button(IFACE[idioma]["btn_desc"], key="btn_folio"):
+            st.markdown(f"### Folio Real {folio_sel} - Análisis Estructural")
+            
+            c1, c2, c3 = st.columns(3)
+            c1.markdown(f"**{IFACE[idioma]['col1']}**")
+            c2.markdown(f"**{IFACE[idioma]['col2']}**")
+            c3.markdown(f"**{IFACE[idioma]['col3']}**")
+            st.markdown("---")
+            
+            for linea in CORPUS_REAL[folio_sel]:
+                f_linea, t_linea = traducir_a_romance(linea)
+                col1, col2, col3 = st.columns(3)
+                col1.code(linea, language="text")
+                col2.warning(f_linea)
+                col3.success(t_linea)
+    else:
+        st.error("⚠️ No se pudieron cargar los folios desde voynich.nu de forma remota. Por favor, recarga la página o utiliza la pestaña 'Laboratorio de Texto Libre' para analizar tus glifos manualmente.")
