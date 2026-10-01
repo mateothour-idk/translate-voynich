@@ -93,9 +93,10 @@ def descargar_corpus_web():
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
 # ==========================================================
-# REEMPLAZO EN VOYNICHAPP.PY - BLOQUE 2 DE 2
-# MOTOR DE EXTRACCIÓN ETIMOLÓGICA ROMANCE-LATINA (REAL)
+# ARCHIVO: voynichapp.py - PARTE 2 DE 2 (CORREGIDA Y COMPLETA)
 # ==========================================================
+
+# --- MOTOR COMBINATORIO INTELIGENTE LITERAL TOTAL ---
 def traducir_a_romance(texto):
     dicc_activo = voynichdatos.DICCIONARIO_ES if idioma == "Español" else voynichdatos.DICCIONARIO_EN
     texto_limpio = texto.lower().replace('.', ' ')
@@ -120,7 +121,7 @@ def traducir_a_romance(texto):
         "onus": " protector de / -ón", "io": " el efecto de / -ción", "iscus": " propio de / -isco"
     } if idioma == "Español" else {
         "trans": "across / trans-", "sub": "under / sub-", "per": "thoroughly / per-",
-        "re": "again / re-", "com": "together with / com-", "con": "associated with / con-",
+        "re": "again / re-", "com": "together with / com-", "con": "associated with / com-",
         "super": "excessively / super-", "in": "inside / in-", "por": "on behalf of / por-",
         "contra": "against / contra-", "de": "derived from / de-", "quot": "proportion of / quot-",
         "la": "the", "la cual": "which",
@@ -143,7 +144,7 @@ def traducir_a_romance(texto):
         "ol": "bud", "ee": "to be / go", "in": "inside"
     }
 
-    # MATRIZ ETiMOLÓGICA REAL: Asocia morfemas sueltos de raíces con conceptos botánicos latinos genuinos
+    # MATRIZ ETIMOLÓGICA REAL: Corregida para asignación directa indexada por idioma [0: ES, 1: EN]
     etimologia_romance = {
         "sc": ("cortante / seco (lat. scindere/siccus)", "cutting / dry"),
         "ch": ("cálido / ardiente (lat. calor)", "warm / burning"),
@@ -164,11 +165,11 @@ def traducir_a_romance(texto):
         if not pal.strip() or len(pal) <= 1: 
             continue
         
+        # Descomposición desde voynichdatos
         p_fix, r_fix, s_fix = voynichdatos.descomponer_y_traducir_glifo(pal)
         forma_romance_completa = f"{p_fix}{r_fix}{s_fix}"
         fon_l.append(forma_romance_completa)
         
-        # 1. TRADUCCIÓN ESTRUCTURADA CIENTÍFICA
         if pal in dicc_activo:
             significado = dicc_activo[pal]
         elif forma_romance_completa in dicc_activo:
@@ -182,25 +183,24 @@ def traducir_a_romance(texto):
             if p_fix and p_fix in significados_morfemas:
                 partes_traducidas.append(significados_morfemas[p_fix])
             
-            # Raíz con Extractor Etimológico Real (Evita el azar)
+            # Raíz Etimológica Real Certificada
             if r_fix:
                 if r_fix in dicc_activo:
                     partes_traducidas.append(dicc_activo[r_fix])
                 elif r_fix in etimologia_romance:
-                    # Extrae la traducción filológica real según el idioma
-                    significado_raiz = etimologia_romance[r_fix][0] if idioma == "Español" else etimologia_romance[r_fix][1]
-                    partes_traducidas.append(significado_raiz)
+                    idx_idioma = 0 if idioma == "Español" else 1
+                    partes_traducidas.append(etimologia_romance[r_fix][idx_idioma])
                 else:
-                    # Intento de aproximación por sub-raíz etimológica para raíces no listadas
                     encontrado = False
                     for clave_etim, val_etim in etimologia_romance.items():
                         if clave_etim in r_fix:
-                            significado_raiz = val_etim[0] if idioma == "Español" else val_etim[1]
-                            partes_traducidas.append(f"{significado_raiz}*")
+                            idx_idioma = 0 if idioma == "Español" else 1
+                            partes_traducidas.append(f"{val_etim[idx_idioma]}*")
                             encontrado = True
                             break
                     if not encontrado:
-                        partes_traducidas.append(f"elemento botánico ({r_fix})" if idioma == "Español" else f"botanical element ({r_fix})")
+                        msg_err = f"elemento botánico ({r_fix})" if idioma == "Español" else f"botanical element ({r_fix})"
+                        partes_traducidas.append(msg_err)
             
             # Sufijo
             if s_fix and s_fix in significados_morfemas:
@@ -211,3 +211,40 @@ def traducir_a_romance(texto):
         trad_l.append(significado)
         
     return " ".join(fon_l), " ".join(trad_l)
+
+# --- DISEÑO Y RENDERIZADO DE LAS PESTAÑAS ---
+tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
+
+with tab1:
+    st.subheader(IFACE[idioma]["lab_sub"])
+    texto_libre = st.text_area("Input EVA Texto:", placeholder=IFACE[idioma]["txt_placeholder"], height=150, key="txt_area_libre")
+    if st.button(IFACE[idioma]["btn_an"], key="btn_libre"):
+        if texto_libre:
+            f_r, t_r = traducir_a_romance(texto_libre)
+            st.markdown(f"### {IFACE[idioma]['res_tit']}")
+            st.info(f"**{IFACE[idioma]['fon_rom']}**\n\n {f_r}")
+            st.success(f"**{IFACE[idioma]['trad_auto']}**\n\n {t_r}")
+
+with tab2:
+    st.subheader(IFACE[idioma]["nav_sub"])
+    if CORPUS_REAL:
+        folios_disponibles = sorted(list(CORPUS_REAL.keys()), key=lambda x: (int(re.sub(r'\D', '', x)), x[-1]))
+        folio_sel = st.selectbox(IFACE[idioma]["nav_sel"], folios_disponibles)
+        
+        if st.button(IFACE[idioma]["btn_desc"], key="btn_folio"):
+            st.markdown(f"### Folio Real {folio_sel} - Análisis Estructural")
+            
+            c1, c2, c3 = st.columns(3)
+            c1.markdown(f"**{IFACE[idioma]['col1']}**")
+            c2.markdown(f"**{IFACE[idioma]['col2']}**")
+            c3.markdown(f"**{IFACE[idioma]['col3']}**")
+            st.markdown("---")
+            
+            for linea in CORPUS_REAL[folio_sel]:
+                f_linea, t_linea = traducir_a_romance(linea)
+                col1, col2, col3 = st.columns(3)
+                col1.code(linea, language="text")
+                col2.warning(f_linea)
+                col3.success(t_linea)
+    else:
+        st.error("Error de inicialización de datos.")
