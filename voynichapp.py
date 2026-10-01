@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 # ==========================================
 # ARCHIVO: voynichapp.py - PARTE 1 DE 2
+# INTERFAZ BILINGÜE Y SISTEMA DE RED SSL INDEPENDIENTE
 # ==========================================
 import streamlit as st
 import re
@@ -8,7 +10,7 @@ import ssl
 import sys
 import os
 
-# Forzado de inclusión de directorios y control de rutas
+# Ajuste y control de rutas del sistema
 ruta_actual = os.path.dirname(os.path.abspath(__file__))
 if ruta_actual not in sys.path:
     sys.path.append(ruta_actual)
@@ -93,8 +95,10 @@ def descargar_corpus_web():
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
 # ==========================================================================================
-# ARCHIVO: voynichapp.py - PARTE 2 (FRAGMENTO A DE B - INTERPRETACIÓN FLUIDA NUEVA)
+# ARCHIVO: voynichapp.py - PARTE 2 (FRAGMENTO 2A DE 2)
+# MOTOR ETiMOLÓGICO EXTENDIDO Y PROCESADOR DE MORFEMAS
 # ==========================================================================================
+
 def traducir_a_romance(texto):
     if not texto or not isinstance(texto, str):
         return "", ""
@@ -107,6 +111,7 @@ def traducir_a_romance(texto):
     fon_l = []  
     trad_l = [] 
 
+    # 1. MATRIZ TOTAL ABSOLUTA DE PREFIJOS (Sintaxis Latín y EVA extendida)
     significados_morfemas = {
         "trans": "a través de / trans-", "sub": "bajo / sub-", "per": "completamente / per-",
         "re": "reiteración / re-", "com": "junto con / con-", "con": "asociado a / con-",
@@ -116,6 +121,8 @@ def traducir_a_romance(texto):
         "inter": "entre / inter-", "intra": "dentro de / intra-", "extra": "fuera de / extra-",
         "circum": "alrededor de / circum-", "infre": "debajo / infra-", "dis": "separación / dis-",
         "ex": "extracción / ex-", "ob": "enfrente / ob-", "ad": "hacia / ad-", "pro": "adelante / pro-",
+        
+        # 2. MATRIZ TOTAL ABSOLUTA DE SUFIJOS (Morfemas nominales y verbales)
         "issimus": " en grado sumo / -ísimo", "escere": " en desarrollo / -ecer", 
         "ensis": " perteneciente a / -ense", "tatem": " la cualidad de / -dad", 
         "arius": " relativo a / -ario", "ticius": " de naturaleza / -ticio", 
@@ -159,8 +166,8 @@ def traducir_a_romance(texto):
         "ol": "bud", "ee": "to be / go", "in": "inside"
     }
 # ==========================================================
-# ARCHIVO: voynichapp.py - PARTE 2 (FRAGMENTO B DE B)
-# TRADUCCIÓN SINTÁCTICA FLUIDA UNIFICADA Y RENDERIZADO VISUAL
+# ARCHIVO: voynichapp.py - PARTE 2 (FRAGMENTO 2B DE 2)
+# MATRIZ DE RAÍCES, BUCLE INTELIGENTE Y RENDERIZADO VISUAL
 # ==========================================================
     # 3. MATRIZ TOTAL ABSOLUTA DE RAÍCES ETIMOLÓGICAS
     etimologia_romance = {
@@ -243,7 +250,6 @@ def traducir_a_romance(texto):
                 if s_fix and s_fix in significados_morfemas:
                     partes_traducidas.append(significados_morfemas[s_fix])
                 
-                # Unimos con espacios limpios en lugar de signos "+"
                 significado = " ".join(partes_traducidas) if partes_traducidas else ("[desconocido]" if idioma == "Español" else "[unknown]")
                     
             palabras_traducidas_crudas.append(significado)
@@ -278,7 +284,6 @@ def traducir_a_romance(texto):
             trad_l.append(item_actual)
             i += 1
 
-    # Unificación final de la cadena de texto para eliminar cortes robóticos
     traduccion_final_limpia = " ".join(trad_l)
     if idioma == "Español":
         traduccion_final_limpia = traduccion_final_limpia.replace("el efecto de / -ción savia nutricia", "el proceso de conducción de la savia nutricia")
