@@ -328,6 +328,10 @@ with tab1:
             st.info(f"**{IFACE[idioma]['fon_rom']}**\n\n {f_r}")
             st.success(f"**{IFACE[idioma]['trad_auto']}**\n\n {t_r}")
 
+# ==========================================================
+# REEMPLAZO FINAL: PESTAÑA 2 CON BOTÓN DE DESCARGA EN TXT
+# PANTALLA TOTALMENTE OPERATIVA
+# ==========================================================
 with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
     if 'CORPUS_REAL' in globals() and CORPUS_REAL and isinstance(CORPUS_REAL, dict):
@@ -343,11 +347,30 @@ with tab2:
             c3.markdown(f"**{IFACE[idioma]['col3']}**")
             st.markdown("---")
             
+            # Variable para acumular el texto que se va a descargar
+            reporte_txt = f"REPORTE DE DESCIFRADO - FOLIO {folio_sel}\n"
+            reporte_txt += "=========================================\n\n"
+            
             for linea in CORPUS_REAL[folio_sel]:
                 f_linea, t_linea = traducir_a_romance(linea)
                 col1, col2, col3 = st.columns(3)
                 col1.code(linea, language="text")
                 col2.warning(f_linea)
                 col3.success(t_linea)
+                
+                # Agregamos los datos al reporte plano
+                reporte_txt += f"EVA: {linea}\n"
+                reporte_txt += f"ROMANCE: {f_linea}\n"
+                reporte_txt += f"TRADUCCIÓN: {t_linea}\n"
+                reporte_txt += "-----------------------------------------\n"
+            
+            st.markdown("### 📥 Guardar Resultados")
+            # Botón nativo de Streamlit para descargar el archivo de texto inmediatamente
+            st.download_button(
+                label="Descargar Traducción Completa (.txt)",
+                data=reporte_txt,
+                file_name=f"traduccion_folio_{folio_sel}.txt",
+                mime="text/plain"
+            )
     else:
         st.error("⚠️ No se pudieron cargar los folios desde voynich.nu de forma remota. Por favor, utiliza la pestaña 'Laboratorio de Texto Libre' para analizar tus glifos manualmente.")
