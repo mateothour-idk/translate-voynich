@@ -1,7 +1,8 @@
-# --- ARCHIVO: voynichdatos.py ---
+# ==========================================
+# PARTE 1: CONFIGURACIÓN Y DICCIONARIO ESPAÑOL
+# ==========================================
 import re
 
-# 1. DICCIONARIO ESPAÑOL CON LAS 100 RAÍCES HISTÓRICAS
 DICCIONARIO_ES = {
     "pui": "planta", "cuta": "corteza", "oarur": "aroma", "poisoda": "pocion (medicina)",
     "quedy": "elemento", "con": "cum (con)", "su": "su", "quoqu": "por lo tanto", 
@@ -20,7 +21,7 @@ DICCIONARIO_ES = {
     "quey": "la cual", "icios": "los vasos", "oiaj": "esencia", "cios": "recipientes", 
     "ain": "líquido", "oteroe": "proceso", "aram": "hornillo", "sier": "hojas", 
     "dalaiu": "destilar", "dam": "dar", "ciodain": "conductos", "aekiy": "mezcla", 
-    "air": "aire", "soar": "vapor", "ciey": "savia", "odotoi": "ciclo", 
+    "air": "aire", "soar": "vapor", "ciey": "savia", "odotoi": "cycle", 
     "doror": "nacimiento", "quaur": "calor", "caud": "tallo largo", "cedy": "cortar", "cidí": "verter",
     "folia": "hoja", "ramus": "rama", "flos": "flor", "semen": "semilla", "capsa": "cápsula",
     "gemma": "yema", "nux": "nuez", "baca": "baya", "spina": "espina", "radix": "raíz profunda",
@@ -45,8 +46,9 @@ DICCIONARIO_ES = {
     "vulner": "heridas", "febri": "fiebre", "dolor": "dolor", "stoma": "estómago", "capitis": "cabeza",
     "ocul": "ojos", "cutis": "afecciones de la piel", "pectus": "pecho/tos"
 }
-
-# 2. DICCIONARIO INGLÉS CON LAS 100 RAÍCES HISTÓRICAS
+# ==========================================
+# PARTE 2: DICCIONARIO INGLÉS Y MACRO-GLIFOS
+# ==========================================
 DICCIONARIO_EN = {
     "pui": "plant", "cuta": "bark", "oarur": "aroma", "poisoda": "medicinal potion",
     "quedy": "element", "con": "with", "su": "its", "quoqu": "whereby", 
@@ -96,22 +98,30 @@ DICCIONARIO_MACRO_GLIFOS = {
     "B2": "[Grupo Biológico 2]", "IH": "[Ilustración de Herboristería]", "LA": "[Línea Alta]", 
     "H1": "[Encabezado Principal]", "C1": "[Cifrado Primario]"
 }
-# 3. REGLAS DE MORFOLOGÍA ESTRUCTURAL COMPLETA
-PREFIJOS = {
-    r"^tcs": "trans", r"^cs": "sub", r"^pc": "per", r"^ceo": "re", r"^ce": "re",
-    r"^ol": "com", r"^cp": "super", r"^y": "in", r"^qok": "com", r"^qo": "con", 
-    r"^ok": "con", r"^l": "la", r"^ot": "por", r"^ct": "contra", r"^da": "de",
-    r"^qot": "quot", r"^ed": "cred", r"^cee": "cred"
-}
+# ==========================================
+# PARTE 3: MATRIZ DE PREFIJOS, SUFIJOS Y REGLAS
+# ==========================================
+PREFIJOS_LISTA = [
+    ("tcs", "trans"), ("qok", "com"), ("qot", "quot"), ("cee", "cred"), 
+    ("ceo", "re"), ("sub", "sub"), ("cse", "sub"), ("per", "per"), 
+    ("com", "com"), ("super", "super"), ("contra", "contra"), ("quot", "quot"),
+    ("cred", "cred"), ("cs", "sub"), ("pc", "per"), ("ce", "re"), 
+    ("ol", "com"), ("cp", "super"), ("qo", "con"), ("ok", "con"), 
+    ("ot", "por"), ("ct", "contra"), ("da", "de"), ("ed", "cred"),
+    ("y", "in"), ("l", "la")
+]
 
-SUFIJOS = {
-    r"edy$": "ensis", r"epy$": "ensis", r"eey$": "ensis", r"ar$": "arius",
-    r"dam$": "tatem", r"kar$": "ura", r"ky$": "ticius", r"ldy$": "tia",
-    r"dy$": "tia", r"dar$": "tor", r"ody$": "osus", r"iin$": "ittus",
-    r"in$": "ittus", r"tar$": "tor", r"eceo$": "issimus", r"cse$": "escere", 
-    r"es$": "escere", r"se$": "escere", r"eor$": "sor", r"sy$": "iscus", 
-    r"eol$": "onus", r"ol$": "onus", r"oe$": "io", r"eo$": "io"
-}
+SUFIJOS_LISTA = [
+    ("issimus", "issimus"), ("escere", "escere"), ("eceo", "issimus"),
+    ("ensis", "ensis"), ("tatem", "tatem"), ("arius", "arius"),
+    ("ticius", "ticius"), ("icculum", "icculum"), ("edy", "ensis"), 
+    ("epy", "ensis"), ("eey", "ensis"), ("dam", "tatem"), ("kar", "ura"), 
+    ("ky", "ticius"), ("ldy", "tia"), ("ody", "osus"), ("iin", "ittus"), 
+    ("tar", "tor"), ("cse", "escere"), ("eor", "sor"), ("esc", "escere"),
+    ("dy", "tia"), ("dar", "tor"), ("in", "ittus"), ("es", "escere"), 
+    ("se", "escere"), ("sy", "iscus"), ("eol", "onus"), ("ol", "onus"), 
+    ("oe", "io"), ("eo", "io"), ("ar", "arius")
+]
 
 RAICES_DIRECTAS = {
     "cse": "cred", "ed": "cred", "ce": "cred", "cee": "cred",
@@ -128,30 +138,29 @@ SUSTITUCION_GLIFOS = [
     ("th", "t"), ("ch", "c"), ("oe", "ue"), ("ey", "a"), ("ck", "qu"),
     ("lf", "lef"), ("el", "l"), ("quo", "cuo")
 ]
-
-CORPUS_MANUSCRITO = {}
-
-# 4. MOTOR DE DESCOMPOSICIÓN LÉXICA
+# ==========================================
+# PARTE 4: MOTOR DE TRADUCCIÓN MORFOLÓGICA
+# ==========================================
 def descomponer_y_traducir_glifo(palabra_cruda):
+    raiz_restante = palabra_cruda.lower().strip()
     prefijo_trad = ""
     sufijo_trad = ""
-    raiz_restante = palabra_cruda.lower().strip()
 
-    # Resolver Prefijo
-    for pat in sorted(PREFIJOS.keys(), key=len, reverse=True):
-        if re.match(pat, raiz_restante):
-            prefijo_trad = PREFIJOS[pat]
-            raiz_restante = re.sub(pat, "", raiz_restante, count=1)
+    # Extraer Prefijo por el inicio (Izquierda)
+    for key, val in PREFIJOS_LISTA:
+        if raiz_restante.startswith(key):
+            prefijo_trad = val
+            raiz_restante = raiz_restante[len(key):]
             break
 
-    # Resolver Sufijo
-    for pat in sorted(SUFIJOS.keys(), key=len, reverse=True):
-        if re.search(pat, raiz_restante):
-            sufijo_trad = SUFIJOS[pat]
-            raiz_restante = re.sub(pat, "", raiz_restante, count=1)
+    # Extraer Sufijo por el final (Derecha)
+    for key, val in SUFIJOS_LISTA:
+        if raiz_restante.endswith(key):
+            sufijo_trad = val
+            raiz_restante = raiz_restante[:-len(key)] if len(key) > 0 else raiz_restante
             break
 
-    # Resolver Raíz
+    # Buscar Raíz Directa o aplicar cambios fonéticos
     if raiz_restante in RAICES_DIRECTAS:
         raiz_trad = RAICES_DIRECTAS[raiz_restante]
     else:
@@ -164,8 +173,11 @@ def descomponer_y_traducir_glifo(palabra_cruda):
         raiz_trad = fon
 
     return f"{prefijo_trad}{raiz_trad}{sufijo_trad}"
+# ==========================================
+# PARTE 5: SISTEMA DE RESPALDO DE FOLIOS LOCALES
+# ==========================================
+CORPUS_MANUSCRITO = {}
 
-# 5. INDEXACIÓN DE RESPALDO DE SEGURIDAD LOCAL
 def cargar_todas_las_paginas_reales():
     global CORPUS_MANUSCRITO
     CORPUS_MANUSCRITO.clear()
