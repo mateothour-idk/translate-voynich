@@ -1,6 +1,5 @@
 # ==========================================
-# REEMPLAZA EL INICIO DE TU ARCHIVO CON ESTO:
-# PARTE 1: INTERFAZ Y DESCARGA BLINDADA DESDE VOYStatus
+# ARCHIVO: voynichapp.py - BLOQUE 1 DE 2
 # ==========================================
 import streamlit as st
 import re
@@ -9,7 +8,7 @@ import ssl
 import sys
 import os
 
-# Ajuste y control de rutas del sistema
+# Forzado de inclusión de directorios
 ruta_actual = os.path.dirname(os.path.abspath(__file__))
 if ruta_actual not in sys.path:
     sys.path.append(ruta_actual)
@@ -54,18 +53,14 @@ st.write(IFACE[idioma]["sub"])
 @st.cache_data
 def descargar_corpus_web():
     corpus = {}
-    # Intentamos la conexión usando la URL oficial indexada
-    url = "https://voynich.nu/data/ZL3b-n.txt"
+    url = "https://voynich.nu"
     try:
-        # Forzamos un contexto SSL compatible con navegadores de escritorio para saltar bloqueos
         ctx = ssl.create_default_context()
         ctx.set_ciphers('DEFAULT@SECLEVEL=1')
-        
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/plain,text/html,application/xhtml+xml'
         }
-        
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=15, context=ctx) as response:
             lineas = response.read().decode('utf-8', errors='ignore').splitlines()
@@ -90,17 +85,15 @@ def descargar_corpus_web():
                 corpus[folio] = []
             corpus[folio].append(texto_limpio)
         return corpus
-
     except Exception as e:
-        st.sidebar.warning(f"⚠️ Nota de red: Servidor externo inaccesible. Desplegando corpus local.")
+        st.sidebar.warning("⚠️ Nota de red: Servidor externo inaccesible. Desplegando corpus local.")
         voynichdatos.cargar_todas_las_paginas_reales()
         return voynichdatos.CORPUS_MANUSCRITO
 
 with st.spinner(IFACE[idioma]["cargando"]):
     CORPUS_REAL = descargar_corpus_web()
 # ==========================================
-# PEGA ESTO A CONTINUACIÓN EN EL MISMO ARCHIVO:
-# PARTE 2: PROCESAMIENTO ROMANCE Y RENDERIZADO VISUAL
+# ARCHIVO: voynichapp.py - BLOQUE 2 DE 2
 # ==========================================
 def traducir_a_romance(texto):
     dicc_activo = voynichdatos.DICCIONARIO_ES if idioma == "Español" else voynichdatos.DICCIONARIO_EN
@@ -111,32 +104,67 @@ def traducir_a_romance(texto):
     fon_l = []  
     trad_l = [] 
     
+    significados_morfemas = {
+        "trans": "a través de / trans-", "sub": "bajo / sub-", "per": "completamente / per-",
+        "re": "reiteración / re-", "com": "junto con / con-", "con": "asociado a / con-",
+        "super": "en exceso / super-", "in": "hacia dentro / in-", "por": "en favor de / por-",
+        "contra": "en oposición / contra-", "de": "derivado de / de-", "quot": "proporción de / quot-",
+        "issimus": " en grado sumo / -ísimo", "escere": " en desarrollo / -ecer", 
+        "ensis": " perteneciente a / -ense", "tatem": " la cualidad de / -dad", 
+        "arius": " relativo a / -ario", "ticius": " de naturaleza / -ticio", 
+        "icculum": " diminutivo de / -ículo", "tia": " el estado de / -cia", 
+        "tor": " el agente que / -dor", "sor": " el ejecutor de / -sor", 
+        "osus": " abundante en / -oso", "ittus": " pequeño / -ito", 
+        "onus": " protector de / -ón", "io": " el efecto de / -ción", "iscus": " propio de / -isco"
+    } if idioma == "Español" else {
+        "trans": "across / trans-", "sub": "under / sub-", "per": "thoroughly / per-",
+        "re": "again / re-", "com": "together with / com-", "con": "associated with / con-",
+        "super": "excessively / super-", "in": "inside / in-", "por": "on behalf of / por-",
+        "contra": "against / contra-", "de": "derived from / de-", "quot": "proportion of / quot-",
+        "issimus": "extremely / -issimus", "escere": "developing / -esce", 
+        "ensis": "belonging to / -ensis", "tatem": "quality of / -ty", 
+        "arius": "relative to / -ary", "ticius": "nature of / -ticius", 
+        "icculum": "small / -cule", "tia": "state of / -ce", 
+        "tor": "agent of / -tor", "sor": "executor of / -sor", 
+        "osus": "abundant in / -ous", "ittus": "little / -ite", 
+        "onus": "protector of / -on", "io": "effect of / -tion", "iscus": "characteristic of / -ish"
+    }
+
     for pal in palabras:
         if not pal.strip() or len(pal) <= 1: 
             continue
         
-        # Llama a tu función exacta paso a paso de voynichdatos.py
-        forma_romance = voynichdatos.descomponer_y_traducir_glifo(pal)
-        fon_l.append(forma_romance)
+        p_fix, r_fix, s_fix = voynichdatos.descomponer_y_traducir_glifo(pal)
+        forma_romance_completa = f"{p_fix}{r_fix}{s_fix}"
+        fon_l.append(forma_romance_completa)
         
-        # Buscar equivalencia semántica en tus 100 raíces históricas
         if pal in dicc_activo:
             significado = dicc_activo[pal]
-        elif forma_romance in dicc_activo:
-            significado = dicc_activo[forma_romance]
+        elif forma_romance_completa in dicc_activo:
+            significado = dicc_activo[forma_romance_completa]
         else:
-            pool = ["extracto", "remedio", "ungüento", "savia", "brote", "esencia", "cáliz", "raíz"] if idioma == "Español" else ["extract", "remedy", "ointment", "sap", "bud", "essence", "calyx", "root"]
-            idx = sum(ord(c) for c in forma_romance) % len(pool)
-            significado = pool[idx]
+            partes_traducidas = []
+            if p_fix and p_fix in significados_morfemas:
+                partes_traducidas.append(significados_morfemas[p_fix])
+            if r_fix:
+                if r_fix in dicc_activo:
+                    partes_traducidas.append(dicc_activo[r_fix])
+                else:
+                    partes_traducidas.append(f"[{r_fix}]")
+            if s_fix and s_fix in significados_morfemas:
+                partes_traducidas.append(significados_morfemas[s_fix])
             
+            if partes_traducidas:
+                significado = " + ".join(partes_traducidas)
+            else:
+                significado = f"[{forma_romance_completa}]"
+                
         trad_l.append(significado)
         
     return " ".join(fon_l), " ".join(trad_l)
 
-# Dibujado de Pestañas
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
-# Pestaña 1: Entrada libre de texto
 with tab1:
     st.subheader(IFACE[idioma]["lab_sub"])
     texto_libre = st.text_area("Input EVA Texto:", placeholder=IFACE[idioma]["txt_placeholder"], height=150, key="txt_area_libre")
@@ -147,7 +175,6 @@ with tab1:
             st.info(f"**{IFACE[idioma]['fon_rom']}**\n\n {f_r}")
             st.success(f"**{IFACE[idioma]['trad_auto']}**\n\n {t_r}")
 
-# Pestaña 2: Navegador de folios de voynich.nu
 with tab2:
     st.subheader(IFACE[idioma]["nav_sub"])
     if CORPUS_REAL:
