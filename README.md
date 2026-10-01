@@ -29,40 +29,40 @@ Debido a las estrictas protecciones contra bots que implementa el servidor de `v
 El núcleo del descifrador descompone el manuscrito aplicando un mapeo de morfemas técnicos hacia el latín medieval botánico-alquímico real:
 
 ### 📥 Prefijos Equivalentes (Dirección / Acción Inicial)
-* **`trans`** / **`tcs`** \(\rightarrow\) A través de / Trans-
-* **`sub`** / **`cse`** / **`cs`** \(\rightarrow\) Bajo / Sub-
-* **`per`** / **`pc`** \(\rightarrow\) Completamente / Per-
-* **`re`** / **`ceo`** / **`ce`** \(\rightarrow\) Reiteración / Re-
-* **`com`** / **`qok`** / **`ol`** \(\rightarrow\) Junto con / Con-
-* **`super`** / **`cp`** \(\rightarrow\) En exceso / Super-
-* **`contra`** / **`ct`** \(\rightarrow\) En oposición / Contra-
-* **`quot`** / **`qot`** \(\rightarrow\) Proporción de / Quot-
-* **`inter`** / **`intra`** / **`extra`** \(\rightarrow\) Entre / Dentro de / Fuera de
+* **`trans`** / **`tcs`** → A través de / Trans-
+* **`sub`** / **`cse`** / **`cs`** → Bajo / Sub-
+* **`per`** / **`pc`** → Completamente / Per-
+* **`re`** / **`ceo`** / **`ce`** → Reiteración / Re-
+* **`com`** / **`qok`** / **`ol`** → Junto con / Con-
+* **`super`** / **`cp`** → En exceso / Super-
+* **`contra`** / **`ct`** → En oposición / Contra-
+* **`quot`** / **`qot`** → Proporción de / Quot-
+* **`inter`** / **`intra`** / **`extra`** → Entre / Dentro de / Fuera de
 
 ### 🌿 Raíces Equivalentes (Concepto Central Alquímico-Botánico)
-* **`sc`** \(\rightarrow\) *Secare* (Secar / deshidratar tejido vegetal)
-* **`ch`** \(\rightarrow\) *Calere* (Calentar / someter a temperatura de hornillo)
-* **`sh`** \(\rightarrow\) *Sanare* (Sanar / restaurar la salud / curativo)
-* **`ct`** \(\rightarrow\) *Coquere* (Cocer / hervir sustancias al fuego)
-* **`fc`** \(\rightarrow\) *Facere* (Hacer / confeccionar el remedio farmacéutico)
-* **`tc`** \(\rightarrow\) *Texere* (Tejer / estructura entrelazada de fibras o raíces)
-* **`lf`** \(\rightarrow\) *Liquere* (Liquar / fundir o extraer un elemento líquido)
-* **`fac`** \(\rightarrow\) *Facies* (Aspecto externo / morfología foliar de la planta)
-* **`cal`** \(\rightarrow\) *Caulis* (Tallo principal / soporte de la fronda)
-* **`s`** \(\rightarrow\) *Succus* (Jugo vital / savia nutricia / látex extraído)
-* **`aqu`** / **`pyr`** / **`nit`** \(\rightarrow\) *Aqua* (Base acuosa) / *Pyra* (Fuego reactivo) / *Nitrum* (Salitre)
+* **`sc`** → *Secare* (Secar / deshidratar tejido vegetal)
+* **`ch`** → *Calere* (Calentar / someter a temperatura de hornillo)
+* **`sh`** → *Sanare* (Sanar / restaurar la salud / curativo)
+* **`ct`** → *Coquere* (Cocer / hervir sustancias al fuego)
+* **`fc`** → *Facere* (Hacer / confeccionar el remedio farmacéutico)
+* **`tc`** → *Texere* (Tejer / estructura entrelazada de fibras o raíces)
+* **`lf`** → *Liquere* (Liquar / fundir o extraer un elemento líquido)
+* **`fac`** → *Facies* (Aspecto externo / morfología foliar de la planta)
+* **`cal`** → *Caulis* (Tallo principal / soporte de la fronda)
+* **`s`** → *Succus* (Jugo vital / savia nutricia / látex extraído)
+* **`aqu`** / **`pyr`** / **`nit`** → *Aqua* (Base acuosa) / *Pyra* (Fuego reactivo) / *Nitrum* (Salitre)
 
 ### 📤 Sufijos Equivalentes (Estado / Agente / Cualidad Final)
-* **`issimus`** / **`eceo`** \(\rightarrow\) En grado sumo / -ísimo (Máxima concentración)
-* **`escere`** / **`cse`** / **`esc`** \(\rightarrow\) En desarrollo / -ecer (Proceso de maduración)
-* **`ensis`** / **`edy`** / **`epy`** \(\rightarrow\) Perteneciente a / -ense (Origen geográfico o anatómico)
-* **`tatem`** / **`dam`** \(\rightarrow\) La cualidad de / -dad (Propiedad absoluta de la sustancia)
-* **`arius`** / **`ar`** \(\rightarrow\) Relativo a / -ario (Especialización del remedio)
-* **`ticius`** / **`ky`** \(\rightarrow\) De naturaleza / -ticio
-* **`tia`** / **`ldy`** / **`dy`** \(\rightarrow\) El estado de / -cia
-* **`tor`** / **`tar`** / **`dar`** \(\rightarrow\) El agente que / -dor (Elemento activo que ejecuta la acción)
-* **`osus`** / **`ody`** \(\rightarrow\) Abundante en / -oso (Saturación de principios activos)
-* **`io`** / **`oe`** / **`eo`** \(\rightarrow\) El efecto de / -ción (Resultado del proceso de laboratorio)
+* **`issimus`** / **`eceo`** → En grado sumo / -ísimo (Máxima concentración)
+* **`escere`** / **`cse`** / **`esc`** → En desarrollo / -ecer (Proceso de maduración)
+* **`ensis`** / **`edy`** / **`epy`** → Perteneciente a / -ense (Origen geográfico o anatómico)
+* **`tatem`** / **`dam`** → La cualidad de / -dad (Propiedad absoluta de la sustancia)
+* **`arius`** / **`ar`** → Relativo a / -ario (Especialización del remedio)
+* **`ticius`** / **`ky`** → De naturaleza / -ticio
+* **`tia`** / **`ldy`** / **`dy`** → El estado de / -cia
+* **`tor`** / **`tar`** / **`dar`** → El agente que / -dor (Elemento activo que ejecuta la acción)
+* **`osus`** / **`ody`** → Abundante en / -oso (Saturación de principios activos)
+* **`io`** / **`oe`** / **`eo`** → El efecto de / -ción (Resultado del proceso de laboratorio)
 
 ---
 
