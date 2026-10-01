@@ -250,7 +250,10 @@ with st.spinner(IFACE[idioma]["cargando"]):
 
     return " ".join(fon_l), traduccion_final_limpia.strip()
 
-# --- CONFIGURACIÓN DE PESTAÑAS (FUERA DE CONDICIONALES) ---
+# ==========================================
+# SECCIÓN FINAL DE PESTAÑAS (VOYNICHAPP.PY)
+# COLOCAR ABAJO DEL TODO EN TU ARCHIVO
+# ==========================================
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
