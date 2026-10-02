@@ -230,57 +230,64 @@ def traducir_a_romance(texto):
             palabras_traducidas_crudas.append(f"componente({pal})")
             continue
 
-    # --- PASADA 2: SUAVIZADOR Y ENSAMBLADOR DE SINTAXIS FLUIDA ---
+        # --- PASADA 2: SUAVIZADOR Y ENSAMBLADOR DE SINTAXIS FLUIDA (BLINDADO) ---
     i = 0
     while i < len(palabras_traducidas_crudas):
         item_actual = palabras_traducidas_crudas[i]
+        
+        # Corrección inmediata de uniones mecánicas antes de armar la cadena
+        if item_actual == "cura-isco":
+            item_actual = "propio del tratamiento medicinal (curatisco)"
+        elif item_actual == "cura-rio":
+            item_actual = "proceso de curación o tratamiento"
+        elif item_actual == "cura-ario":
+            item_actual = "recetario de tratamientos médicos"
+        elif item_actual == "humor-ario":
+            item_actual = "relativo a los fluidos o humores de la planta"
+        elif item_actual == "humidus-ario":
+            item_actual = "relativo al estado de humedad vegetal"
+        elif item_actual == "brote-oso":
+            item_actual = "brote abundante en savia nutricia"
+        elif item_actual == "tallo-ense":
+            item_actual = "perteneciente a la estructura del tallo"
+        elif item_actual == "secar-dor":
+            item_actual = "agente deshidratante o desecante"
+        elif item_actual == "hacer-dor":
+            item_actual = "agente extractor o confeccionador"
+
         conteo_repeticiones = 1
-        while i + conteo_repeticiones < len(palabras_traducidas_crudas) and palabras_traducidas_crudas[i + conteo_repeticiones] == item_actual:
+        while i + conteo_repeticiones < len(palabras_traducidas_crudas) and palabras_traducidas_crudas[i + conteo_repeticiones] == palabras_traducidas_crudas[i]:
             conteo_repeticiones += 1
+            
         if conteo_repeticiones > 1:
             if "ostium" in item_actual:
-                trad_l.append("sistema-de-conductos-extendidos")
+                trad_l.append("sistema de conductos extendidos")
+            elif "recetario" in item_actual or "cura-ario" in palabras_traducidas_crudas[i]:
+                trad_l.append("sistema continuo de recetarios médicos")
             else:
-                trad_l.append(f"sistema-continuo-de-{item_actual}s")
+                trad_l.append(f"sistema continuo de {item_actual}s")
             i += conteo_repeticiones  
         else:
             trad_l.append(item_actual)
             i += 1
 
-        traduccion_final_limpia = " | ".join(trad_l)
+    traduccion_final_limpia = " | ".join(trad_l)
     
-    # === MÓDULO DE FUSIÓN MORFOLÓGICA LÍQUIDA AVANZADA (ORDEN ESTRICTO) ===
-    # 1. Purgamos explicaciones técnicas y parches repetitivos entre paréntesis primero
+    # === MÓDULO DE EMBELLECIMIENTO FINAL (TEXTO CRUDO LIMPIO) ===
+    # Purgamos explicaciones técnicas repetitivas entre paréntesis al final
     traduccion_final_limpia = re.sub(r'\s*\([^)]*\)', '', traduccion_final_limpia)
     
-    # 2. Reemplazo prioritario de uniones complejas con guiones
     if idioma == "Español":
-        traduccion_final_limpia = traduccion_final_limpia.replace("cura-isco", "propio del tratamiento medicinal (curatisco)")
-        traduccion_final_limpia = traduccion_final_limpia.replace("cura-rio", "proceso de curación o tratamiento")
-        traduccion_final_limpia = traduccion_final_limpia.replace("cura-ario", "recetario de tratamientos médicos")
-        traduccion_final_limpia = traduccion_final_limpia.replace("humor-ario", "relativo a los fluidos o humores de la planta")
-        traduccion_final_limpia = traduccion_final_limpia.replace("humidus-ario", "relativo al estado de humedad vegetal")
-        traduccion_final_limpia = traduccion_final_limpia.replace("brote-oso", "brote abundante en savia nutricia")
-        traduccion_final_limpia = traduccion_final_limpia.replace("tallo-ense", "perteneciente a la estructura del tallo")
-        
-        # Corrección quirúrgica del suavizador automático de plurales en bloques largos
-        traduccion_final_limpia = traduccion_final_limpia.replace("sistema-continuo-de-recetario de tratamientos médicoss", "sistema continuo de recetarios médicos")
-        traduccion_final_limpia = traduccion_final_limpia.replace("sistema-continuo-de-", "sistema continuo de ")
-        
-        # 3. Reemplazo final de términos o raíces sueltas (Al final para evitar anidaciones)
+        # Ajustamos los términos sueltos que quedaron limpios y sin guiones
         traduccion_final_limpia = traduccion_final_limpia.replace("amare", "principio activo amargo (amare)")
         traduccion_final_limpia = traduccion_final_limpia.replace("calere", "someter a temperatura (calere)")
         traduccion_final_limpia = traduccion_final_limpia.replace("cura", "tratamiento herborístico (cura)")
+        traduccion_final_limpia = traduccion_final_limpia.replace("curatisco", "propio del tratamiento medicinal (curatisco)")
     else:
-        traduccion_final_limpia = traduccion_final_limpia.replace("cura-isco", "pertaining to medical treatment (curatisco)")
-        traduccion_final_limpia = traduccion_final_limpia.replace("cura-ario", "medical treatment formulary")
-        traduccion_final_limpia = traduccion_final_limpia.replace("humor-ario", "relating to plant fluids and humors")
         traduccion_final_limpia = traduccion_final_limpia.replace("amare", "bitter active principle (amare)")
         traduccion_final_limpia = traduccion_final_limpia.replace("calere", "apply laboratory heat (calere)")
-        traduccion_final_limpia = traduccion_final_limpia.replace("sistema-continuo-de-", "continuous system of ")
-
-    # Limpieza final de guiones y barras estéticas huérfanas
-    traduccion_final_limpia = traduccion_final_limpia.replace(" / ", " o ").replace(" -", " ")
+        traduccion_final_limpia = traduccion_final_limpia.replace("cura", "medical treatment (cura)")
+        traduccion_final_limpia = traduccion_final_limpia.replace("curatisco", "pertaining to medical treatment (curatisco)")
 
     return " ".join(fon_l), traduccion_final_limpia.strip()
 
