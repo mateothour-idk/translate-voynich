@@ -249,11 +249,11 @@ def traducir_a_romance(texto):
 
         traduccion_final_limpia = " | ".join(trad_l)
     
-    # === MÓDULO DE FUSIÓN MORFOLÓGICA LÍQUIDA AVANZADA ===
-    # 1. Limpieza automática de todas las explicaciones entre paréntesis para permitir la fusión
+    # === MÓDULO DE FUSIÓN MORFOLÓGICA LÍQUIDA AVANZADA (ORDEN ESTRICTO) ===
+    # 1. Purgamos explicaciones técnicas y parches repetitivos entre paréntesis primero
     traduccion_final_limpia = re.sub(r'\s*\([^)]*\)', '', traduccion_final_limpia)
     
-    # 2. Unificación y embellecimiento sintáctico de los morfemas latinos
+    # 2. Reemplazo prioritario de uniones complejas con guiones
     if idioma == "Español":
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-isco", "propio del tratamiento medicinal (curatisco)")
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-rio", "proceso de curación o tratamiento")
@@ -262,10 +262,12 @@ def traducir_a_romance(texto):
         traduccion_final_limpia = traduccion_final_limpia.replace("humidus-ario", "relativo al estado de humedad vegetal")
         traduccion_final_limpia = traduccion_final_limpia.replace("brote-oso", "brote abundante en savia nutricia")
         traduccion_final_limpia = traduccion_final_limpia.replace("tallo-ense", "perteneciente a la estructura del tallo")
-        traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "agente deshidratante o desecante")
-        traduccion_final_limpia = traduccion_final_limpia.replace("hacer-dor", "agente extractor o confeccionador")
         
-        # Conectores estéticos para raíces individuales limpias
+        # Corrección quirúrgica del suavizador automático de plurales en bloques largos
+        traduccion_final_limpia = traduccion_final_limpia.replace("sistema-continuo-de-recetario de tratamientos médicoss", "sistema continuo de recetarios médicos")
+        traduccion_final_limpia = traduccion_final_limpia.replace("sistema-continuo-de-", "sistema continuo de ")
+        
+        # 3. Reemplazo final de términos o raíces sueltas (Al final para evitar anidaciones)
         traduccion_final_limpia = traduccion_final_limpia.replace("amare", "principio activo amargo (amare)")
         traduccion_final_limpia = traduccion_final_limpia.replace("calere", "someter a temperatura (calere)")
         traduccion_final_limpia = traduccion_final_limpia.replace("cura", "tratamiento herborístico (cura)")
@@ -275,6 +277,10 @@ def traducir_a_romance(texto):
         traduccion_final_limpia = traduccion_final_limpia.replace("humor-ario", "relating to plant fluids and humors")
         traduccion_final_limpia = traduccion_final_limpia.replace("amare", "bitter active principle (amare)")
         traduccion_final_limpia = traduccion_final_limpia.replace("calere", "apply laboratory heat (calere)")
+        traduccion_final_limpia = traduccion_final_limpia.replace("sistema-continuo-de-", "continuous system of ")
+
+    # Limpieza final de guiones y barras estéticas huérfanas
+    traduccion_final_limpia = traduccion_final_limpia.replace(" / ", " o ").replace(" -", " ")
 
     return " ".join(fon_l), traduccion_final_limpia.strip()
 
