@@ -133,19 +133,42 @@ def traducir_a_romance(texto):
         "d": "dare / datur (dar / dosificar)", "p": "pars / partes (proporciones)"
     }
 
+        # 3. MATRIZ TOTAL ABSOLUTA DE RAÍCES EN LATÍN REAL DEL SIGLO XV (CORREGIDA)
     etimologia_romance = {
-        "sc": "secare (secar)", "ch": "calere (calentar)", "sh": "sanare (sanar)",
-        "ct": "coquere (cocer)", "fc": "facere (hacer)", "tc": "texere (tejer)",
-        "pc": "purgare (purgar)", "lf": "liquere (licuar)", "dr": "durare (durar)",
-        "am": "amare (amargar)", "fl": "florere (florecer)", "rd": "radicari (enraizar)",
-        "v":  "vivere (vivir)", "fac": "facies (aspecto)", "cal": "caulis (tallo)",
-        "s":   "succus (jugo/savia)", "sory": "sorbitio (poción)", "o": "ostium (apertura)",
-        "so":  "solutio (disolución)", "nit": "nitrum (nitro)", "aqu": "aqua (agua)",
-        "ter": "terra (tierra)", "aer": "aer (aire)", "pyr": "pyra (fuego)",
-        "rub": "ruber (rojo)", "alb": "albus (blanco)",
-        "at": "ater / atra (oscuro)", "h": "humor / humidus (humedad)", 
-        "r": "radix / radicari (enraizar)", "cor": "cortex (corteza)",
-        "c": "cura (cuidado / tratamiento herborístico)"
+        "sc": ("secare (secar)", "secare (to dry)"),
+        "ch": ("calere (calentar)", "calere (to heat)"),
+        "sh": ("sanare (sanar)", "sanare (to heal)"),
+        "ct": ("coquere (cocer)", "coquere (to cook)"),
+        "fc": ("facere (hacer)", "facere (to make)"),
+        "tc": ("texere (tejer)", "texere (to weave)"),
+        "pc": ("purgare (purgar)", "purgare (to purge)"),
+        "lf": ("liquere (licuar)", "liquere (to liquefy)"),
+        "dr": ("durare (durar)", "durare (to endure)"),
+        "am": ("amare (amargar)", "amare (to infuse bitterness)"),
+        "fl": ("florere (florecer)", "florere (to bloom)"),
+        "rd": ("radicari (enraizar)", "radicari (to take root)"),
+        "v":  ("vivere (vivir)", "vivere (to live)"),
+        "fac": ("facies (aspecto)", "facies (aspect)"),
+        "cal": ("caulis (tallo)", "caulis (stem)"),
+        "s":   ("succus (jugo/savia)", "succus (sap/extracted latex)"),
+        "sory": ("sorbitio (poción)", "sorbitio (liquid potion)"),
+        "o":   ("ostium (apertura)", "ostium (opening)"),
+        "so":  ("solutio (disolución)", "solutio (mixture)"),
+        "nit": ("nitrum (nitro)", "nitrum (nitre)"),
+        "aqu": ("aqua (agua)", "aqua (water)"),
+        "ter": ("terra (tierra)", "terra (earth)"),
+        "aer": ("aer (aire)", "aer (air)"),
+        "pyr": ("pyra (fuego)", "pyra (fire)"),
+        "rub": ("ruber (rojo)", "ruber (red)"),
+        "alb": ("albus (blanco)", "albus (white)"),
+        
+        # --- Mapeo de letras sueltas individuales indexadas ---
+        "c":   ("cura (curar/tratamiento)", "cura (to heal/treatment)"),
+        "h":   ("humidus (humedad)", "humidus (moisture)"),
+        "a":   ("amare (amargor/principio activo)", "amare (bitterness/active principle)"),
+        "at":  ("ater (oscuro)", "ater (dark)"),
+        "r":   ("radix (raíz)", "radix (root)"),
+        "cor": ("cortex (corteza)", "cortex (bark)")
     }
 
     idx_idioma = 0 if idioma == "Español" else 1
