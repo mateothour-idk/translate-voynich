@@ -223,7 +223,23 @@ def traducir_a_romance(texto):
                 if s_fix and s_fix in significados_morfemas:
                     partes_traducidas.append(significados_morfemas[s_fix])
                 
+                                # --- BUSCA ESTA SECCIÓN AL FINAL DE LA PASADA 1 ---
                 significado = "".join(partes_traducidas) if partes_traducidas else f"elemento({forma_romance_completa})"
+            
+            # === FILTRO RADICAL DE LIMPIEZA INMEDIATA ===
+            # Si la palabra contiene explicaciones largas unidas por guiones, las limpia de golpe aquí
+            if "-isco" in significado:
+                significado = "cura-isco"
+            elif "-ario" in significado or "-rio" in significado:
+                significado = "cura-ario"
+            elif "-oso" in significado:
+                significado = "brote-oso"
+            elif "-ense" in significado:
+                significado = "tallo-ense"
+            elif "-dor" in significado:
+                if "secar" in significado: significado = "secar-dor"
+                if "hacer" in significado: significado = "hacer-dor"
+
             palabras_traducidas_crudas.append(significado)
         except Exception:
             fon_l.append(pal)
