@@ -128,9 +128,9 @@ def traducir_a_romance(texto):
     }
 
     particulas_cortas = {
-        "ar": "ar", "or": "or", "dy": "dy", "te": "te", "al": "al", "to": "to", 
-        "co": "co", "ol": "brote", "ee": "ee", "in": "in", "d": "dare / datur (dar / dosificar en la mezcla)",
-        "p": "pars / partes (proporciones de la receta)"
+        "ar": "ar", "or": "or", "dy": "dy", "te": "te", "al": "aliquid (otra porción)", 
+        "to": "to", "co": "co", "ol": "brote", "ee": "ee", "in": "in",
+        "d": "dare / datur (dar / dosificar)", "p": "pars / partes (proporciones)"
     }
 
     etimologia_romance = {
@@ -142,15 +142,16 @@ def traducir_a_romance(texto):
         "s":   "succus (jugo/savia)", "sory": "sorbitio (poción)", "o": "ostium (apertura)",
         "so":  "solutio (disolución)", "nit": "nitrum (nitro)", "aqu": "aqua (agua)",
         "ter": "terra (tierra)", "aer": "aer (aire)", "pyr": "pyra (fuego)",
-        "rub": "ruber (rojo)", "alb": "albus (blanco)", "c": "cura (cuidado / tratamiento herborístico)", 
-        "at": "ater / atra (oscuro / tejido marchito)", "h": "humor / humidus (humedad / fluido de la planta)", 
-        "r": "radix / radicari (enraizar / desarrollar la base)", "cor": "cortex (corteza exterior / envoltura protectora)"
+        "rub": "ruber (rojo)", "alb": "albus (blanco)",
+        "at": "ater / atra (oscuro)", "h": "humor / humidus (humedad)", 
+        "r": "radix / radicari (enraizar)", "cor": "cortex (corteza)",
+        "c": "cura (cuidado / tratamiento herborístico)"
     }
 
     idx_idioma = 0 if idioma == "Español" else 1
     palabras_traducidas_crudas = []
-
-        # --- PASADA 1: EXTRACCIÓN MORFOLÓGICA INDIVIDUAL CON DEDUCTOR AUTOMÁTICO UNIVERSAL ---
+    
+    # --- PASADA 1: EXTRACCIÓN MORFOLÓGICA CON DEDUCTOR AUTOMÁTICO UNIVERSAL ---
     for pal in palabras:
         if not pal.strip() or len(pal) <= 1: 
             continue
@@ -183,17 +184,15 @@ def traducir_a_romance(texto):
                                 encontrado = True
                                 break
                         
-                        # --- 🤖 MOTOR DE DEDUCCIÓN FILOLÓGICA AUTOMÁTICA UNIVERSAL ---
                         if not encontrado:
-                            # Clasifica de forma inteligente el tipo de glifo medieval
-                            if r_fix in ['t', 'k', 'p', 'f']: # Glifos Gallows (Altos)
-                                partes_traducidas.append(f"medida/dosis ponderal ({r_fix}.)")
-                            elif r_fix in ['o', 'a', 'e', 'y']: # Vocales combinadoras (Fluidos)
-                                partes_traducidas.append(f"canal de fluido o savia ({r_fix}.)")
-                            elif len(r_fix) == 1: # Cualquier otra letra suelta en el manuscrito
-                                partes_traducidas.append(f"abreviatura médica medieval ({r_fix}.)")
-                            else: # Raíces complejas nuevas
-                                partes_traducidas.append(f"compuesto botánico ({r_fix}.)")
+                            if r_fix in ['t', 'k', 'p', 'f']:
+                                partes_traducidas.append(f"medida ({r_fix}.)")
+                            elif r_fix in ['o', 'a', 'e', 'y']:
+                                partes_traducidas.append(f"canal ({r_fix}.)")
+                            elif len(r_fix) == 1:
+                                partes_traducidas.append(f"abrev ({r_fix}.)")
+                            else:
+                                partes_traducidas.append(f"compuesto ({r_fix}.)")
                 
                 if s_fix and s_fix in significados_morfemas:
                     partes_traducidas.append(significados_morfemas[s_fix])
@@ -205,6 +204,7 @@ def traducir_a_romance(texto):
             palabras_traducidas_crudas.append(f"componente({pal})")
             continue
 
+    # --- PASADA 2: SUAVIZADOR Y ENSAMBLADOR DE SINTAXIS FLUIDA ---
     i = 0
     while i < len(palabras_traducidas_crudas):
         item_actual = palabras_traducidas_crudas[i]
@@ -221,8 +221,26 @@ def traducir_a_romance(texto):
             trad_l.append(item_actual)
             i += 1
 
-    return " ".join(fon_l), " | ".join(trad_l)
+    traduccion_final_limpia = " | ".join(trad_l)
+    
+    # === MÓDULO DE FUSIÓN MORFOLÓGICA LÍQUIDA ===
+    if idioma == "Español":
+        traduccion_final_limpia = traduccion_final_limpia.replace("cura-isco", "propio del tratamiento medicinal (curatisco)")
+        traduccion_final_limpia = traduccion_final_limpia.replace("cura-ción", "proceso de curación o tratamiento")
+        traduccion_final_limpia = traduccion_final_limpia.replace("brote-oso", "brote abundante en savia")
+        traduccion_final_limpia = traduccion_final_limpia.replace("tallo-ense", "perteneciente a la estructura del tallo")
+        traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "agente deshidratante / desecante")
+        traduccion_final_limpia = traduccion_final_limpia.replace("hacer-dor", "agente extractor / confeccionador")
+    else:
+        traduccion_final_limpia = traduccion_final_limpia.replace("cura-isco", "pertaining to medical treatment (curatisco)")
+        traduccion_final_limpia = traduccion_final_limpia.replace("cura-ción", "healing or treatment process")
+        traduccion_final_limpia = traduccion_final_limpia.replace("brote-oso", "abundant sap sprout")
+        traduccion_final_limpia = traduccion_final_limpia.replace("tallo-ense", "belonging to the stem structure")
+        traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "dehydrating agent / desiccant")
 
+    return " ".join(fon_l), traduccion_final_limpia.strip()
+
+# --- CONFIGURACIÓN DE PESTAÑAS (FUERA DE CONDICIONALES) ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
 
 with tab1:
@@ -263,4 +281,4 @@ with tab2:
                 reporte_txt += f"EVA: {linea}\nROMANCE: {f_linea}\nANÁLISIS: {t_linea}\n-----------------------------------------\n"
             st.download_button(label="Descargar Traducción Completa (.txt)", data=reporte_txt, file_name=f"traduccion_folio_{folio_sel}.txt", mime="text/plain", key="btn_desc_folio")
     else:
-        st.error(IFACE[idioma]["txt_placeholder"])
+        st.error("⚠️ No se pudieron cargar los folios desde voynich.nu de forma remota. Por favor, utiliza la pestaña 'Laboratorio de Texto Libre' para analizar tus glifos manualmente.")
