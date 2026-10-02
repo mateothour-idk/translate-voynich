@@ -300,16 +300,18 @@ def traducir_a_romance(texto):
     traduccion_final_limpia = " | ".join(trad_l)
     
     # === PROCESADOR DE SINTAXIS 100% FLUIDA (CORREGIDO) ===
+        # === PROCESADOR DE SINTAXIS 100% FLUIDA (EDICIÓN DEFINITIVA) ===
     if idioma == "Español":
         traduccion_final_limpia = traduccion_final_limpia.replace("con-ostium-dor", "agente estimulador de la apertura de poros")
         traduccion_final_limpia = traduccion_final_limpia.replace("contra-brote-tor", "agente estimulador del secado de brotes")
         traduccion_final_limpia = traduccion_final_limpia.replace("coquere-cion", "proceso de cocción o ebullición")
-        traduccion_final_limpia = traduccion_final_limpia.replace("radix ecer", "proceso de enraizamiento de la base")
-        traduccion_final_limpia = traduccion_final_limpia.replace("radix-ecer", "proceso de enraizamiento de la base")
-        traduccion_final_limpia = traduccion_final_limpia.replace("solutio cia", "estado de disolución líquida")
-        traduccion_final_limpia = traduccion_final_limpia.replace("solutio-cia", "estado de disolución líquida")
         traduccion_final_limpia = traduccion_final_limpia.replace("corazón", "corteza protectora externa")
         
+        # --- 🧼 SOLUCIÓN DE SOLUTIO CIA Y RADIX ECER CON LÍMITES FLEXIBLES ---
+        traduccion_final_limpia = re.sub(r'\bsolutio\s*[-|]*\s*cia\b', 'estado de disolución líquida', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bradix\s*[-|]*\s*ecer\b', 'proceso de enraizamiento de la base', traduccion_final_limpia)
+        
+        # --- TRADUCCIÓN ESTRICTA DE LÍMITES PALABRA POR PALABRA ---
         traduccion_final_limpia = re.sub(r'\bin caulis\b', 'en el tallo principal', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bin-caulis\b', 'en el tallo principal', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bfacies\b', 'aspecto o morfología foliar', traduccion_final_limpia)
@@ -330,13 +332,20 @@ def traducir_a_romance(texto):
         traduccion_final_limpia = traduccion_final_limpia.replace("abrev(d.)", "dosificar")
         traduccion_final_limpia = traduccion_final_limpia.replace("abrev (d.)", "dosificar")
         traduccion_final_limpia = re.sub(r'\babrev\b', 'dosificación', traduccion_final_limpia)
+
     else:
+        # === PROCESADOR DE SINTAXIS 100% INGLÉS FLUIDO (EDICIÓN DEFINITIVA) ===
         traduccion_final_limpia = traduccion_final_limpia.replace("con-ostium-dor", "pore-opening stimulating agent")
         traduccion_final_limpia = traduccion_final_limpia.replace("contra-brote-tor", "sprout dehydration accelerating agent")
         traduccion_final_limpia = traduccion_final_limpia.replace("coquere-cion", "decoction or boiling process")
         traduccion_final_limpia = traduccion_final_limpia.replace("brote-oso", "abundant sap sprout")
         traduccion_final_limpia = traduccion_final_limpia.replace("tallo-ense", "belonging to the stem structure")
         
+        # --- 🧼 SOLUCIÓN DE SOLUTIO CIA Y RADIX ECER CON LÍMITES FLEXIBLES PARA INGLÉS ---
+        traduccion_final_limpia = re.sub(r'\bsolutio\s*[-|]*\s*cia\b', 'liquid dissolution state', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bradix\s*[-|]*\s*ecer\b', 'base rooting process', traduccion_final_limpia)
+        
+        # --- TRADUCCIÓN ESTRICTA DE LÍMITES PALABRA POR PALABRA ---
         traduccion_final_limpia = re.sub(r'\bin caulis\b', 'in the main stem', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bin-caulis\b', 'in the main stem', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bfacies\b', 'leaf morphology or aspect', traduccion_final_limpia)
