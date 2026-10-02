@@ -334,26 +334,58 @@ def traducir_a_romance(texto):
         traduccion_final_limpia = traduccion_final_limpia.replace("abrev(d.)", "dosificar")
         traduccion_final_limpia = traduccion_final_limpia.replace("abrev (d.)", "dosificar")
         traduccion_final_limpia = re.sub(r'\babrev\b', 'dosificación', traduccion_final_limpia)
-
+    
     else:
-        # Equivalentes globales blindados para el idioma Inglés
+        # === PROCESADOR DE SINTAXIS 100% INGLÉS FLUIDO ===
+        # 1. Purgamos explicaciones técnicas repetitivas entre paréntesis primero
+        traduccion_final_limpia = re.sub(r'\s*\([^)]*\)', '', traduccion_final_limpia)
+        
+        # 2. Traducción directa de compuestos morfológicos al inglés fluido
         traduccion_final_limpia = traduccion_final_limpia.replace("con-ostium-dor", "pore-opening stimulating agent")
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-isco", "pertaining to medical treatment")
+        traduccion_final_limpia = traduccion_final_limpia.replace("cura-rio", "healing or treatment process")
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-ario", "medical treatment formulary")
+        traduccion_final_limpia = traduccion_final_limpia.replace("humor-ario", "relating to plant fluids and humors")
+        traduccion_final_limpia = traduccion_final_limpia.replace("humidus-ario", "relating to plant moisture state")
         traduccion_final_limpia = traduccion_final_limpia.replace("brote-oso", "abundant sap sprout")
         traduccion_final_limpia = traduccion_final_limpia.replace("tallo-ense", "belonging to the stem structure")
+        traduccion_final_limpia = traduccion_final_limpia.replace("radix ecer", "base rooting process")
+        traduccion_final_limpia = traduccion_final_limpia.replace("radix-ecer", "base rooting process")
+        traduccion_final_limpia = traduccion_final_limpia.replace("solutio cia", "liquid dissolution state")
+        traduccion_final_limpia = traduccion_final_limpia.replace("solutio-cia", "liquid dissolution state")
+        traduccion_final_limpia = traduccion_final_limpia.replace("corazón", "external protective bark")
+        traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "dehydrating agent")
+        traduccion_final_limpia = traduccion_final_limpia.replace("hacer-dor", "compounding agent")
         
+        # 3. Traducción estricta de términos latinos sueltos y frases al inglés fluido
+        # Captura primero la locución compuesta "in caulis" antes de fragmentarla
+        traduccion_final_limpia = re.sub(r'\bin caulis\b', 'in the main stem', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bin-caulis\b', 'in the main stem', traduccion_final_limpia)
+        
+        # Traduce los términos individuales restantes con límites estrictos (\b)
+        traduccion_final_limpia = re.sub(r'\bfacies\b', 'leaf morphology or aspect', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcaulis\b', 'stem', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bsuccus\b', 'vital sap or juice', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bsorbitio\b', 'potion or brew', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcontra humidus\b', 'against moisture', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcontra-humidus\b', 'against moisture', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bostium\b', 'opening of the stomatal pore', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bcalere\b', 'apply laboratory heat', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bamare\b', 'bitter active principle', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bcura\b', 'medical treatment', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bor\b', 'origin of the sprout', traduccion_final_limpia)
-        traduccion_final_limpia = re.sub(r'\babrev\b', 'dosage', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bar\b', 'woody structure of the branch', traduccion_final_limpia)
+        
+        # Limpieza de las abreviaturas técnicas en inglés
+        traduccion_final_limpia = traduccion_final_limpia.replace("abrev(d.)", "dosage")
+        traduccion_final_limpia = traduccion_final_limpia.replace("abrev (d.)", "dosage")
+        traduccion_final_limpia = re.sub(r'\babrev\b', 'dosage process', traduccion_final_limpia)
 
-    # 4. Limpieza masiva de guiones residuales de control de la matriz
+    # 4. Limpieza masiva final de guiones y conectores estéticos para ambos bloques
     traduccion_final_limpia = traduccion_final_limpia.replace("-", " ").replace(" / ", " o ")
 
     return " ".join(fon_l), traduccion_final_limpia.strip()
+
 
 
 # --- CONFIGURACIÓN DE PESTAÑAS (FUERA DE CONDICIONALES) ---
