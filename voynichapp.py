@@ -151,7 +151,7 @@ def traducir_a_romance(texto):
     idx_idioma = 0 if idioma == "Español" else 1
     palabras_traducidas_crudas = []
     
-    # --- PASADA 1: EXTRACCIÓN MORFOLÓGICA CON DEDUCTOR AUTOMÁTICO UNIVERSAL ---
+        # --- PASADA 1: EXTRACCIÓN MORFOLÓGICA CON FILTRO DE RAÍZ LIMPIA ---
     for pal in palabras:
         if not pal.strip() or len(pal) <= 1: 
             continue
@@ -175,12 +175,15 @@ def traducir_a_romance(texto):
                     if r_fix in dicc_activo:
                         partes_traducidas.append(dicc_activo[r_fix])
                     elif r_fix in etimologia_romance:
-                        partes_traducidas.append(etimologia_romance[r_fix])
+                        # Extrae solo el término latino limpio eliminando explicaciones para evitar choques
+                        termino_crudo = etimologia_romance[r_fix][idx_idioma].split(" (")[0]
+                        partes_traducidas.append(termino_crudo)
                     else:
                         encontrado = False
                         for clave_etim, val_etim in etimologia_romance.items():
                             if clave_etim in r_fix:
-                                partes_traducidas.append(val_etim)
+                                termino_crudo = val_etim[idx_idioma].split(" (")[0]
+                                partes_traducidas.append(termino_crudo)
                                 encontrado = True
                                 break
                         
