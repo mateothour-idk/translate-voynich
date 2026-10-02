@@ -221,22 +221,34 @@ def traducir_a_romance(texto):
             trad_l.append(item_actual)
             i += 1
 
-    traduccion_final_limpia = " | ".join(trad_l)
+        traduccion_final_limpia = " | ".join(trad_l)
     
-    # === MÓDULO DE FUSIÓN MORFOLÓGICA LÍQUIDA ===
+    # === MÓDULO DE FUSIÓN MORFOLÓGICA LÍQUIDA AVANZADA ===
+    # 1. Limpieza automática de todas las explicaciones entre paréntesis para permitir la fusión
+    traduccion_final_limpia = re.sub(r'\s*\([^)]*\)', '', traduccion_final_limpia)
+    
+    # 2. Unificación y embellecimiento sintáctico de los morfemas latinos
     if idioma == "Español":
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-isco", "propio del tratamiento medicinal (curatisco)")
-        traduccion_final_limpia = traduccion_final_limpia.replace("cura-ción", "proceso de curación o tratamiento")
-        traduccion_final_limpia = traduccion_final_limpia.replace("brote-oso", "brote abundante en savia")
+        traduccion_final_limpia = traduccion_final_limpia.replace("cura-rio", "proceso de curación o tratamiento")
+        traduccion_final_limpia = traduccion_final_limpia.replace("cura-ario", "recetario de tratamientos médicos")
+        traduccion_final_limpia = traduccion_final_limpia.replace("humor-ario", "relativo a los fluidos o humores de la planta")
+        traduccion_final_limpia = traduccion_final_limpia.replace("humidus-ario", "relativo al estado de humedad vegetal")
+        traduccion_final_limpia = traduccion_final_limpia.replace("brote-oso", "brote abundante en savia nutricia")
         traduccion_final_limpia = traduccion_final_limpia.replace("tallo-ense", "perteneciente a la estructura del tallo")
-        traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "agente deshidratante / desecante")
-        traduccion_final_limpia = traduccion_final_limpia.replace("hacer-dor", "agente extractor / confeccionador")
+        traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "agente deshidratante o desecante")
+        traduccion_final_limpia = traduccion_final_limpia.replace("hacer-dor", "agente extractor o confeccionador")
+        
+        # Conectores estéticos para raíces individuales limpias
+        traduccion_final_limpia = traduccion_final_limpia.replace("amare", "principio activo amargo (amare)")
+        traduccion_final_limpia = traduccion_final_limpia.replace("calere", "someter a temperatura (calere)")
+        traduccion_final_limpia = traduccion_final_limpia.replace("cura", "tratamiento herborístico (cura)")
     else:
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-isco", "pertaining to medical treatment (curatisco)")
-        traduccion_final_limpia = traduccion_final_limpia.replace("cura-ción", "healing or treatment process")
-        traduccion_final_limpia = traduccion_final_limpia.replace("brote-oso", "abundant sap sprout")
-        traduccion_final_limpia = traduccion_final_limpia.replace("tallo-ense", "belonging to the stem structure")
-        traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "dehydrating agent / desiccant")
+        traduccion_final_limpia = traduccion_final_limpia.replace("cura-ario", "medical treatment formulary")
+        traduccion_final_limpia = traduccion_final_limpia.replace("humor-ario", "relating to plant fluids and humors")
+        traduccion_final_limpia = traduccion_final_limpia.replace("amare", "bitter active principle (amare)")
+        traduccion_final_limpia = traduccion_final_limpia.replace("calere", "apply laboratory heat (calere)")
 
     return " ".join(fon_l), traduccion_final_limpia.strip()
 
