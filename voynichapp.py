@@ -239,6 +239,15 @@ def traducir_a_romance(texto):
             elif "-dor" in significado:
                 if "secar" in significado: significado = "secar-dor"
                 if "hacer" in significado: significado = "hacer-dor"
+                                # === FILTRO RADICAL DE LIMPIEZA INMEDIATA ===
+            if "-isco" in significado:
+                significado = "cura-isco"
+            elif "-ario" in significado or "-rio" in significado:
+                significado = "cura-ario"
+            elif "coquere" in significado and "-ción" in significado:
+                significado = "coquere-cion"  # <--- ¡Inyecta esta línea de control aquí!
+            elif "contra-" in significado and "tor" in significado:
+                significado = "contra-brote-tor"
 
             palabras_traducidas_crudas.append(significado)
         except Exception:
@@ -310,12 +319,15 @@ def traducir_a_romance(texto):
         traduccion_final_limpia = traduccion_final_limpia.replace("corazón", "corteza protectora externa")
         traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "agente deshidratante")
         traduccion_final_limpia = traduccion_final_limpia.replace("hacer-dor", "agente confeccionador")
+        traduccion_final_limpia = traduccion_final_limpia.replace("coquere-cion", "proceso de cocción o ebullición")
 
         # 3. Traducción estricta de términos latinos sueltos y frases al español fluido
         # Captura primero la locución compuesta "in caulis" para evitar que se traduzcan por separado
         traduccion_final_limpia = re.sub(r'\bin caulis\b', 'en el tallo principal', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bin-caulis\b', 'en el tallo principal', traduccion_final_limpia)
-        
+        traduccion_final_limpia = re.sub(r'\bcum\b', 'mezclado con', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcoquere\b', 'cocer al fuego', traduccion_final_limpia)
+
         # Traduce los términos individuales restantes
         traduccion_final_limpia = re.sub(r'\bfacies\b', 'aspecto o morfología foliar', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bcaulis\b', 'tallo', traduccion_final_limpia)
