@@ -289,31 +289,40 @@ def traducir_a_romance(texto):
 
             traduccion_final_limpia = " | ".join(trad_l)
     
-        # === PROCESADOR DE SINTAXIS LIMPIA UNIVERSAL (GLOBAL Y ABSOLUTO) ===
-    # 1. Purgamos explicaciones técnicas repetitivas entre paréntesis primero
-    traduccion_final_limpia = re.sub(r'\s*\([^)]*\)', '', traduccion_final_limpia)
-    
-    # 2. Reemplazo prioritario de compuestos mecánicos con guiones (Morfología Líquida)
+            # === PROCESADOR DE SINTAXIS 100% ESPAÑOL FLUIDO ===
     if idioma == "Español":
+        # 1. Purgamos explicaciones técnicas repetitivas entre paréntesis primero
+        traduccion_final_limpia = re.sub(r'\s*\([^)]*\)', '', traduccion_final_limpia)
+
+        # 2. Traducción directa de compuestos morfológicos al castellano fluido
         traduccion_final_limpia = traduccion_final_limpia.replace("con-ostium-dor", "agente estimulador de la apertura de poros")
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-isco", "propio del tratamiento medicinal")
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-rio", "proceso de curación o tratamiento")
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-ario", "recetario de tratamientos médicos")
-        traduccion_final_limpia = traduccion_final_limpia.replace("humor-ario", "relativo a los fluidos o humores de la planta")
+        traduccion_final_limpia = traduccion_final_limpia.replace("humor-ario", "relativo a los fluidos de la planta")
         traduccion_final_limpia = traduccion_final_limpia.replace("humidus-ario", "relativo al estado de humedad vegetal")
         traduccion_final_limpia = traduccion_final_limpia.replace("brote-oso", "brote abundante en savia nutricia")
         traduccion_final_limpia = traduccion_final_limpia.replace("tallo-ense", "perteneciente a la estructura del tallo")
-        traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "agente deshidratante o desecante")
-        traduccion_final_limpia = traduccion_final_limpia.replace("hacer-dor", "agente extractor o confeccionador")
-        
-        # --- NUEVOS REEMPLAZOS GLOBALES ANATÓMICOS Y COMBINATORIOS ---
         traduccion_final_limpia = traduccion_final_limpia.replace("radix ecer", "proceso de enraizamiento de la base")
         traduccion_final_limpia = traduccion_final_limpia.replace("radix-ecer", "proceso de enraizamiento de la base")
         traduccion_final_limpia = traduccion_final_limpia.replace("solutio cia", "estado de disolución líquida")
         traduccion_final_limpia = traduccion_final_limpia.replace("solutio-cia", "estado de disolución líquida")
         traduccion_final_limpia = traduccion_final_limpia.replace("corazón", "corteza protectora externa")
+        traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "agente deshidratante")
+        traduccion_final_limpia = traduccion_final_limpia.replace("hacer-dor", "agente confeccionador")
+
+        # 3. Traducción estricta de términos latinos sueltos y frases al español fluido
+        # Captura primero la locución compuesta "in caulis" para evitar que se traduzcan por separado
+        traduccion_final_limpia = re.sub(r'\bin caulis\b', 'en el tallo principal', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bin-caulis\b', 'en el tallo principal', traduccion_final_limpia)
         
-        # 3. Traducción global de partículas sueltas remanentes usando límites estrictos (\b)
+        # Traduce los términos individuales restantes
+        traduccion_final_limpia = re.sub(r'\bfacies\b', 'aspecto o morfología foliar', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcaulis\b', 'tallo', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bsuccus\b', 'savia o jugo vital', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bsorbitio\b', 'poción o brebaje', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcontra humidus\b', 'contra la humedad', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcontra-humidus\b', 'contra la humedad', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bostium\b', 'apertura del poro foliar', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bcalere\b', 'someter a temperatura', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bamare\b', 'principio activo amargo', traduccion_final_limpia)
@@ -321,7 +330,7 @@ def traducir_a_romance(texto):
         traduccion_final_limpia = re.sub(r'\bor\b', 'origen del brote', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bar\b', 'estructura leñosa de la rama', traduccion_final_limpia)
         
-        # Corrección de las abreviaturas técnicas del deductor automático al vuelo
+        # Limpieza de las abreviaturas técnicas del deductor automático
         traduccion_final_limpia = traduccion_final_limpia.replace("abrev(d.)", "dosificar")
         traduccion_final_limpia = traduccion_final_limpia.replace("abrev (d.)", "dosificar")
         traduccion_final_limpia = re.sub(r'\babrev\b', 'dosificación', traduccion_final_limpia)
