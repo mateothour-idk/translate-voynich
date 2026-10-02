@@ -129,7 +129,8 @@ def traducir_a_romance(texto):
 
     particulas_cortas = {
         "ar": "ar", "or": "or", "dy": "dy", "te": "te", "al": "al", "to": "to", 
-        "co": "co", "ol": "brote", "ee": "ee", "in": "in"
+        "co": "co", "ol": "brote", "ee": "ee", "in": "in", "d": "dare / datur (dar / dosificar en la mezcla)",
+        "p": "pars / partes (proporciones de la receta)"
     }
 
     etimologia_romance = {
