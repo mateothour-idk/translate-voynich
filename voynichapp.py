@@ -368,11 +368,14 @@ def traducir_a_romance(texto):
         traduccion_final_limpia = traduccion_final_limpia.replace("corazón", "external protective bark")
         traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "dehydrating agent")
         traduccion_final_limpia = traduccion_final_limpia.replace("hacer-dor", "compounding agent")
+        traduccion_final_limpia = traduccion_final_limpia.replace("coquere-cion", "decoction or boiling process")
         
         # 3. Traducción estricta de términos latinos sueltos y frases al inglés fluido
         # Captura primero la locución compuesta "in caulis" antes de fragmentarla
         traduccion_final_limpia = re.sub(r'\bin caulis\b', 'in the main stem', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bin-caulis\b', 'in the main stem', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcum\b', 'mixed with', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcoquere\b', 'boil over fire', traduccion_final_limpia)
         
         # Traduce los términos individuales restantes con límites estrictos (\b)
         traduccion_final_limpia = re.sub(r'\bfacies\b', 'leaf morphology or aspect', traduccion_final_limpia)
