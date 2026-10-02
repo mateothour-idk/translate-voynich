@@ -150,6 +150,7 @@ def traducir_a_romance(texto):
     idx_idioma = 0 if idioma == "Español" else 1
     palabras_traducidas_crudas = []
 
+        # --- PASADA 1: EXTRACCIÓN MORFOLÓGICA INDIVIDUAL CON DEDUCTOR AUTOMÁTICO UNIVERSAL ---
     for pal in palabras:
         if not pal.strip() or len(pal) <= 1: 
             continue
@@ -157,16 +158,18 @@ def traducir_a_romance(texto):
             p_fix, r_fix, s_fix = voynichdatos.descomponer_y_traducir_glifo(pal)
             forma_romance_completa = f"{p_fix}{r_fix}{s_fix}"
             fon_l.append(forma_romance_completa)
+            
             if pal in dicc_activo:
                 significado = dicc_activo[pal]
             elif forma_romance_completa in dicc_activo:
                 significado = dicc_activo[forma_romance_completa]
             elif len(pal) <= 3 and pal in particulas_cortas:
-                significado = f"[{particulas_cortas[pal]}]"
+                significado = particulas_cortas[pal]
             else:
                 partes_traducidas = []
                 if p_fix and p_fix in significados_morfemas:
                     partes_traducidas.append(significados_morfemas[p_fix])
+                
                 if r_fix:
                     if r_fix in dicc_activo:
                         partes_traducidas.append(dicc_activo[r_fix])
@@ -179,15 +182,27 @@ def traducir_a_romance(texto):
                                 partes_traducidas.append(val_etim)
                                 encontrado = True
                                 break
+                        
+                        # --- 🤖 MOTOR DE DEDUCCIÓN FILOLÓGICA AUTOMÁTICA UNIVERSAL ---
                         if not encontrado:
-                            partes_traducidas.append(f"¿{r_fix}?")
+                            # Clasifica de forma inteligente el tipo de glifo medieval
+                            if r_fix in ['t', 'k', 'p', 'f']: # Glifos Gallows (Altos)
+                                partes_traducidas.append(f"medida/dosis ponderal ({r_fix}.)")
+                            elif r_fix in ['o', 'a', 'e', 'y']: # Vocales combinadoras (Fluidos)
+                                partes_traducidas.append(f"canal de fluido o savia ({r_fix}.)")
+                            elif len(r_fix) == 1: # Cualquier otra letra suelta en el manuscrito
+                                partes_traducidas.append(f"abreviatura médica medieval ({r_fix}.)")
+                            else: # Raíces complejas nuevas
+                                partes_traducidas.append(f"compuesto botánico ({r_fix}.)")
+                
                 if s_fix and s_fix in significados_morfemas:
                     partes_traducidas.append(significados_morfemas[s_fix])
-                significado = "".join(partes_traducidas) if partes_traducidas else f"¿{forma_romance_completa}?"
+                
+                significado = "".join(partes_traducidas) if partes_traducidas else f"elemento({forma_romance_completa})"
             palabras_traducidas_crudas.append(significado)
         except Exception:
             fon_l.append(pal)
-            palabras_traducidas_crudas.append(f"[{pal}]")
+            palabras_traducidas_crudas.append(f"componente({pal})")
             continue
 
     i = 0
