@@ -141,7 +141,9 @@ def traducir_a_romance(texto):
         "s":   "succus (jugo/savia)", "sory": "sorbitio (poción)", "o": "ostium (apertura)",
         "so":  "solutio (disolución)", "nit": "nitrum (nitro)", "aqu": "aqua (agua)",
         "ter": "terra (tierra)", "aer": "aer (aire)", "pyr": "pyra (fuego)",
-        "rub": "ruber (rojo)", "alb": "albus (blanco)", "c": "cura (cuidado / tratamiento herborístico)"
+        "rub": "ruber (rojo)", "alb": "albus (blanco)", "c": "cura (cuidado / tratamiento herborístico)", 
+        "at": "ater / atra (oscuro / tejido marchito)", "h": "humor / humidus (humedad / fluido de la planta)", 
+        "r": "radix / radicari (enraizar / desarrollar la base)", "cor": "cortex (corteza exterior / envoltura protectora)"
     }
 
     idx_idioma = 0 if idioma == "Español" else 1
