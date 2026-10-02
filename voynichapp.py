@@ -289,8 +289,8 @@ def traducir_a_romance(texto):
 
             traduccion_final_limpia = " | ".join(trad_l)
     
-    # === PROCESADOR DE SINTAXIS LIMPIA UNIVERSAL (BLINDADO CON LÍMITES \b) ===
-    # 1. Purgamos explicaciones técnicas repetitivas entre paréntesis
+        # === PROCESADOR DE SINTAXIS LIMPIA UNIVERSAL (GLOBAL Y ABSOLUTO) ===
+    # 1. Purgamos explicaciones técnicas repetitivas entre paréntesis primero
     traduccion_final_limpia = re.sub(r'\s*\([^)]*\)', '', traduccion_final_limpia)
     
     # 2. Reemplazo prioritario de compuestos mecánicos con guiones (Morfología Líquida)
@@ -306,20 +306,26 @@ def traducir_a_romance(texto):
         traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "agente deshidratante o desecante")
         traduccion_final_limpia = traduccion_final_limpia.replace("hacer-dor", "agente extractor o confeccionador")
         
-        # 3. Traducción global de palabras sueltas remanentes usando límites estrictos (\b)
+        # --- NUEVOS REEMPLAZOS GLOBALES ANATÓMICOS Y COMBINATORIOS ---
+        traduccion_final_limpia = traduccion_final_limpia.replace("radix ecer", "proceso de enraizamiento de la base")
+        traduccion_final_limpia = traduccion_final_limpia.replace("radix-ecer", "proceso de enraizamiento de la base")
+        traduccion_final_limpia = traduccion_final_limpia.replace("solutio cia", "estado de disolución líquida")
+        traduccion_final_limpia = traduccion_final_limpia.replace("solutio-cia", "estado de disolución líquida")
+        traduccion_final_limpia = traduccion_final_limpia.replace("corazón", "corteza protectora externa")
+        
+        # 3. Traducción global de partículas sueltas remanentes usando límites estrictos (\b)
         traduccion_final_limpia = re.sub(r'\bostium\b', 'apertura del poro foliar', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bcalere\b', 'someter a temperatura', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bamare\b', 'principio activo amargo', traduccion_final_limpia)
         traduccion_final_limpia = re.sub(r'\bcura\b', 'tratamiento herborístico', traduccion_final_limpia)
-        
-        # Al usar \bor\b, SOLO cambiará si la palabra "or" está sola. No romperá "poro" ni "foliar".
         traduccion_final_limpia = re.sub(r'\bor\b', 'origen del brote', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bar\b', 'estructura leñosa de la rama', traduccion_final_limpia)
         
         # Corrección de las abreviaturas técnicas del deductor automático al vuelo
         traduccion_final_limpia = traduccion_final_limpia.replace("abrev(d.)", "dosificar")
         traduccion_final_limpia = traduccion_final_limpia.replace("abrev (d.)", "dosificar")
         traduccion_final_limpia = re.sub(r'\babrev\b', 'dosificación', traduccion_final_limpia)
-        
+
     else:
         # Equivalentes globales blindados para el idioma Inglés
         traduccion_final_limpia = traduccion_final_limpia.replace("con-ostium-dor", "pore-opening stimulating agent")
