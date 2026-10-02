@@ -287,15 +287,14 @@ def traducir_a_romance(texto):
             trad_l.append(item_actual)
             i += 1
 
-        traduccion_final_limpia = " | ".join(trad_l)
+            traduccion_final_limpia = " | ".join(trad_l)
     
-    # === PROCESADOR DE SINTAXIS LIMPIA UNIVERSAL (GLOBAL Y AUTOMÁTICO) ===
+    # === PROCESADOR DE SINTAXIS LIMPIA UNIVERSAL (BLINDADO CON LÍMITES \b) ===
     # 1. Purgamos explicaciones técnicas repetitivas entre paréntesis
     traduccion_final_limpia = re.sub(r'\s*\([^)]*\)', '', traduccion_final_limpia)
     
-    # 2. Diccionario de Traducción Global para raíces y compuestos sueltos
+    # 2. Reemplazo prioritario de compuestos mecánicos con guiones (Morfología Líquida)
     if idioma == "Español":
-        # Traducción automática de compuestos mecánicos rebeldes
         traduccion_final_limpia = traduccion_final_limpia.replace("con-ostium-dor", "agente estimulador de la apertura de poros")
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-isco", "propio del tratamiento medicinal")
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-rio", "proceso de curación o tratamiento")
@@ -307,31 +306,40 @@ def traducir_a_romance(texto):
         traduccion_final_limpia = traduccion_final_limpia.replace("secar-dor", "agente deshidratante o desecante")
         traduccion_final_limpia = traduccion_final_limpia.replace("hacer-dor", "agente extractor o confeccionador")
         
-        # Traducción global de palabras sueltas remanentes en cualquier línea
-        traduccion_final_limpia = traduccion_final_limpia.replace("ostium", "apertura del poro foliar")
-        traduccion_final_limpia = traduccion_final_limpia.replace("calere", "someter a temperatura")
-        traduccion_final_limpia = traduccion_final_limpia.replace("amare", "principio activo amargo")
-        traduccion_final_limpia = traduccion_final_limpia.replace("cura", "tratamiento herborístico")
-        traduccion_final_limpia = traduccion_final_limpia.replace("or", "origen del brote")
+        # 3. Traducción global de palabras sueltas remanentes usando límites estrictos (\b)
+        traduccion_final_limpia = re.sub(r'\bostium\b', 'apertura del poro foliar', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcalere\b', 'someter a temperatura', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bamare\b', 'principio activo amargo', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcura\b', 'tratamiento herborístico', traduccion_final_limpia)
+        
+        # Al usar \bor\b, SOLO cambiará si la palabra "or" está sola. No romperá "poro" ni "foliar".
+        traduccion_final_limpia = re.sub(r'\bor\b', 'origen del brote', traduccion_final_limpia)
+        
+        # Corrección de las abreviaturas técnicas del deductor automático al vuelo
+        traduccion_final_limpia = traduccion_final_limpia.replace("abrev(d.)", "dosificar")
+        traduccion_final_limpia = traduccion_final_limpia.replace("abrev (d.)", "dosificar")
+        traduccion_final_limpia = re.sub(r'\babrev\b', 'dosificación', traduccion_final_limpia)
         
     else:
-        # Equivalentes globales para el idioma Inglés
+        # Equivalentes globales blindados para el idioma Inglés
         traduccion_final_limpia = traduccion_final_limpia.replace("con-ostium-dor", "pore-opening stimulating agent")
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-isco", "pertaining to medical treatment")
         traduccion_final_limpia = traduccion_final_limpia.replace("cura-ario", "medical treatment formulary")
-        traduccion_final_limpia = traduccion_final_limpia.replace("humor-ario", "relating to plant fluids and humors")
         traduccion_final_limpia = traduccion_final_limpia.replace("brote-oso", "abundant sap sprout")
         traduccion_final_limpia = traduccion_final_limpia.replace("tallo-ense", "belonging to the stem structure")
-        traduccion_final_limpia = traduccion_final_limpia.replace("ostium", "opening of the stomatal pore")
-        traduccion_final_limpia = traduccion_final_limpia.replace("calere", "apply laboratory heat")
-        traduccion_final_limpia = traduccion_final_limpia.replace("amare", "bitter active principle")
-        traduccion_final_limpia = traduccion_final_limpia.replace("cura", "medical treatment")
-        traduccion_final_limpia = traduccion_final_limpia.replace("or", "origin of the sprout")
+        
+        traduccion_final_limpia = re.sub(r'\bostium\b', 'opening of the stomatal pore', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcalere\b', 'apply laboratory heat', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bamare\b', 'bitter active principle', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bcura\b', 'medical treatment', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\bor\b', 'origin of the sprout', traduccion_final_limpia)
+        traduccion_final_limpia = re.sub(r'\babrev\b', 'dosage', traduccion_final_limpia)
 
-    # 3. Limpieza masiva final: remueve guiones de control huérfanos que afean la pantalla
+    # 4. Limpieza masiva de guiones residuales de control de la matriz
     traduccion_final_limpia = traduccion_final_limpia.replace("-", " ").replace(" / ", " o ")
 
     return " ".join(fon_l), traduccion_final_limpia.strip()
+
 
 # --- CONFIGURACIÓN DE PESTAÑAS (FUERA DE CONDICIONALES) ---
 tab1, tab2 = st.tabs([IFACE[idioma]["tab1"], IFACE[idioma]["tab2"]])
